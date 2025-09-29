@@ -64,9 +64,9 @@ func TestChainExecution(t *testing.T) {
 			DefaultTimeout: 50 * time.Millisecond,
 		})
 		r := retry.New[int](retry.Config{
-			MaxAttempts:    3,
-			InitialDelay:   10 * time.Millisecond,
-			BackoffPolicy:  retry.BackoffConstant,
+			MaxAttempts:   3,
+			InitialDelay:  10 * time.Millisecond,
+			BackoffPolicy: retry.BackoffConstant,
 		})
 
 		chain := New[int]().
