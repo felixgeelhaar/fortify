@@ -26,6 +26,9 @@ go.work
 *.swo
 *~
 
+# Claude Code configuration (local)
+.claude/
+
 # OS specific files
 .DS_Store
 Thumbs.db
