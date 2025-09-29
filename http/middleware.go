@@ -115,8 +115,8 @@ func Timeout(tm timeout.Timeout[*http.Response], duration time.Duration) func(ht
 
 				if timedOut {
 					http.Error(w, "Gateway Timeout", http.StatusGatewayTimeout)
+					return
 				}
-				return
 			}
 		})
 	}

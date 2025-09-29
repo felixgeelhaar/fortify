@@ -8,6 +8,12 @@ import (
 // tokenBucket implements the token bucket algorithm for rate limiting.
 // It maintains a bucket of tokens that refills at a constant rate.
 type tokenBucket struct {
+	// interval is the time period for rate replenishment
+	interval time.Duration
+
+	// lastRefill is the last time tokens were refilled
+	lastRefill time.Time
+
 	mu sync.Mutex
 
 	// tokens is the current number of available tokens
@@ -18,16 +24,10 @@ type tokenBucket struct {
 
 	// rate is the number of tokens added per interval
 	rate float64
-
-	// interval is the time period for rate replenishment
-	interval time.Duration
-
-	// lastRefill is the last time tokens were refilled
-	lastRefill time.Time
 }
 
 // newTokenBucket creates a new token bucket with the given rate, burst, and interval.
-func newTokenBucket(rate int, burst int, interval time.Duration) *tokenBucket {
+func newTokenBucket(rate, burst int, interval time.Duration) *tokenBucket {
 	return &tokenBucket{
 		tokens:     float64(burst),
 		burst:      float64(burst),

@@ -8,15 +8,6 @@ import (
 
 // Config holds the configuration for a RateLimiter.
 type Config struct {
-	// Rate is the number of tokens added to the bucket per Interval.
-	// If Rate is 0, defaults to 100.
-	Rate int
-
-	// Burst is the maximum number of tokens in the bucket (bucket capacity).
-	// This allows short bursts of requests up to this limit.
-	// If Burst is 0, defaults to Rate.
-	Burst int
-
 	// Interval is the time period over which Rate tokens are added.
 	// If Interval is 0, defaults to 1 second.
 	Interval time.Duration
@@ -32,6 +23,15 @@ type Config struct {
 
 	// Logger is used for structured logging. If nil, no logging is performed.
 	Logger *slog.Logger
+
+	// Rate is the number of tokens added to the bucket per Interval.
+	// If Rate is 0, defaults to 100.
+	Rate int
+
+	// Burst is the maximum number of tokens in the bucket (bucket capacity).
+	// This allows short bursts of requests up to this limit.
+	// If Burst is 0, defaults to Rate.
+	Burst int
 }
 
 // setDefaults applies default values to unset configuration fields.

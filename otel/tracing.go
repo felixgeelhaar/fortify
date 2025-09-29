@@ -25,6 +25,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 // Pattern represents a resilience pattern type for tracing.
@@ -57,7 +58,7 @@ type Tracer struct {
 // If provider is nil, returns a tracer that uses the global TracerProvider.
 func NewTracer(provider trace.TracerProvider, serviceName string) *Tracer {
 	if provider == nil {
-		provider = trace.NewNoopTracerProvider()
+		provider = noop.NewTracerProvider()
 	}
 
 	return &Tracer{

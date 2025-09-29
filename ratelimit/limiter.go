@@ -147,7 +147,8 @@ func (rl *rateLimiter) Take(ctx context.Context, key string, tokens int) bool {
 func (rl *rateLimiter) getBucket(key string) *tokenBucket {
 	// Try to load existing bucket
 	if bucket, ok := rl.buckets.Load(key); ok {
-		return bucket.(*tokenBucket)
+		tb, _ := bucket.(*tokenBucket)
+		return tb
 	}
 
 	// Create new bucket
@@ -155,7 +156,8 @@ func (rl *rateLimiter) getBucket(key string) *tokenBucket {
 
 	// Store and return (LoadOrStore handles race conditions)
 	actual, _ := rl.buckets.LoadOrStore(key, newBucket)
-	return actual.(*tokenBucket)
+	tb, _ := actual.(*tokenBucket)
+	return tb
 }
 
 // resolveKey determines the rate limiting key using KeyFunc if configured.

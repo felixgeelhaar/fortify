@@ -7,11 +7,6 @@ import (
 
 // Config holds the configuration for a CircuitBreaker.
 type Config struct {
-	// MaxRequests is the maximum number of requests allowed to pass through
-	// when the circuit breaker is in the Half-Open state.
-	// If MaxRequests is 0, the circuit breaker allows only 1 request.
-	MaxRequests uint32
-
 	// Interval is the cyclic period of the Closed state for the circuit breaker
 	// to clear the internal Counts. If Interval is 0, the circuit breaker doesn't
 	// clear internal Counts during the Closed state.
@@ -39,6 +34,11 @@ type Config struct {
 
 	// Logger is used for structured logging. If nil, no logging is performed.
 	Logger *slog.Logger
+
+	// MaxRequests is the maximum number of requests allowed to pass through
+	// when the circuit breaker is in the Half-Open state.
+	// If MaxRequests is 0, the circuit breaker allows only 1 request.
+	MaxRequests uint32
 }
 
 // setDefaults applies default values to unset configuration fields.
