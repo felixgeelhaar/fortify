@@ -182,3 +182,84 @@ func TestPatternTypes(t *testing.T) {
 		})
 	}
 }
+
+func TestRecordError_NilSpan(t *testing.T) {
+	tracer := NewTracer(nil, "test-service")
+	// Should not panic with nil span
+	tracer.RecordError(nil, context.Canceled, "test error")
+}
+
+func TestRecordError_NilError(t *testing.T) {
+	tracer := NewTracer(nil, "test-service")
+	_, span := tracer.StartSpan(context.Background(), PatternRetry, "test")
+	defer span.End()
+
+	// Should not panic with nil error - function should return early
+	tracer.RecordError(span, nil, "no error")
+}
+
+func TestAddEvent_NilSpan(t *testing.T) {
+	tracer := NewTracer(nil, "test-service")
+	// Should not panic with nil span
+	tracer.AddEvent(nil, "test_event", attribute.String("key", "value"))
+}
+
+func TestSetAttributes_NilSpan(t *testing.T) {
+	tracer := NewTracer(nil, "test-service")
+	// Should not panic with nil span
+	tracer.SetAttributes(nil, attribute.String("key", "value"))
+}
+
+func TestSetStatus(t *testing.T) {
+	t.Run("sets status on span", func(t *testing.T) {
+		exporter := tracetest.NewInMemoryExporter()
+		tp := sdktrace.NewTracerProvider(
+			sdktrace.WithSyncer(exporter),
+		)
+		tracer := NewTracer(tp, "test-service")
+
+		_, span := tracer.StartSpan(context.Background(), PatternCircuitBreaker, "execute")
+		tracer.SetStatus(span, codes.Ok, "operation successful")
+		span.End()
+
+		spans := exporter.GetSpans()
+		if len(spans) == 0 {
+			t.Fatal("no spans recorded")
+		}
+
+		spanData := spans[0]
+		if spanData.Status.Code != codes.Ok {
+			t.Errorf("span status = %v, want Ok", spanData.Status.Code)
+		}
+		// Note: OpenTelemetry SDK may not preserve description for Ok status
+		// This is expected behavior
+	})
+
+	t.Run("handles error status", func(t *testing.T) {
+		exporter := tracetest.NewInMemoryExporter()
+		tp := sdktrace.NewTracerProvider(
+			sdktrace.WithSyncer(exporter),
+		)
+		tracer := NewTracer(tp, "test-service")
+
+		_, span := tracer.StartSpan(context.Background(), PatternTimeout, "execute")
+		tracer.SetStatus(span, codes.Error, "operation failed")
+		span.End()
+
+		spans := exporter.GetSpans()
+		if len(spans) == 0 {
+			t.Fatal("no spans recorded")
+		}
+
+		spanData := spans[0]
+		if spanData.Status.Code != codes.Error {
+			t.Errorf("span status = %v, want Error", spanData.Status.Code)
+		}
+	})
+}
+
+func TestSetStatus_NilSpan(t *testing.T) {
+	tracer := NewTracer(nil, "test-service")
+	// Should not panic with nil span
+	tracer.SetStatus(nil, codes.Ok, "test")
+}
