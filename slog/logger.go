@@ -82,8 +82,9 @@ func LogPatternEvent(logger *slog.Logger, pattern Pattern, event string, attrs .
 	}
 
 	args := make([]slog.Attr, 0, len(attrs)+2)
-	args = append(args, slog.String("pattern", string(pattern)))
-	args = append(args, slog.String("event", event))
+	args = append(args,
+		slog.String("pattern", string(pattern)),
+		slog.String("event", event))
 	args = append(args, attrs...)
 
 	logger.LogAttrs(context.Background(), slog.LevelInfo, "pattern event", args...)
@@ -109,8 +110,9 @@ func LogPatternMetrics(logger *slog.Logger, pattern Pattern, metric string, attr
 	}
 
 	args := make([]slog.Attr, 0, len(attrs)+2)
-	args = append(args, slog.String("pattern", string(pattern)))
-	args = append(args, slog.String("metric", metric))
+	args = append(args,
+		slog.String("pattern", string(pattern)),
+		slog.String("metric", metric))
 	args = append(args, attrs...)
 
 	logger.LogAttrs(context.Background(), slog.LevelInfo, "pattern metrics", args...)

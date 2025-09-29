@@ -11,12 +11,12 @@ type Config struct {
 	// If DefaultTimeout is 0, defaults to 30 seconds.
 	DefaultTimeout time.Duration
 
+	// Logger is used for structured logging. If nil, no logging is performed.
+	Logger *slog.Logger
+
 	// OnTimeout is called when an operation times out.
 	// This can be used for cleanup, logging, or metrics.
 	OnTimeout func()
-
-	// Logger is used for structured logging. If nil, no logging is performed.
-	Logger *slog.Logger
 }
 
 // setDefaults applies default values to unset configuration fields.

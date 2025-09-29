@@ -54,14 +54,13 @@ type CircuitBreaker[T any] interface {
 
 // circuitBreaker is the concrete implementation of CircuitBreaker.
 type circuitBreaker[T any] struct {
-	config Config
-
-	mu            sync.RWMutex
-	state         State
-	generation    uint64
-	counts        Counts
 	expiry        time.Time
 	halfOpenStart time.Time
+	config        Config
+	mu            sync.RWMutex
+	counts        Counts
+	generation    uint64
+	state         State
 }
 
 // New creates a new CircuitBreaker with the given configuration.
@@ -173,7 +172,7 @@ func (cb *circuitBreaker[T]) afterRequest(generation uint64, success bool) {
 
 // currentState determines the current state based on time and counts.
 // Must be called with lock held.
-func (cb *circuitBreaker[T]) currentState(now time.Time) (State, uint64) {
+func (cb *circuitBreaker[T]) currentState(now time.Time) (state State, generation uint64) {
 	switch cb.state {
 	case StateClosed:
 		if cb.config.Interval > 0 && cb.expiry.Before(now) {
