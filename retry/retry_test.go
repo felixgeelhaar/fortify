@@ -269,6 +269,7 @@ func TestRetryBackoff(t *testing.T) {
 
 		start := time.Now()
 
+		//nolint:errcheck // intentionally ignoring error in test
 		r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -295,6 +296,7 @@ func TestRetryCallbacks(t *testing.T) {
 			},
 		})
 
+		//nolint:errcheck // intentionally ignoring error in test
 		r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -322,6 +324,7 @@ func TestRetryWithJitter(t *testing.T) {
 	durations := make([]time.Duration, 3)
 	for i := 0; i < 3; i++ {
 		start := time.Now()
+		//nolint:errcheck // intentionally ignoring error in test
 		r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})

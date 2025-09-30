@@ -9,7 +9,11 @@
       "Bash(tee:*)",
       "Bash(for i in {1..5})",
       "Bash(do go test ./timeout -run \"Example_contextAwareness\")",
-      "Bash(gh pr list:*)"
+      "Bash(gh pr list:*)",
+      "Bash(perl:*)",
+      "Bash(awk:*)",
+      "Bash(for file in bulkhead/bulkhead_test.go bulkhead/example_test.go circuitbreaker/breaker_test.go testing/example_test.go)",
+      "Bash(do echo \"=== $file ===\" golangci-lint run ./$file)"
     ],
     "deny": [],
     "ask": []

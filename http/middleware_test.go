@@ -188,6 +188,7 @@ func TestMiddlewareChaining(t *testing.T) {
 			return "test-key"
 		})(Timeout(tm, 100*time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
+			//nolint:errcheck // intentionally ignoring Write error in test
 			_, _ = w.Write([]byte("success"))
 		})))
 

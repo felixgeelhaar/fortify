@@ -123,6 +123,7 @@ func Example_queueTimeout() {
 
 	// First request will execute
 	go func() {
+		//nolint:errcheck // intentionally ignoring error in example
 		bh.Execute(context.Background(), func(ctx context.Context) (string, error) {
 			time.Sleep(time.Millisecond * 500)
 			return "long operation", nil
@@ -157,6 +158,7 @@ func Example_rejectionCallback() {
 
 	// First request will execute
 	go func() {
+		//nolint:errcheck // intentionally ignoring error in example goroutine
 		bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			time.Sleep(time.Millisecond * 100)
 			return 1, nil
@@ -166,6 +168,7 @@ func Example_rejectionCallback() {
 	time.Sleep(time.Millisecond * 10) // Let first request start
 
 	// Second request will be rejected
+	//nolint:errcheck // intentionally ignoring error in example
 	bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		return 2, nil
 	})

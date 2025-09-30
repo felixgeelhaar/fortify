@@ -148,11 +148,13 @@ func Example_callbacks() {
 	})
 
 	// Successful execution
+	//nolint:errcheck // intentionally ignoring error in example
 	_, _ = fb.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "success", nil
 	})
 
 	// Failed execution with fallback
+	//nolint:errcheck // intentionally ignoring error in example
 	_, _ = fb.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "", errors.New("operation failed")
 	})
