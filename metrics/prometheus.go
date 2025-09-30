@@ -35,28 +35,28 @@ type Collector struct {
 	circuitBreakerStateTotal *prometheus.CounterVec
 
 	// Retry metrics
-	retryAttempts        *prometheus.HistogramVec
-	retrySuccesses       *prometheus.CounterVec
-	retryFailures        *prometheus.CounterVec
-	retryDuration        *prometheus.HistogramVec
+	retryAttempts  *prometheus.HistogramVec
+	retrySuccesses *prometheus.CounterVec
+	retryFailures  *prometheus.CounterVec
+	retryDuration  *prometheus.HistogramVec
 
 	// Rate Limiter metrics
-	rateLimitAllowed     *prometheus.CounterVec
-	rateLimitDenied      *prometheus.CounterVec
-	rateLimitWaitTime    *prometheus.HistogramVec
+	rateLimitAllowed  *prometheus.CounterVec
+	rateLimitDenied   *prometheus.CounterVec
+	rateLimitWaitTime *prometheus.HistogramVec
 
 	// Timeout metrics
-	timeoutExecutions    *prometheus.CounterVec
-	timeoutExceeded      *prometheus.CounterVec
-	timeoutDuration      *prometheus.HistogramVec
+	timeoutExecutions *prometheus.CounterVec
+	timeoutExceeded   *prometheus.CounterVec
+	timeoutDuration   *prometheus.HistogramVec
 
 	// Bulkhead metrics
-	bulkheadActive       *prometheus.GaugeVec
-	bulkheadQueued       *prometheus.GaugeVec
-	bulkheadRejected     *prometheus.CounterVec
-	bulkheadSuccesses    *prometheus.CounterVec
-	bulkheadFailures     *prometheus.CounterVec
-	bulkheadDuration     *prometheus.HistogramVec
+	bulkheadActive    *prometheus.GaugeVec
+	bulkheadQueued    *prometheus.GaugeVec
+	bulkheadRejected  *prometheus.CounterVec
+	bulkheadSuccesses *prometheus.CounterVec
+	bulkheadFailures  *prometheus.CounterVec
+	bulkheadDuration  *prometheus.HistogramVec
 
 	mu sync.RWMutex
 }

@@ -17,7 +17,9 @@
       "Bash(golangci-lint run:*)",
       "Bash(gofmt:*)",
       "Bash(find:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(go tool cover:*)"
     ],
     "deny": [],
     "ask": []
