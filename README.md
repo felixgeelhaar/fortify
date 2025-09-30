@@ -1,4 +1,7 @@
-# Fortify
+<div align="center">
+  <img src="assets/fortify.png" alt="Fortify Logo" width="200"/>
+  <h1>Fortify</h1>
+</div>
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/felixgeelhaar/fortify.svg)](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
 [![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/fortify)](https://goreportcard.com/report/github.com/felixgeelhaar/fortify)
