@@ -82,8 +82,8 @@ func TestRetryableError(t *testing.T) {
 
 func TestIsRetryable(t *testing.T) {
 	tests := []struct {
-		name string
 		err  error
+		name string
 		want bool
 	}{
 		{

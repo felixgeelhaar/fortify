@@ -280,8 +280,8 @@ func Example_timeout() {
 // Example_externalService demonstrates graceful degradation with external services.
 func Example_externalService() {
 	type WeatherData struct {
-		Temperature float64
 		Condition   string
+		Temperature float64
 	}
 
 	// Mock weather service that sometimes fails
