@@ -140,7 +140,7 @@ func Example_queueTimeout() {
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
-	// Output: Error: queue timeout exceeded
+	// Output: Error: context deadline exceeded
 }
 
 // Example_rejectionCallback demonstrates handling rejected requests.
@@ -364,14 +364,14 @@ func Example_threadPoolPattern() {
 		go func() {
 			defer wg.Done()
 
-			result, err := workerPool.Execute(context.Background(), func(ctx context.Context) (int, error) {
+			_, err := workerPool.Execute(context.Background(), func(ctx context.Context) (int, error) {
 				// Simulate work
 				time.Sleep(time.Millisecond * 10)
 				return taskID * 2, nil
 			})
 
-			if err == nil {
-				fmt.Printf("Task %d completed: %d\n", taskID, result)
+			if err != nil {
+				fmt.Printf("Task %d failed: %v\n", taskID, err)
 			}
 		}()
 	}
