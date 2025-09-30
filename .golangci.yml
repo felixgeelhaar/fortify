@@ -57,6 +57,7 @@ linters-settings:
       - G104 # Audit errors not checked (we use errcheck for this)
 
 issues:
+  uniq-by-line: true
   exclude-dirs:
     - examples
   exclude-rules:
@@ -76,5 +77,4 @@ output:
     - format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
   sort-results: true
