@@ -56,13 +56,16 @@ func TestLoggerWithPattern(t *testing.T) {
 }
 
 func TestLoggerWithContext(t *testing.T) {
+	type contextKey string
+	const requestIDKey contextKey = "request_id"
+
 	t.Run("adds context values to log", func(t *testing.T) {
 		var buf bytes.Buffer
 		logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}))
 
-		ctx := context.WithValue(context.Background(), "request_id", "req-123")
+		ctx := context.WithValue(context.Background(), requestIDKey, "req-123")
 		LogWithContext(ctx, logger, slog.LevelInfo, "test message",
 			slog.String("key", "value"),
 		)
@@ -158,4 +161,101 @@ func TestLogPatternMetrics(t *testing.T) {
 			t.Error("output should contain metric name")
 		}
 	})
+}
+
+func TestNewTextLogger(t *testing.T) {
+	t.Run("creates text logger with custom writer", func(t *testing.T) {
+		var buf bytes.Buffer
+		logger := NewTextLogger(&buf, slog.LevelInfo)
+		if logger == nil {
+			t.Error("logger should not be nil")
+		}
+
+		logger.Info("test message")
+		output := buf.String()
+		if !strings.Contains(output, "test message") {
+			t.Error("output should contain message")
+		}
+	})
+
+	t.Run("uses stdout when writer is nil", func(t *testing.T) {
+		logger := NewTextLogger(nil, slog.LevelDebug)
+		if logger == nil {
+			t.Error("logger should not be nil")
+		}
+	})
+}
+
+func TestNewJSONLogger(t *testing.T) {
+	t.Run("creates JSON logger with custom writer", func(t *testing.T) {
+		var buf bytes.Buffer
+		logger := NewJSONLogger(&buf, slog.LevelInfo)
+		if logger == nil {
+			t.Error("logger should not be nil")
+		}
+
+		logger.Info("test message")
+		output := buf.String()
+		if !strings.Contains(output, "test message") {
+			t.Error("output should contain message")
+		}
+		// JSON output should contain quotes
+		if !strings.Contains(output, `"msg"`) {
+			t.Error("output should be JSON formatted")
+		}
+	})
+
+	t.Run("uses stdout when writer is nil", func(t *testing.T) {
+		logger := NewJSONLogger(nil, slog.LevelWarn)
+		if logger == nil {
+			t.Error("logger should not be nil")
+		}
+	})
+}
+
+func TestWithPattern(t *testing.T) {
+	t.Run("returns logger with pattern field", func(t *testing.T) {
+		var buf bytes.Buffer
+		baseLogger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		}))
+
+		patternLogger := WithPattern(baseLogger, PatternTimeout)
+		if patternLogger == nil {
+			t.Error("pattern logger should not be nil")
+		}
+
+		patternLogger.Info("test event")
+		output := buf.String()
+		if !strings.Contains(output, "timeout") {
+			t.Error("output should contain pattern field")
+		}
+	})
+
+	t.Run("returns nil when base logger is nil", func(t *testing.T) {
+		patternLogger := WithPattern(nil, PatternRetry)
+		if patternLogger != nil {
+			t.Error("should return nil when base logger is nil")
+		}
+	})
+}
+
+func TestLogPatternEvent_NilLogger(t *testing.T) {
+	// Should not panic with nil logger
+	LogPatternEvent(nil, PatternCircuitBreaker, "test", slog.String("key", "value"))
+}
+
+func TestLogPatternError_NilLogger(t *testing.T) {
+	// Should not panic with nil logger
+	LogPatternError(nil, PatternRetry, "test error", slog.String("error", "details"))
+}
+
+func TestLogPatternMetrics_NilLogger(t *testing.T) {
+	// Should not panic with nil logger
+	LogPatternMetrics(nil, PatternBulkhead, "metric", slog.Int("value", 42))
+}
+
+func TestLogWithContext_NilLogger(t *testing.T) {
+	// Should not panic with nil logger
+	LogWithContext(context.Background(), nil, slog.LevelInfo, "test", slog.String("key", "value"))
 }

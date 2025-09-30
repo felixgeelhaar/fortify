@@ -9,9 +9,10 @@ import (
 	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
 )
 
+//nolint:gocyclo // test function with many subtests
 func TestRetryDo(t *testing.T) {
 	t.Run("succeeds on first attempt", func(t *testing.T) {
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts: 3,
 		})
 
@@ -33,7 +34,7 @@ func TestRetryDo(t *testing.T) {
 	})
 
 	t.Run("retries on failure and succeeds", func(t *testing.T) {
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:  3,
 			InitialDelay: 10 * time.Millisecond,
 		})
@@ -59,7 +60,7 @@ func TestRetryDo(t *testing.T) {
 	})
 
 	t.Run("returns error after max attempts", func(t *testing.T) {
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:  3,
 			InitialDelay: 10 * time.Millisecond,
 		})
@@ -80,7 +81,7 @@ func TestRetryDo(t *testing.T) {
 	})
 
 	t.Run("respects context cancellation", func(t *testing.T) {
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:  5,
 			InitialDelay: 100 * time.Millisecond,
 		})
@@ -107,7 +108,7 @@ func TestRetryDo(t *testing.T) {
 	t.Run("does not retry non-retryable errors", func(t *testing.T) {
 		nonRetryableErr := errors.New("non-retryable")
 
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:        5,
 			InitialDelay:       10 * time.Millisecond,
 			NonRetryableErrors: []error{nonRetryableErr},
@@ -130,7 +131,7 @@ func TestRetryDo(t *testing.T) {
 	t.Run("retries only retryable errors", func(t *testing.T) {
 		retryableErr := fortifyerrors.AsRetryable(errors.New("retryable"))
 
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:  3,
 			InitialDelay: 10 * time.Millisecond,
 		})
@@ -152,7 +153,7 @@ func TestRetryDo(t *testing.T) {
 	t.Run("uses custom IsRetryable predicate", func(t *testing.T) {
 		customErr := errors.New("custom error")
 
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:  3,
 			InitialDelay: 10 * time.Millisecond,
 			IsRetryable: func(err error) bool {
@@ -183,7 +184,7 @@ func TestRetryDo(t *testing.T) {
 
 func TestRetryBackoff(t *testing.T) {
 	t.Run("exponential backoff", func(t *testing.T) {
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:   4,
 			InitialDelay:  10 * time.Millisecond,
 			Multiplier:    2.0,
@@ -193,7 +194,8 @@ func TestRetryBackoff(t *testing.T) {
 		attempts := 0
 		start := time.Now()
 
-		r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		//nolint:errcheck // intentionally ignoring error in test
+		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")
 		})
@@ -208,7 +210,7 @@ func TestRetryBackoff(t *testing.T) {
 	})
 
 	t.Run("linear backoff", func(t *testing.T) {
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:   4,
 			InitialDelay:  10 * time.Millisecond,
 			Multiplier:    1.0,
@@ -218,7 +220,8 @@ func TestRetryBackoff(t *testing.T) {
 		attempts := 0
 		start := time.Now()
 
-		r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		//nolint:errcheck // intentionally ignoring error in test
+		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")
 		})
@@ -232,7 +235,7 @@ func TestRetryBackoff(t *testing.T) {
 	})
 
 	t.Run("constant backoff", func(t *testing.T) {
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:   4,
 			InitialDelay:  10 * time.Millisecond,
 			BackoffPolicy: BackoffConstant,
@@ -241,7 +244,8 @@ func TestRetryBackoff(t *testing.T) {
 		attempts := 0
 		start := time.Now()
 
-		r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		//nolint:errcheck // intentionally ignoring error in test
+		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")
 		})
@@ -255,7 +259,7 @@ func TestRetryBackoff(t *testing.T) {
 	})
 
 	t.Run("respects max delay", func(t *testing.T) {
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:   5,
 			InitialDelay:  10 * time.Millisecond,
 			MaxDelay:      20 * time.Millisecond,
@@ -265,6 +269,7 @@ func TestRetryBackoff(t *testing.T) {
 
 		start := time.Now()
 
+		//nolint:errcheck // intentionally ignoring error in test
 		r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -283,7 +288,7 @@ func TestRetryCallbacks(t *testing.T) {
 	t.Run("OnRetry callback", func(t *testing.T) {
 		var retries []int
 
-		r := New[int](Config{
+		r := New[int](&Config{
 			MaxAttempts:  3,
 			InitialDelay: 10 * time.Millisecond,
 			OnRetry: func(attempt int, err error) {
@@ -291,6 +296,7 @@ func TestRetryCallbacks(t *testing.T) {
 			},
 		})
 
+		//nolint:errcheck // intentionally ignoring error in test
 		r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -306,7 +312,7 @@ func TestRetryCallbacks(t *testing.T) {
 }
 
 func TestRetryWithJitter(t *testing.T) {
-	r := New[int](Config{
+	r := New[int](&Config{
 		MaxAttempts:   10,
 		InitialDelay:  10 * time.Millisecond,
 		Multiplier:    2.0,
@@ -318,6 +324,7 @@ func TestRetryWithJitter(t *testing.T) {
 	durations := make([]time.Duration, 3)
 	for i := 0; i < 3; i++ {
 		start := time.Now()
+		//nolint:errcheck // intentionally ignoring error in test
 		r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})

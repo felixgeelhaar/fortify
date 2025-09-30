@@ -35,13 +35,14 @@ jobs:
       run: go mod verify
 
     - name: Run tests
-      run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+      shell: bash
+      run: go test -v -race -coverprofile=coverage.txt -covermode=atomic ./...
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.go == '1.23'
       uses: codecov/codecov-action@v4
       with:
-        files: ./coverage.out
+        files: coverage.txt
         flags: unittests
         fail_ci_if_error: false
 
@@ -63,7 +64,7 @@ jobs:
       uses: golangci/golangci-lint-action@v6
       with:
         version: latest
-        args: --timeout=5m
+        args: --timeout=5m ./...
 
   build:
     name: Build

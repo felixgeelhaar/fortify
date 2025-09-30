@@ -8,7 +8,7 @@ import (
 )
 
 func BenchmarkRetrySuccess(b *testing.B) {
-	r := New[int](Config{
+	r := New[int](&Config{
 		MaxAttempts:  3,
 		InitialDelay: 10 * time.Millisecond,
 	})
@@ -25,7 +25,7 @@ func BenchmarkRetrySuccess(b *testing.B) {
 }
 
 func BenchmarkRetryFailure(b *testing.B) {
-	r := New[int](Config{
+	r := New[int](&Config{
 		MaxAttempts:  3,
 		InitialDelay: 1 * time.Millisecond, // Small delay for benchmarking
 	})
@@ -43,7 +43,7 @@ func BenchmarkRetryFailure(b *testing.B) {
 }
 
 func BenchmarkRetryWithJitter(b *testing.B) {
-	r := New[int](Config{
+	r := New[int](&Config{
 		MaxAttempts:   3,
 		InitialDelay:  1 * time.Millisecond,
 		Jitter:        true,

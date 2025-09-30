@@ -12,7 +12,7 @@ import (
 // Example demonstrates basic retry usage with exponential backoff.
 func Example() {
 	// Create retry with default configuration (3 attempts, exponential backoff)
-	r := retry.New[string](retry.Config{
+	r := retry.New[string](&retry.Config{
 		MaxAttempts:  3,
 		InitialDelay: time.Millisecond * 100,
 	})
@@ -37,7 +37,7 @@ func Example() {
 
 // Example_exponentialBackoff demonstrates exponential backoff with custom multiplier.
 func Example_exponentialBackoff() {
-	r := retry.New[int](retry.Config{
+	r := retry.New[int](&retry.Config{
 		MaxAttempts:   4,
 		InitialDelay:  time.Millisecond * 100,
 		MaxDelay:      time.Second * 5,
@@ -64,7 +64,7 @@ func Example_exponentialBackoff() {
 
 // Example_linearBackoff demonstrates linear backoff strategy.
 func Example_linearBackoff() {
-	r := retry.New[string](retry.Config{
+	r := retry.New[string](&retry.Config{
 		MaxAttempts:   3,
 		InitialDelay:  time.Millisecond * 200,
 		BackoffPolicy: retry.BackoffLinear,
@@ -74,6 +74,7 @@ func Example_linearBackoff() {
 	})
 
 	attempt := 0
+	//nolint:errcheck // intentionally ignoring error in example
 	r.Do(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		return "", fmt.Errorf("error %d", attempt)
@@ -85,7 +86,7 @@ func Example_linearBackoff() {
 
 // Example_constantBackoff demonstrates constant delay between retries.
 func Example_constantBackoff() {
-	r := retry.New[int](retry.Config{
+	r := retry.New[int](&retry.Config{
 		MaxAttempts:   4,
 		InitialDelay:  time.Millisecond * 500,
 		BackoffPolicy: retry.BackoffConstant,
@@ -111,7 +112,7 @@ func Example_selectiveRetry() {
 	var ErrTemporary = errors.New("temporary error")
 	var ErrPermanent = errors.New("permanent error")
 
-	r := retry.New[string](retry.Config{
+	r := retry.New[string](&retry.Config{
 		MaxAttempts:  5,
 		InitialDelay: time.Millisecond * 100,
 		IsRetryable: func(err error) bool {
@@ -151,7 +152,7 @@ func Example_retryableErrors() {
 	var ErrServiceUnavailable = errors.New("service unavailable")
 	var ErrUnauthorized = errors.New("unauthorized")
 
-	r := retry.New[int](retry.Config{
+	r := retry.New[int](&retry.Config{
 		MaxAttempts:  3,
 		InitialDelay: time.Millisecond * 100,
 		RetryableErrors: []error{
@@ -190,7 +191,7 @@ func Example_nonRetryableErrors() {
 	var ErrBadRequest = errors.New("bad request")
 	var ErrInternalError = errors.New("internal error")
 
-	r := retry.New[string](retry.Config{
+	r := retry.New[string](&retry.Config{
 		MaxAttempts:  4,
 		InitialDelay: time.Millisecond * 100,
 		NonRetryableErrors: []error{
@@ -225,7 +226,7 @@ func Example_nonRetryableErrors() {
 
 // Example_contextCancellation demonstrates respecting context cancellation.
 func Example_contextCancellation() {
-	r := retry.New[int](retry.Config{
+	r := retry.New[int](&retry.Config{
 		MaxAttempts:  10,
 		InitialDelay: time.Millisecond * 200,
 	})
@@ -246,7 +247,7 @@ func Example_contextCancellation() {
 
 // Example_jitter demonstrates adding random jitter to prevent thundering herd.
 func Example_jitter() {
-	r := retry.New[string](retry.Config{
+	r := retry.New[string](&retry.Config{
 		MaxAttempts:   3,
 		InitialDelay:  time.Millisecond * 100,
 		BackoffPolicy: retry.BackoffExponential,
@@ -255,6 +256,7 @@ func Example_jitter() {
 	})
 
 	attempt := 0
+	//nolint:errcheck // intentionally ignoring error in example
 	r.Do(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		if attempt < 3 {
@@ -269,7 +271,7 @@ func Example_jitter() {
 
 // Example_httpClient demonstrates retry with HTTP client pattern.
 func Example_httpClient() {
-	r := retry.New[int](retry.Config{
+	r := retry.New[int](&retry.Config{
 		MaxAttempts:  3,
 		InitialDelay: time.Millisecond * 500,
 		MaxDelay:     time.Second * 5,

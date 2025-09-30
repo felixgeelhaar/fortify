@@ -38,7 +38,7 @@ func TestChainExecution(t *testing.T) {
 		tm := timeout.New[int](timeout.Config{
 			DefaultTimeout: time.Second,
 		})
-		r := retry.New[int](retry.Config{
+		r := retry.New[int](&retry.Config{
 			MaxAttempts: 3,
 		})
 
@@ -63,7 +63,7 @@ func TestChainExecution(t *testing.T) {
 		tm := timeout.New[int](timeout.Config{
 			DefaultTimeout: 50 * time.Millisecond,
 		})
-		r := retry.New[int](retry.Config{
+		r := retry.New[int](&retry.Config{
 			MaxAttempts:   3,
 			InitialDelay:  10 * time.Millisecond,
 			BackoffPolicy: retry.BackoffConstant,
@@ -88,7 +88,7 @@ func TestChainExecution(t *testing.T) {
 			MaxRequests: 10,
 			Interval:    time.Second,
 		})
-		r := retry.New[int](retry.Config{
+		r := retry.New[int](&retry.Config{
 			MaxAttempts: 2,
 		})
 		rl := ratelimit.New(ratelimit.Config{
@@ -141,7 +141,7 @@ func TestChainWithoutMiddleware(t *testing.T) {
 
 func TestChainErrorPropagation(t *testing.T) {
 	t.Run("propagates errors through chain", func(t *testing.T) {
-		r := retry.New[int](retry.Config{
+		r := retry.New[int](&retry.Config{
 			MaxAttempts: 2,
 		})
 

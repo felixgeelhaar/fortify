@@ -15,21 +15,21 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Mock unary handler for testing
+// Mock unary handler for testing.
 func mockUnaryHandler(resp interface{}, err error) grpc.UnaryHandler {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		return resp, err
 	}
 }
 
-// Mock stream handler for testing
+// Mock stream handler for testing.
 func mockStreamHandler(err error) grpc.StreamHandler {
 	return func(srv interface{}, stream grpc.ServerStream) error {
 		return err
 	}
 }
 
-// Mock server stream for testing
+// Mock server stream for testing.
 type mockServerStream struct {
 	grpc.ServerStream
 	ctx context.Context
@@ -72,6 +72,7 @@ func TestUnaryCircuitBreakerInterceptor(t *testing.T) {
 
 		// First request fails, opens circuit
 		handler1 := mockUnaryHandler(nil, errors.New("service error"))
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = interceptor(context.Background(), "request", &grpc.UnaryServerInfo{}, handler1)
 
 		// Second request should be rejected
@@ -231,6 +232,7 @@ func TestStreamCircuitBreakerInterceptor(t *testing.T) {
 		// First request fails, opens circuit
 		handler1 := mockStreamHandler(errors.New("service error"))
 		stream1 := &mockServerStream{ctx: context.Background()}
+		//nolint:errcheck // intentionally ignoring error in test
 		_ = interceptor(nil, stream1, &grpc.StreamServerInfo{}, handler1)
 
 		// Second request should be rejected

@@ -7,16 +7,16 @@ import (
 
 // Config holds the configuration for a Timeout instance.
 type Config struct {
-	// DefaultTimeout is the timeout duration used when Execute is called with 0 duration.
-	// If DefaultTimeout is 0, defaults to 30 seconds.
-	DefaultTimeout time.Duration
+	// OnTimeout is called when an operation times out.
+	// This can be used for cleanup, logging, or metrics.
+	OnTimeout func()
 
 	// Logger is used for structured logging. If nil, no logging is performed.
 	Logger *slog.Logger
 
-	// OnTimeout is called when an operation times out.
-	// This can be used for cleanup, logging, or metrics.
-	OnTimeout func()
+	// DefaultTimeout is the timeout duration used when Execute is called with 0 duration.
+	// If DefaultTimeout is 0, defaults to 30 seconds.
+	DefaultTimeout time.Duration
 }
 
 // setDefaults applies default values to unset configuration fields.

@@ -22,7 +22,7 @@ func Example() {
 		Interval:    time.Second * 30,
 	})
 
-	r := retry.New[string](retry.Config{
+	r := retry.New[string](&retry.Config{
 		MaxAttempts:  3,
 		InitialDelay: time.Millisecond * 100,
 	})
@@ -69,7 +69,7 @@ func Example_fullStack() {
 		Interval:    time.Second * 30,
 	})
 
-	r := retry.New[int](retry.Config{
+	r := retry.New[int](&retry.Config{
 		MaxAttempts:  3,
 		InitialDelay: time.Millisecond * 100,
 	})
@@ -110,7 +110,7 @@ func Example_retryWithCircuitBreaker() {
 		},
 	})
 
-	r := retry.New[string](retry.Config{
+	r := retry.New[string](&retry.Config{
 		MaxAttempts:  5,
 		InitialDelay: time.Millisecond * 100,
 	})
@@ -121,7 +121,8 @@ func Example_retryWithCircuitBreaker() {
 		WithRetry(r)
 
 	attempt := 0
-	chain.Execute(context.Background(), func(ctx context.Context) (string, error) {
+	//nolint:errcheck // intentionally ignoring error in test
+	_, _ = chain.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		return "", errors.New("service failure")
 	})
@@ -137,7 +138,7 @@ func Example_timeoutWithRetry() {
 		DefaultTimeout: time.Second * 10,
 	})
 
-	r := retry.New[int](retry.Config{
+	r := retry.New[int](&retry.Config{
 		MaxAttempts:  3,
 		InitialDelay: time.Millisecond * 100,
 	})
@@ -220,7 +221,7 @@ func Example_apiClient() {
 		},
 	})
 
-	r := retry.New[map[string]interface{}](retry.Config{
+	r := retry.New[map[string]interface{}](&retry.Config{
 		MaxAttempts:   3,
 		InitialDelay:  time.Millisecond * 500,
 		BackoffPolicy: retry.BackoffExponential,
@@ -274,7 +275,7 @@ func Example_databaseClient() {
 	})
 
 	// Retry transient database errors
-	r := retry.New[[]string](retry.Config{
+	r := retry.New[[]string](&retry.Config{
 		MaxAttempts:  2,
 		InitialDelay: time.Millisecond * 500,
 	})
@@ -323,7 +324,7 @@ func Example_microserviceCall() {
 	})
 
 	// Quick retries for transient failures
-	r := retry.New[interface{}](retry.Config{
+	r := retry.New[interface{}](&retry.Config{
 		MaxAttempts:   2,
 		InitialDelay:  time.Millisecond * 200,
 		BackoffPolicy: retry.BackoffConstant,
@@ -362,7 +363,7 @@ func Example_backgroundJob() {
 	})
 
 	// More aggressive retries for batch jobs
-	r := retry.New[bool](retry.Config{
+	r := retry.New[bool](&retry.Config{
 		MaxAttempts:   5,
 		InitialDelay:  time.Second,
 		BackoffPolicy: retry.BackoffExponential,

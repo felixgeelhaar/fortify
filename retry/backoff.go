@@ -63,6 +63,7 @@ func addJitter(delay time.Duration) time.Duration {
 	}
 
 	// Add random jitter between 0% and 10% of the delay.
+	//nolint:gosec // G404: weak random acceptable for retry jitter
 	jitterAmount := time.Duration(rand.Float64() * float64(delay) * 0.1)
 	return delay + jitterAmount
 }

@@ -26,9 +26,8 @@ go.work
 *.swo
 *~
 
-# Claude Code configuration (local)
+# Local configuration
 .claude/
-CLAUDE.md
 
 # OS specific files
 .DS_Store

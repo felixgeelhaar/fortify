@@ -16,9 +16,12 @@ Fortify is a production-grade resilience and fault-tolerance library for Go 1.23
 - **⚡ High Performance**: <1µs overhead with zero allocations in hot paths
 - **🎯 Zero Dependencies**: Core patterns have no external dependencies
 - **🔍 Observable**: Built-in support for structured logging (slog) and OpenTelemetry
+- **📊 Prometheus Metrics**: Export metrics for all resilience patterns
 - **🌐 Framework Integration**: First-class support for HTTP and gRPC
 - **🧩 Composable**: Fluent API for combining multiple patterns
 - **🧪 Well Tested**: >95% test coverage with race detection
+- **🌪️ Chaos Engineering**: Built-in testing utilities for resilience validation
+- **📈 Performance Testing**: Automated regression detection and benchmarking
 - **📊 Production Ready**: Battle-tested patterns with comprehensive examples
 
 ## Installation
@@ -226,6 +229,37 @@ log.Printf("Active: %d, Queued: %d, Rejected: %d",
 - Isolating critical operations
 - Managing concurrent access
 
+### Fallback
+
+Provides graceful degradation with automatic fallback on errors.
+
+```go
+import "github.com/felixgeelhaar/fortify/fallback"
+
+fb := fallback.New[Response](fallback.Config{
+    Primary: func(ctx context.Context) (Response, error) {
+        return primaryService.Call(ctx)
+    },
+    Fallback: func(ctx context.Context, err error) (Response, error) {
+        log.Printf("Primary failed: %v, using fallback", err)
+        return fallbackService.Call(ctx)
+    },
+    ShouldFallback: func(err error) bool {
+        return isServiceError(err) // Only fallback on service errors
+    },
+    OnFallback: func(err error) {
+        metrics.IncFallbackCount()
+    },
+})
+
+result, err := fb.Execute(ctx)
+```
+
+**Use Cases:**
+- Graceful service degradation
+- Multi-tier service architectures
+- Cache fallback strategies
+
 ## Middleware Composition
 
 Combine multiple patterns into a single execution chain:
@@ -356,6 +390,38 @@ tracer.SetAttributes(span,
 )
 ```
 
+### Prometheus Metrics
+
+Export detailed metrics for all resilience patterns:
+
+```go
+import (
+    "github.com/felixgeelhaar/fortify/metrics"
+    "github.com/prometheus/client_golang/prometheus"
+)
+
+// Register Fortify metrics with Prometheus
+metrics.MustRegister(prometheus.DefaultRegisterer)
+
+// Use the default collector
+collector := metrics.DefaultCollector()
+
+// Record circuit breaker metrics
+collector.RecordCircuitBreakerRequest("api-client", "closed")
+collector.RecordCircuitBreakerSuccess("api-client")
+
+// Record retry metrics
+collector.RecordRetryAttempts("database-query", 2)
+collector.RecordRetrySuccess("database-query")
+```
+
+**Available Metrics:**
+- Circuit Breaker: state, requests, successes, failures, state changes
+- Retry: attempts, duration, successes, failures
+- Rate Limit: allowed/denied requests, wait times
+- Timeout: executions, exceeded, durations
+- Bulkhead: active/queued requests, rejections, durations
+
 ## Performance
 
 Fortify is designed for production use with minimal overhead:
@@ -431,6 +497,8 @@ Recommended order for combining patterns:
 
 ## Testing
 
+### Unit and Integration Tests
+
 Run tests with race detection:
 
 ```bash
@@ -444,6 +512,61 @@ go test -v -race ./circuitbreaker
 go test -v -race -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out
 ```
+
+### Chaos Engineering
+
+Test resilience with built-in chaos utilities:
+
+```go
+import fortifytesting "github.com/felixgeelhaar/fortify/testing"
+
+// Inject errors with configurable probability
+injector := fortifytesting.NewErrorInjector(0.3, errors.New("service unavailable"))
+
+// Add network latency
+latency := fortifytesting.NewLatencyInjector(10*time.Millisecond, 50*time.Millisecond)
+
+// Simulate timeouts
+timeout := fortifytesting.NewTimeoutSimulator(100*time.Millisecond, 0.5)
+
+// Create flakey service combining all
+service := fortifytesting.NewFlakeyService(0.3, 10*time.Millisecond, 30*time.Millisecond)
+```
+
+**Chaos Utilities:**
+- `ErrorInjector`: Simulate failures with probability
+- `LatencyInjector`: Add realistic network delays
+- `TimeoutSimulator`: Create timeout scenarios
+- `FlakeyService`: Combine errors, latency, and timeouts
+
+### Performance Regression Testing
+
+Automated benchmark tracking and regression detection:
+
+```bash
+# Run benchmarks with automation
+./scripts/benchmark.sh run
+
+# Generate performance baseline
+./scripts/benchmark.sh generate-baseline
+
+# Check for regressions
+./scripts/benchmark.sh check
+
+# Complete workflow
+./scripts/benchmark.sh all
+```
+
+**Features:**
+- Automatic regression detection (time, allocations, memory)
+- Configurable thresholds (10% time, 20% allocs, 15% memory)
+- Historical tracking with JSON storage
+- CI/CD integration with GitHub Actions
+- Detailed performance reports
+
+See [Performance Testing Guide](./docs/PERFORMANCE_TESTING.md) for details.
+
+### Benchmarks
 
 Run benchmarks:
 
