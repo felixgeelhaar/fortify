@@ -208,6 +208,7 @@ func TestRateLimiterKeyFunc(t *testing.T) {
 				if userID == nil {
 					return "anonymous"
 				}
+				//nolint:errcheck // type assertion safe here
 				return userID.(string)
 			},
 		})

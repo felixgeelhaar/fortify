@@ -82,6 +82,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		// Start first request (fills bulkhead)
 		go func() {
+			//nolint:errcheck // intentionally ignoring error in goroutine
 			bh.Execute(ctx, func(ctx context.Context) (int, error) {
 				started <- true
 				<-done

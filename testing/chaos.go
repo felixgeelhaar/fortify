@@ -48,6 +48,7 @@ func (e *ErrorInjector) ShouldFail() bool {
 	prob := e.probability
 	e.mu.RUnlock()
 
+	//nolint:gosec // G404: weak random acceptable for testing
 	if rand.Float64() < prob {
 		e.failures.Add(1)
 		return true
@@ -134,6 +135,7 @@ func (l *LatencyInjector) Delay(ctx context.Context) error {
 	// Calculate random delay
 	delay := minDelay
 	if maxDelay > minDelay {
+		//nolint:gosec // G404: weak random acceptable for testing
 		delay = minDelay + time.Duration(rand.Int63n(int64(maxDelay-minDelay)))
 	}
 
@@ -215,6 +217,7 @@ func (t *TimeoutSimulator) Context(parent context.Context) (context.Context, con
 	t.mu.RUnlock()
 
 	// Decide if we should simulate timeout
+	//nolint:gosec // G404: weak random acceptable for testing
 	if rand.Float64() < prob {
 		t.timeouts.Add(1)
 		return context.WithTimeout(parent, timeout)
