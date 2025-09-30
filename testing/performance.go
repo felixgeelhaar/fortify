@@ -10,35 +10,35 @@ import (
 
 // BenchmarkResult represents a single benchmark measurement.
 type BenchmarkResult struct {
-	Name           string    `json:"name"`
-	NsPerOp        float64   `json:"ns_per_op"`
-	AllocsPerOp    uint64    `json:"allocs_per_op"`
-	BytesPerOp     uint64    `json:"bytes_per_op"`
-	Timestamp      time.Time `json:"timestamp"`
-	GitCommit      string    `json:"git_commit,omitempty"`
-	GitBranch      string    `json:"git_branch,omitempty"`
-	GoVersion      string    `json:"go_version,omitempty"`
-	OS             string    `json:"os,omitempty"`
-	Arch           string    `json:"arch,omitempty"`
-	CPUModel       string    `json:"cpu_model,omitempty"`
-	MemoryTotal    uint64    `json:"memory_total,omitempty"`
-	IterationCount int       `json:"iteration_count"`
+	Name        string    `json:"name"`
+	GitCommit   string    `json:"git_commit,omitempty"`
+	GitBranch   string    `json:"git_branch,omitempty"`
+	GoVersion   string    `json:"go_version,omitempty"`
+	OS          string    `json:"os,omitempty"`
+	Arch        string    `json:"arch,omitempty"`
+	CPUModel    string    `json:"cpu_model,omitempty"`
+	Timestamp   time.Time `json:"timestamp"`
+	NsPerOp     float64   `json:"ns_per_op"`
+	AllocsPerOp uint64    `json:"allocs_per_op"`
+	BytesPerOp  uint64    `json:"bytes_per_op"`
+	MemoryTotal uint64    `json:"memory_total,omitempty"`
+	IterationCount int    `json:"iteration_count"`
 }
 
 // BenchmarkReport contains a collection of benchmark results.
 type BenchmarkReport struct {
 	Results   []BenchmarkResult `json:"results"`
-	Timestamp time.Time         `json:"timestamp"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
+	Timestamp time.Time         `json:"timestamp"`
 }
 
 // PerformanceBaseline stores baseline performance expectations.
 type PerformanceBaseline struct {
 	Name        string  `json:"name"`
+	Description string  `json:"description,omitempty"`
 	MaxNsPerOp  float64 `json:"max_ns_per_op"`
 	MaxAllocs   uint64  `json:"max_allocs"`
 	MaxBytes    uint64  `json:"max_bytes"`
-	Description string  `json:"description,omitempty"`
 }
 
 // RegressionThresholds defines acceptable performance degradation.
@@ -61,12 +61,12 @@ func DefaultRegressionThresholds() RegressionThresholds {
 // PerformanceRegression represents a detected performance regression.
 type PerformanceRegression struct {
 	BenchmarkName string  `json:"benchmark_name"`
-	Metric        string  `json:"metric"` // "time", "allocs", "bytes"
+	Metric        string  `json:"metric"`   // "time", "allocs", "bytes"
+	Severity      string  `json:"severity"` // "warning", "critical"
 	BaselineValue float64 `json:"baseline_value"`
 	CurrentValue  float64 `json:"current_value"`
 	Increase      float64 `json:"increase"` // Percentage increase
 	Threshold     float64 `json:"threshold"`
-	Severity      string  `json:"severity"` // "warning", "critical"
 }
 
 // RegressionReport contains all detected regressions.

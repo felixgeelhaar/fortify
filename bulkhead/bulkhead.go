@@ -39,10 +39,10 @@ type Bulkhead[T any] interface {
 
 // bulkhead is the concrete implementation of Bulkhead.
 type bulkhead[T any] struct {
-	config   Config
 	sem      chan struct{} // Semaphore for concurrency control
 	queue    chan *request[T]
 	queueSem chan struct{} // Semaphore for queue capacity
+	config   Config
 }
 
 // request represents a queued execution request.
