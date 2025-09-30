@@ -195,13 +195,16 @@ func TestRateLimiterTake(t *testing.T) {
 }
 
 func TestRateLimiterKeyFunc(t *testing.T) {
+	type contextKey string
+	const userIDKey contextKey = "user_id"
+
 	t.Run("uses custom key function", func(t *testing.T) {
 		limiter := New(Config{
 			Rate:     2,
 			Burst:    2,
 			Interval: time.Second,
 			KeyFunc: func(ctx context.Context) string {
-				userID := ctx.Value("user_id")
+				userID := ctx.Value(userIDKey)
 				if userID == nil {
 					return "anonymous"
 				}
@@ -210,8 +213,8 @@ func TestRateLimiterKeyFunc(t *testing.T) {
 		})
 
 		// Use context with user_id
-		ctx1 := context.WithValue(context.Background(), "user_id", "user1")
-		ctx2 := context.WithValue(context.Background(), "user_id", "user2")
+		ctx1 := context.WithValue(context.Background(), userIDKey, "user1")
+		ctx2 := context.WithValue(context.Background(), userIDKey, "user2")
 
 		// Exhaust user1's quota
 		limiter.Allow(ctx1, "")

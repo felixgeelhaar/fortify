@@ -23,7 +23,7 @@ func TestCircuitBreakerMiddleware(t *testing.T) {
 			_, _ = w.Write([]byte("success"))
 		}))
 
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -50,12 +50,12 @@ func TestCircuitBreakerMiddleware(t *testing.T) {
 		}))
 
 		// First request fails, opens circuit
-		req1 := httptest.NewRequest("GET", "/test", nil)
+		req1 := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec1 := httptest.NewRecorder()
 		handler.ServeHTTP(rec1, req1)
 
 		// Second request should be rejected (circuit open)
-		req2 := httptest.NewRequest("GET", "/test", nil)
+		req2 := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec2 := httptest.NewRecorder()
 		handler.ServeHTTP(rec2, req2)
 
@@ -78,7 +78,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -102,12 +102,12 @@ func TestRateLimitMiddleware(t *testing.T) {
 		}))
 
 		// First request succeeds
-		req1 := httptest.NewRequest("GET", "/test", nil)
+		req1 := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec1 := httptest.NewRecorder()
 		handler.ServeHTTP(rec1, req1)
 
 		// Second request should be rate limited
-		req2 := httptest.NewRequest("GET", "/test", nil)
+		req2 := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec2 := httptest.NewRecorder()
 		handler.ServeHTTP(rec2, req2)
 
@@ -127,7 +127,7 @@ func TestTimeoutMiddleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -155,7 +155,7 @@ func TestTimeoutMiddleware(t *testing.T) {
 			}
 		}))
 
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -190,7 +190,7 @@ func TestMiddlewareChaining(t *testing.T) {
 			_, _ = w.Write([]byte("success"))
 		})))
 
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
@@ -206,7 +206,7 @@ func TestMiddlewareChaining(t *testing.T) {
 
 func TestKeyExtractors(t *testing.T) {
 	t.Run("extracts key from IP address", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest("GET", "/test", http.NoBody)
 		req.RemoteAddr = "192.168.1.1:12345"
 
 		key := KeyFromIP(req)
@@ -216,7 +216,7 @@ func TestKeyExtractors(t *testing.T) {
 	})
 
 	t.Run("extracts key from header", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/test", nil)
+		req := httptest.NewRequest("GET", "/test", http.NoBody)
 		req.Header.Set("X-User-ID", "user-123")
 
 		extractor := KeyFromHeader("X-User-ID")

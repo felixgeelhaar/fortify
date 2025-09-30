@@ -43,9 +43,9 @@ type PerformanceBaseline struct {
 
 // RegressionThresholds defines acceptable performance degradation.
 type RegressionThresholds struct {
-	TimeIncrease      float64 `json:"time_increase"`       // e.g., 1.1 = 10% slower is acceptable
-	AllocIncrease     float64 `json:"alloc_increase"`      // e.g., 1.2 = 20% more allocations
-	BytesIncrease     float64 `json:"bytes_increase"`      // e.g., 1.15 = 15% more bytes
+	TimeIncrease       float64 `json:"time_increase"`                    // e.g., 1.1 = 10% slower is acceptable
+	AllocIncrease      float64 `json:"alloc_increase"`                   // e.g., 1.2 = 20% more allocations
+	BytesIncrease      float64 `json:"bytes_increase"`                   // e.g., 1.15 = 15% more bytes
 	AbsoluteMaxNsPerOp float64 `json:"absolute_max_ns_per_op,omitempty"` // Hard limit
 }
 
