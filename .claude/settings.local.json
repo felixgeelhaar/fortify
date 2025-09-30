@@ -19,7 +19,8 @@
       "Bash(find:*)",
       "Bash(git restore:*)",
       "WebFetch(domain:github.com)",
-      "Bash(go tool cover:*)"
+      "Bash(go tool cover:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []

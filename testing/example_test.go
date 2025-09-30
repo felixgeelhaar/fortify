@@ -273,3 +273,63 @@ func Example_intermittentFailures() {
 	fmt.Printf("Circuit state: %s\n", cb.State())
 	// Output will vary but circuit should stay closed
 }
+
+// Example_performanceTracking demonstrates tracking benchmark performance.
+func Example_performanceTracking() {
+	tracker := fortifyTesting.NewPerformanceTracker(".benchmark-results")
+
+	// Add performance baselines
+	tracker.AddBaseline(fortifyTesting.PerformanceBaseline{
+		Name:        "BenchmarkCircuitBreaker",
+		MaxNsPerOp:  1000,
+		MaxAllocs:   5,
+		MaxBytes:    512,
+		Description: "Circuit breaker baseline",
+	})
+
+	// Simulate benchmark results
+	results := []fortifyTesting.BenchmarkResult{
+		{
+			Name:        "BenchmarkCircuitBreaker",
+			NsPerOp:     950,
+			AllocsPerOp: 4,
+			BytesPerOp:  480,
+			Timestamp:   time.Now(),
+		},
+	}
+
+	// Check for regressions
+	report := tracker.CheckRegressions(results)
+
+	fmt.Printf("Total checks: %d\n", report.TotalChecks)
+	fmt.Printf("Passed: %d\n", report.Passed)
+	fmt.Printf("Failed: %d\n", report.Failed)
+	// Output:
+	// Total checks: 1
+	// Passed: 1
+	// Failed: 0
+}
+
+// Example_performanceBaseline demonstrates generating performance baselines.
+func Example_performanceBaseline() {
+	tracker := fortifyTesting.NewPerformanceTracker(".benchmark-results")
+
+	// Simulate benchmark results
+	results := []fortifyTesting.BenchmarkResult{
+		{
+			Name:        "BenchmarkRetry",
+			NsPerOp:     2000,
+			AllocsPerOp: 10,
+			BytesPerOp:  1024,
+			Timestamp:   time.Now(),
+		},
+	}
+
+	// Generate baseline with 10% safety factor
+	tracker.GenerateBaselineFromResults(results, 1.1)
+
+	// Check how many baselines were created
+	report := tracker.CheckRegressions(results)
+	fmt.Printf("Baselines generated, checks performed: %d\n", report.TotalChecks)
+	// Output: Baselines generated, checks performed: 1
+}
