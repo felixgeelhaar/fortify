@@ -141,6 +141,7 @@ func Example_stateManagement() {
 
 	// Cause failures to open the circuit
 	for i := 0; i < 2; i++ {
+		//nolint:errcheck // intentionally ignoring error in example
 		_, _ = cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})

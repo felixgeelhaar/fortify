@@ -97,8 +97,10 @@ func Example_flakeyService() {
 	}
 
 	stats := service.Stats()
-	hasErrors := stats["error_rate"].(float64) > 0.0
-	hasLatency := stats["avg_latency"].(time.Duration) > 0
+	errorRate, _ := stats["error_rate"].(float64)
+	avgLatency, _ := stats["avg_latency"].(time.Duration)
+	hasErrors := errorRate > 0.0
+	hasLatency := avgLatency > 0
 	fmt.Printf("Error rate present: %v\n", hasErrors)
 	fmt.Printf("Average latency present: %v\n", hasLatency)
 	// Output will vary due to randomness
@@ -221,6 +223,7 @@ func Example_testingWithMetrics() {
 
 	// Simulate load
 	for i := 0; i < 50; i++ {
+		//nolint:errcheck // intentionally ignoring error in example
 		_ = service.Call(context.Background(), func() error {
 			return nil
 		})
@@ -228,8 +231,8 @@ func Example_testingWithMetrics() {
 
 	// Get statistics
 	stats := service.Stats()
-	errorCalls := stats["error_calls"].(int64)
-	errorRate := stats["error_rate"].(float64)
+	errorCalls, _ := stats["error_calls"].(int64)
+	errorRate, _ := stats["error_rate"].(float64)
 	avgLatency := stats["avg_latency"].(time.Duration)
 
 	fmt.Printf("Total calls: %d\n", errorCalls)
