@@ -193,6 +193,7 @@ func TestRetryBackoff(t *testing.T) {
 		attempts := 0
 		start := time.Now()
 
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")
@@ -218,6 +219,7 @@ func TestRetryBackoff(t *testing.T) {
 		attempts := 0
 		start := time.Now()
 
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")
@@ -241,6 +243,7 @@ func TestRetryBackoff(t *testing.T) {
 		attempts := 0
 		start := time.Now()
 
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")

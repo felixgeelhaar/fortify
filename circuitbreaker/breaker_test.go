@@ -58,6 +58,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		})
 
 		// Trigger failure to open circuit
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -89,6 +90,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		})
 
 		// Open the circuit
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -337,11 +339,13 @@ func TestCircuitBreakerCounts(t *testing.T) {
 	})
 
 	for i := 0; i < 3; i++ {
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = testCB.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 42, nil
 		})
 	}
 	for i := 0; i < 2; i++ {
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = testCB.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
