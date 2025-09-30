@@ -225,7 +225,7 @@ func Example_resourceIsolation() {
 	})
 
 	// Database operation
-	dbResult, err := dbBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
+	dbResult, _ := dbBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		// Simulate DB query
 		return "db result", nil
 	})

@@ -95,7 +95,7 @@ func TestFallback_ShouldFallback(t *testing.T) {
 
 	// Test retryable error - should trigger fallback
 	fallbackCalled = false
-	result, err := fb.Execute(context.Background(), func(ctx context.Context) (string, error) {
+	result1, err := fb.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "", retryableErr
 	})
 	if err != nil {
@@ -104,13 +104,13 @@ func TestFallback_ShouldFallback(t *testing.T) {
 	if !fallbackCalled {
 		t.Error("Expected fallback to be called for retryable error")
 	}
-	if result != "fallback" {
-		t.Errorf("Expected 'fallback', got %q", result)
+	if result1 != "fallback" {
+		t.Errorf("Expected 'fallback', got %q", result1)
 	}
 
 	// Test non-retryable error - should not trigger fallback
 	fallbackCalled = false
-	result, err = fb.Execute(context.Background(), func(ctx context.Context) (string, error) {
+	_, err = fb.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "", nonRetryableErr
 	})
 	if err != nonRetryableErr {
@@ -283,7 +283,7 @@ func TestFallback_Logging(t *testing.T) {
 	}
 }
 
-// testLogWriter is a simple writer for capturing log output in tests
+// testLogWriter is a simple writer for capturing log output in tests.
 type testLogWriter struct {
 	lines *[]string
 }
