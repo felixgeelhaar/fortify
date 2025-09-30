@@ -144,7 +144,7 @@ func (pt *PerformanceTracker) SaveBaselines(path string) error {
 
 // SaveReport saves a benchmark report to the results directory.
 func (pt *PerformanceTracker) SaveReport(report BenchmarkReport) error {
-	if err := os.MkdirAll(pt.resultsDir, 0755); err != nil {
+	if err := os.MkdirAll(pt.resultsDir, 0o700); err != nil {
 		return fmt.Errorf("failed to create results directory: %w", err)
 	}
 
@@ -156,7 +156,7 @@ func (pt *PerformanceTracker) SaveReport(report BenchmarkReport) error {
 		return fmt.Errorf("failed to marshal report: %w", err)
 	}
 
-	if err := os.WriteFile(filename, data, 0644); err != nil {
+	if err := os.WriteFile(filename, data, 0o600); err != nil {
 		return fmt.Errorf("failed to write report: %w", err)
 	}
 
