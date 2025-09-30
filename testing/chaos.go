@@ -15,11 +15,11 @@ import (
 
 // ErrorInjector simulates failures by returning errors based on configured probability.
 type ErrorInjector struct {
-	err      error        // Error to return
-	mu       sync.RWMutex // Protects configuration
-	calls    atomic.Int64 // Total calls
-	failures atomic.Int64 // Total failures
-	probability float64   // Probability of error (0.0 to 1.0)
+	err         error        // Error to return
+	mu          sync.RWMutex // Protects configuration
+	calls       atomic.Int64 // Total calls
+	failures    atomic.Int64 // Total failures
+	probability float64      // Probability of error (0.0 to 1.0)
 }
 
 // NewErrorInjector creates an error injector with the given probability.
