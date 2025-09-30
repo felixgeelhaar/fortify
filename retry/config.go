@@ -6,6 +6,7 @@ import (
 )
 
 // Config holds the configuration for a Retry instance.
+//
 //nolint:govet // fieldalignment: public API struct, preserving logical grouping
 type Config struct {
 	// RetryableErrors is a list of errors that should trigger a retry.

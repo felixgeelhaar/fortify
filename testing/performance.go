@@ -9,6 +9,7 @@ import (
 )
 
 // BenchmarkResult represents a single benchmark measurement.
+//
 //nolint:govet // fieldalignment: data struct with many fields, readability prioritized
 type BenchmarkResult struct {
 	Name           string    `json:"name"`
@@ -27,6 +28,8 @@ type BenchmarkResult struct {
 }
 
 // BenchmarkReport contains a collection of benchmark results.
+//
+//nolint:govet // fieldalignment: data struct, readability prioritized
 type BenchmarkReport struct {
 	Results   []BenchmarkResult `json:"results"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
@@ -71,6 +74,8 @@ type PerformanceRegression struct {
 }
 
 // RegressionReport contains all detected regressions.
+//
+//nolint:govet // fieldalignment: data struct, readability prioritized
 type RegressionReport struct {
 	Regressions []PerformanceRegression `json:"regressions"`
 	Timestamp   time.Time               `json:"timestamp"`
@@ -80,6 +85,8 @@ type RegressionReport struct {
 }
 
 // PerformanceTracker tracks and analyzes benchmark results over time.
+//
+//nolint:govet // fieldalignment: data struct, readability prioritized
 type PerformanceTracker struct {
 	resultsDir string
 	baselines  map[string]PerformanceBaseline

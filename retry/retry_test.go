@@ -9,6 +9,7 @@ import (
 	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
 )
 
+//nolint:gocyclo // test function with many subtests
 func TestRetryDo(t *testing.T) {
 	t.Run("succeeds on first attempt", func(t *testing.T) {
 		r := New[int](&Config{
