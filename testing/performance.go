@@ -143,7 +143,8 @@ func (pt *PerformanceTracker) SaveBaselines(path string) error {
 		return fmt.Errorf("failed to marshal baselines: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	//nolint:gosec // G306: baseline file permissions intentionally set to 0o644 for readability
+	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("failed to write baselines: %w", err)
 	}
 

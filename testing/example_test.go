@@ -97,7 +97,9 @@ func Example_flakeyService() {
 	}
 
 	stats := service.Stats()
+	//nolint:errcheck // type assertion in example, error handled by test
 	errorRate, _ := stats["error_rate"].(float64)
+	//nolint:errcheck // type assertion in example, error handled by test
 	avgLatency, _ := stats["avg_latency"].(time.Duration)
 	hasErrors := errorRate > 0.0
 	hasLatency := avgLatency > 0
@@ -231,8 +233,11 @@ func Example_testingWithMetrics() {
 
 	// Get statistics
 	stats := service.Stats()
+	//nolint:errcheck // type assertion in example, error handled by test
 	errorCalls, _ := stats["error_calls"].(int64)
+	//nolint:errcheck // type assertion in example, error handled by test
 	errorRate, _ := stats["error_rate"].(float64)
+	//nolint:errcheck // type assertion in example, error handled by test
 	avgLatency := stats["avg_latency"].(time.Duration)
 
 	fmt.Printf("Total calls: %d\n", errorCalls)

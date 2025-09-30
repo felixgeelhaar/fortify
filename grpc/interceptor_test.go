@@ -72,6 +72,7 @@ func TestUnaryCircuitBreakerInterceptor(t *testing.T) {
 
 		// First request fails, opens circuit
 		handler1 := mockUnaryHandler(nil, errors.New("service error"))
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = interceptor(context.Background(), "request", &grpc.UnaryServerInfo{}, handler1)
 
 		// Second request should be rejected
@@ -231,6 +232,7 @@ func TestStreamCircuitBreakerInterceptor(t *testing.T) {
 		// First request fails, opens circuit
 		handler1 := mockStreamHandler(errors.New("service error"))
 		stream1 := &mockServerStream{ctx: context.Background()}
+		//nolint:errcheck // intentionally ignoring error in test
 		_ = interceptor(nil, stream1, &grpc.StreamServerInfo{}, handler1)
 
 		// Second request should be rejected

@@ -264,6 +264,7 @@ func TestFallback_Logging(t *testing.T) {
 
 	// Test primary success
 	logBuffer = nil
+	//nolint:errcheck // intentionally ignoring error in test
 	_, _ = fb.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "success", nil
 	})
@@ -274,6 +275,7 @@ func TestFallback_Logging(t *testing.T) {
 
 	// Test fallback triggered
 	logBuffer = nil
+	//nolint:errcheck // intentionally ignoring error in test
 	_, _ = fb.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "", errors.New("failed")
 	})
@@ -304,6 +306,7 @@ func BenchmarkFallback_PrimarySuccess(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		//nolint:errcheck // intentionally ignoring error in benchmark
 		_, _ = fb.Execute(ctx, func(ctx context.Context) (int, error) {
 			return i, nil
 		})
@@ -322,6 +325,7 @@ func BenchmarkFallback_FallbackTriggered(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		//nolint:errcheck // intentionally ignoring error in benchmark
 		_, _ = fb.Execute(ctx, func(ctx context.Context) (int, error) {
 			return 0, err
 		})
@@ -349,10 +353,12 @@ func BenchmarkFallback_WithCallbacks(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		if i%2 == 0 {
+			//nolint:errcheck // intentionally ignoring error in benchmark
 			_, _ = fb.Execute(ctx, func(ctx context.Context) (int, error) {
 				return i, nil
 			})
 		} else {
+			//nolint:errcheck // intentionally ignoring error in benchmark
 			_, _ = fb.Execute(ctx, func(ctx context.Context) (int, error) {
 				return 0, err
 			})

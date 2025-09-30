@@ -278,6 +278,7 @@ func TestFlakeyService_Stats(t *testing.T) {
 	}
 
 	// Error rate should be close to 0.5
+	//nolint:errcheck // type assertion in test, error handled by test
 	errorRate := stats["error_rate"].(float64)
 	if errorRate < 0.3 || errorRate > 0.7 {
 		t.Logf("Warning: error rate %f is outside expected range 0.3-0.7", errorRate)
@@ -298,6 +299,7 @@ func TestFlakeyService_Reset(t *testing.T) {
 	service.Reset()
 
 	stats := service.Stats()
+	//nolint:errcheck // type assertion in test, error handled by test
 	if stats["error_calls"].(int64) != 0 {
 		t.Error("Expected error_calls to be 0 after reset")
 	}
