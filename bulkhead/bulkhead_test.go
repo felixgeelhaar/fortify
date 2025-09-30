@@ -44,7 +44,8 @@ func TestBulkheadExecute(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				bh.Execute(ctx, func(ctx context.Context) (int, error) {
+				//nolint:errcheck // intentionally ignoring error in test
+				_, _ = bh.Execute(ctx, func(ctx context.Context) (int, error) {
 					current := executing.Add(1)
 					defer executing.Add(-1)
 
@@ -81,6 +82,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		// Start first request (fills bulkhead)
 		go func() {
+			//nolint:errcheck // intentionally ignoring error in goroutine
 			bh.Execute(ctx, func(ctx context.Context) (int, error) {
 				started <- true
 				<-done
@@ -115,6 +117,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		// First request (fills bulkhead)
 		go func() {
+			//nolint:errcheck // intentionally ignoring error in test goroutine
 			result, _ := bh.Execute(ctx, func(ctx context.Context) (int, error) {
 				started <- true
 				time.Sleep(50 * time.Millisecond)
@@ -129,6 +132,7 @@ func TestBulkheadExecute(t *testing.T) {
 		for i := 2; i <= 3; i++ {
 			val := i
 			go func() {
+				//nolint:errcheck // intentionally ignoring error in test goroutine
 				result, _ := bh.Execute(ctx, func(ctx context.Context) (int, error) {
 					return val, nil
 				})
@@ -160,6 +164,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		// Fill bulkhead
 		go func() {
+			//nolint:errcheck // intentionally ignoring error in test goroutine
 			bh.Execute(ctx, func(ctx context.Context) (int, error) {
 				started <- true
 				<-release
@@ -171,6 +176,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		// Fill queue
 		go func() {
+			//nolint:errcheck // intentionally ignoring error in test goroutine
 			bh.Execute(ctx, func(ctx context.Context) (int, error) {
 				return 2, nil
 			})
@@ -202,6 +208,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		// Fill bulkhead
 		go func() {
+			//nolint:errcheck // intentionally ignoring error in test goroutine
 			bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 				started <- true
 				<-release
@@ -238,6 +245,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		// Fill bulkhead with long-running operation
 		go func() {
+			//nolint:errcheck // intentionally ignoring error in test goroutine
 			bh.Execute(ctx, func(ctx context.Context) (int, error) {
 				started <- true
 				time.Sleep(200 * time.Millisecond)
@@ -276,6 +284,7 @@ func TestBulkheadCallback(t *testing.T) {
 
 		// Fill bulkhead
 		go func() {
+			//nolint:errcheck // intentionally ignoring error in test goroutine
 			bh.Execute(ctx, func(ctx context.Context) (int, error) {
 				started <- true
 				<-done
@@ -286,6 +295,7 @@ func TestBulkheadCallback(t *testing.T) {
 		<-started
 
 		// This should be rejected
+		//nolint:errcheck // intentionally ignoring error in test
 		bh.Execute(ctx, func(ctx context.Context) (int, error) {
 			return 2, nil
 		})

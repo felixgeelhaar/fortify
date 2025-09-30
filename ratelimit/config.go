@@ -8,10 +8,6 @@ import (
 
 // Config holds the configuration for a RateLimiter.
 type Config struct {
-	// Interval is the time period over which Rate tokens are added.
-	// If Interval is 0, defaults to 1 second.
-	Interval time.Duration
-
 	// KeyFunc extracts the rate limiting key from the context.
 	// If nil, the key parameter passed to Allow/Wait/Take is used.
 	// This is useful for extracting keys from request context (user ID, IP, tenant, etc.)
@@ -23,6 +19,10 @@ type Config struct {
 
 	// Logger is used for structured logging. If nil, no logging is performed.
 	Logger *slog.Logger
+
+	// Interval is the time period over which Rate tokens are added.
+	// If Interval is 0, defaults to 1 second.
+	Interval time.Duration
 
 	// Rate is the number of tokens added to the bucket per Interval.
 	// If Rate is 0, defaults to 100.

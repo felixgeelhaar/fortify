@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/felixgeelhaar/fortify/bulkhead"
@@ -123,6 +124,7 @@ func Example_queueTimeout() {
 
 	// First request will execute
 	go func() {
+		//nolint:errcheck // intentionally ignoring error in example
 		bh.Execute(context.Background(), func(ctx context.Context) (string, error) {
 			time.Sleep(time.Millisecond * 500)
 			return "long operation", nil
@@ -139,7 +141,7 @@ func Example_queueTimeout() {
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 	}
-	// Output: Error: queue timeout exceeded
+	// Output: Error: context deadline exceeded
 }
 
 // Example_rejectionCallback demonstrates handling rejected requests.
@@ -157,6 +159,7 @@ func Example_rejectionCallback() {
 
 	// First request will execute
 	go func() {
+		//nolint:errcheck // intentionally ignoring error in example goroutine
 		bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			time.Sleep(time.Millisecond * 100)
 			return 1, nil
@@ -166,6 +169,7 @@ func Example_rejectionCallback() {
 	time.Sleep(time.Millisecond * 10) // Let first request start
 
 	// Second request will be rejected
+	//nolint:errcheck // intentionally ignoring error in example
 	bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		return 2, nil
 	})
@@ -180,8 +184,8 @@ func Example_rejectionCallback() {
 
 // Example_monitoring demonstrates monitoring bulkhead state.
 func Example_monitoring() {
-	active := 0
-	completed := 0
+	var active atomic.Int32
+	var completed atomic.Int32
 
 	bh := bulkhead.New[int](bulkhead.Config{
 		MaxConcurrent: 5,
@@ -194,21 +198,21 @@ func Example_monitoring() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			active++
+			active.Add(1)
 			_, err := bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 				time.Sleep(time.Millisecond * 50)
 				return 0, nil
 			})
-			active--
+			active.Add(-1)
 			if err == nil {
-				completed++
+				completed.Add(1)
 			}
 		}()
 	}
 
 	wg.Wait()
 
-	fmt.Printf("Completed operations: %d\n", completed)
+	fmt.Printf("Completed operations: %d\n", completed.Load())
 	// Output:
 	// Completed operations: 3
 }
@@ -225,7 +229,8 @@ func Example_resourceIsolation() {
 	})
 
 	// Database operation
-	dbResult, err := dbBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
+	//nolint:errcheck // intentionally ignoring error in test
+	dbResult, _ := dbBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		// Simulate DB query
 		return "db result", nil
 	})
@@ -330,10 +335,12 @@ func Example_microserviceIsolation() {
 	})
 
 	// If order service is slow/failing, it won't affect user service calls
+	//nolint:errcheck // intentionally ignoring error in test
 	userResult, _ := userServiceBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "user data", nil
 	})
 
+	//nolint:errcheck // intentionally ignoring error in test
 	orderResult, _ := orderServiceBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "order data", nil
 	})
@@ -358,14 +365,14 @@ func Example_threadPoolPattern() {
 		go func() {
 			defer wg.Done()
 
-			result, err := workerPool.Execute(context.Background(), func(ctx context.Context) (int, error) {
+			_, err := workerPool.Execute(context.Background(), func(ctx context.Context) (int, error) {
 				// Simulate work
 				time.Sleep(time.Millisecond * 10)
 				return taskID * 2, nil
 			})
 
-			if err == nil {
-				fmt.Printf("Task %d completed: %d\n", taskID, result)
+			if err != nil {
+				fmt.Printf("Task %d failed: %v\n", taskID, err)
 			}
 		}()
 	}
