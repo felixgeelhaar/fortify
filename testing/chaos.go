@@ -108,18 +108,18 @@ type LatencyInjector struct {
 	totalDelay atomic.Int64 // in nanoseconds
 }
 
-// NewLatencyInjector creates a latency injector with random delays between min and max.
-func NewLatencyInjector(min, max time.Duration) *LatencyInjector {
-	if min < 0 {
-		min = 0
+// NewLatencyInjector creates a latency injector with random delays between minLatency and maxLatency.
+func NewLatencyInjector(minLatency, maxLatency time.Duration) *LatencyInjector {
+	if minLatency < 0 {
+		minLatency = 0
 	}
-	if max < min {
-		max = min
+	if maxLatency < minLatency {
+		maxLatency = minLatency
 	}
 
 	return &LatencyInjector{
-		min: min,
-		max: max,
+		min: minLatency,
+		max: maxLatency,
 	}
 }
 
@@ -128,13 +128,13 @@ func (l *LatencyInjector) Delay(ctx context.Context) error {
 	l.calls.Add(1)
 
 	l.mu.RLock()
-	min, max := l.min, l.max
+	minDelay, maxDelay := l.min, l.max
 	l.mu.RUnlock()
 
 	// Calculate random delay
-	delay := min
-	if max > min {
-		delay = min + time.Duration(rand.Int63n(int64(max-min)))
+	delay := minDelay
+	if maxDelay > minDelay {
+		delay = minDelay + time.Duration(rand.Int63n(int64(maxDelay-minDelay)))
 	}
 
 	l.totalDelay.Add(int64(delay))
@@ -149,16 +149,16 @@ func (l *LatencyInjector) Delay(ctx context.Context) error {
 }
 
 // SetLatency updates the latency range.
-func (l *LatencyInjector) SetLatency(min, max time.Duration) {
-	if min < 0 {
-		min = 0
+func (l *LatencyInjector) SetLatency(minLatency, maxLatency time.Duration) {
+	if minLatency < 0 {
+		minLatency = 0
 	}
-	if max < min {
-		max = min
+	if maxLatency < minLatency {
+		maxLatency = minLatency
 	}
 	l.mu.Lock()
-	l.min = min
-	l.max = max
+	l.min = minLatency
+	l.max = maxLatency
 	l.mu.Unlock()
 }
 

@@ -56,13 +56,16 @@ func TestLoggerWithPattern(t *testing.T) {
 }
 
 func TestLoggerWithContext(t *testing.T) {
+	type contextKey string
+	const requestIDKey contextKey = "request_id"
+
 	t.Run("adds context values to log", func(t *testing.T) {
 		var buf bytes.Buffer
 		logger := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		}))
 
-		ctx := context.WithValue(context.Background(), "request_id", "req-123")
+		ctx := context.WithValue(context.Background(), requestIDKey, "req-123")
 		LogWithContext(ctx, logger, slog.LevelInfo, "test message",
 			slog.String("key", "value"),
 		)
