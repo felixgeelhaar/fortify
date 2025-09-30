@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/felixgeelhaar/fortify/bulkhead"
@@ -183,8 +184,8 @@ func Example_rejectionCallback() {
 
 // Example_monitoring demonstrates monitoring bulkhead state.
 func Example_monitoring() {
-	active := 0
-	completed := 0
+	var active atomic.Int32
+	var completed atomic.Int32
 
 	bh := bulkhead.New[int](bulkhead.Config{
 		MaxConcurrent: 5,
@@ -197,21 +198,21 @@ func Example_monitoring() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			active++
+			active.Add(1)
 			_, err := bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 				time.Sleep(time.Millisecond * 50)
 				return 0, nil
 			})
-			active--
+			active.Add(-1)
 			if err == nil {
-				completed++
+				completed.Add(1)
 			}
 		}()
 	}
 
 	wg.Wait()
 
-	fmt.Printf("Completed operations: %d\n", completed)
+	fmt.Printf("Completed operations: %d\n", completed.Load())
 	// Output:
 	// Completed operations: 3
 }
