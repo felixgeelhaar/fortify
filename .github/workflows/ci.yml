@@ -34,8 +34,13 @@ jobs:
     - name: Verify dependencies
       run: go mod verify
 
+    - name: List test packages
+      id: packages
+      shell: bash
+      run: echo "packages=$(go list ./... | grep -v examples | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
     - name: Run tests
-      run: go test -v -race -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v examples)
+      run: go test -v -race -coverprofile=coverage.out -covermode=atomic ${{ steps.packages.outputs.packages }}
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.go == '1.23'
@@ -63,7 +68,7 @@ jobs:
       uses: golangci/golangci-lint-action@v6
       with:
         version: latest
-        args: --timeout=5m --skip-dirs examples
+        args: --timeout=5m ./...
 
   build:
     name: Build
@@ -79,8 +84,13 @@ jobs:
         go-version: '1.23'
         cache: true
 
+    - name: List build packages
+      id: packages
+      shell: bash
+      run: echo "packages=$(go list ./... | grep -v examples | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
     - name: Build
-      run: go build -v $(go list ./... | grep -v examples)
+      run: go build -v ${{ steps.packages.outputs.packages }}
 
   benchmark:
     name: Benchmark
@@ -96,8 +106,13 @@ jobs:
         go-version: '1.23'
         cache: true
 
+    - name: List benchmark packages
+      id: packages
+      shell: bash
+      run: echo "packages=$(go list ./... | grep -v examples | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
     - name: Run benchmarks
-      run: go test -bench=. -benchmem -run=^$ $(go list ./... | grep -v examples) | tee benchmark.txt
+      run: go test -bench=. -benchmem -run=^$ ${{ steps.packages.outputs.packages }} | tee benchmark.txt
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
