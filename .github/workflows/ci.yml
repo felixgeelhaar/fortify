@@ -64,16 +64,16 @@ jobs:
         go-version: '1.23'
         cache: true
 
-    - name: List lint packages
-      id: packages
+    - name: List lint directories
+      id: dirs
       shell: bash
-      run: echo "packages=$(go list ./... | grep -v examples | tr '\n' ' ')" >> $GITHUB_OUTPUT
+      run: echo "dirs=$(find . -name "*.go" -type f | grep -v examples | xargs dirname | sort -u | tr '\n' ' ')" >> $GITHUB_OUTPUT
 
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
         version: latest
-        args: --timeout=5m ${{ steps.packages.outputs.packages }}
+        args: --timeout=5m ${{ steps.dirs.outputs.dirs }}
 
   build:
     name: Build
