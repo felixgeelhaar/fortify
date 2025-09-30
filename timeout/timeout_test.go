@@ -98,6 +98,7 @@ func TestTimeoutExecute(t *testing.T) {
 		var receivedDeadline time.Time
 		hasDeadline := false
 
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = tm.Execute(context.Background(), 100*time.Millisecond, func(ctx context.Context) (int, error) {
 			receivedDeadline, hasDeadline = ctx.Deadline()
 			return 42, nil
@@ -123,6 +124,7 @@ func TestTimeoutCallback(t *testing.T) {
 			},
 		})
 
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = tm.Execute(context.Background(), 50*time.Millisecond, func(ctx context.Context) (int, error) {
 			time.Sleep(100 * time.Millisecond)
 			return 42, nil
@@ -146,6 +148,7 @@ func TestTimeoutCallback(t *testing.T) {
 			},
 		})
 
+		//nolint:errcheck // intentionally ignoring error in test
 		_, _ = tm.Execute(context.Background(), 100*time.Millisecond, func(ctx context.Context) (int, error) {
 			return 42, nil
 		})

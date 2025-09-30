@@ -121,6 +121,7 @@ func Example_retryWithCircuitBreaker() {
 		WithRetry(r)
 
 	attempt := 0
+	//nolint:errcheck // intentionally ignoring error in test
 	_, _ = chain.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		return "", errors.New("service failure")

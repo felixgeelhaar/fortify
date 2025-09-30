@@ -127,6 +127,7 @@ func TestLatencyInjector_Stats(t *testing.T) {
 	injector := NewLatencyInjector(10*time.Millisecond, 20*time.Millisecond)
 
 	for i := 0; i < 5; i++ {
+		//nolint:errcheck // intentionally ignoring error in test
 		_ = injector.Delay(context.Background())
 	}
 
@@ -147,6 +148,7 @@ func TestLatencyInjector_SetLatency(t *testing.T) {
 	injector.SetLatency(1*time.Millisecond, 2*time.Millisecond)
 
 	start := time.Now()
+		//nolint:errcheck // intentionally ignoring error in test
 	_ = injector.Delay(context.Background())
 	elapsed := time.Since(start)
 
@@ -253,6 +255,7 @@ func TestFlakeyService_Stats(t *testing.T) {
 
 	// Make several calls
 	for i := 0; i < 20; i++ {
+		//nolint:errcheck // intentionally ignoring error in test
 		_ = service.Call(context.Background(), func() error {
 			return nil
 		})
@@ -285,6 +288,7 @@ func TestFlakeyService_Reset(t *testing.T) {
 
 	// Make some calls
 	for i := 0; i < 5; i++ {
+		//nolint:errcheck // intentionally ignoring error in test
 		_ = service.Call(context.Background(), func() error {
 			return nil
 		})
@@ -313,6 +317,7 @@ func BenchmarkLatencyInjector_Delay(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		//nolint:errcheck // intentionally ignoring error in test
 		_ = injector.Delay(ctx)
 	}
 }
@@ -323,6 +328,7 @@ func BenchmarkFlakeyService_Call(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		//nolint:errcheck // intentionally ignoring error in test
 		_ = service.Call(ctx, func() error {
 			return nil
 		})
