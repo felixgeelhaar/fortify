@@ -157,7 +157,7 @@ func Example_testingRetryPolicy() {
 	attemptCount := 0
 	failureThreshold := 2
 
-	r := retry.New[string](retry.Config{
+	r := retry.New[string](&retry.Config{
 		MaxAttempts:  5,
 		InitialDelay: 10 * time.Millisecond,
 		MaxDelay:     100 * time.Millisecond,

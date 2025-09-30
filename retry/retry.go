@@ -6,7 +6,7 @@
 //
 // Example usage:
 //
-//	r := retry.New[*User](retry.Config{
+//	r := retry.New[*User](&retry.Config{
 //	    MaxAttempts:   3,
 //	    InitialDelay:  100 * time.Millisecond,
 //	    Multiplier:    2.0,
@@ -43,10 +43,13 @@ type retry[T any] struct {
 }
 
 // New creates a new Retry instance with the given configuration.
-func New[T any](config Config) Retry[T] {
+func New[T any](config *Config) Retry[T] {
+	if config == nil {
+		config = &Config{}
+	}
 	config.setDefaults()
 	return &retry[T]{
-		config: config,
+		config: *config,
 	}
 }
 
