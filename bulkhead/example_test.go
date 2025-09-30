@@ -225,6 +225,7 @@ func Example_resourceIsolation() {
 	})
 
 	// Database operation
+	//nolint:errcheck // intentionally ignoring error in test
 	dbResult, _ := dbBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		// Simulate DB query
 		return "db result", nil
@@ -330,10 +331,12 @@ func Example_microserviceIsolation() {
 	})
 
 	// If order service is slow/failing, it won't affect user service calls
+	//nolint:errcheck // intentionally ignoring error in test
 	userResult, _ := userServiceBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "user data", nil
 	})
 
+	//nolint:errcheck // intentionally ignoring error in test
 	orderResult, _ := orderServiceBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "order data", nil
 	})

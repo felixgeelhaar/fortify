@@ -148,7 +148,7 @@ func TestLatencyInjector_SetLatency(t *testing.T) {
 	injector.SetLatency(1*time.Millisecond, 2*time.Millisecond)
 
 	start := time.Now()
-		//nolint:errcheck // intentionally ignoring error in test
+	//nolint:errcheck // intentionally ignoring error in test
 	_ = injector.Delay(context.Background())
 	elapsed := time.Since(start)
 
