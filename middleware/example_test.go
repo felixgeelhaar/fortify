@@ -221,7 +221,7 @@ func Example_apiClient() {
 		},
 	})
 
-	r := retry.New[map[string]interface{}](retry.Config{
+	r := retry.New[map[string]interface{}](&retry.Config{
 		MaxAttempts:   3,
 		InitialDelay:  time.Millisecond * 500,
 		BackoffPolicy: retry.BackoffExponential,
@@ -275,7 +275,7 @@ func Example_databaseClient() {
 	})
 
 	// Retry transient database errors
-	r := retry.New[[]string](retry.Config{
+	r := retry.New[[]string](&retry.Config{
 		MaxAttempts:  2,
 		InitialDelay: time.Millisecond * 500,
 	})
