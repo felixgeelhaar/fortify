@@ -7,6 +7,7 @@ import (
 
 // tokenBucket implements the token bucket algorithm for rate limiting.
 // It maintains a bucket of tokens that refills at a constant rate.
+//
 //nolint:govet // fieldalignment: internal struct, optimization not critical
 type tokenBucket struct {
 	mu sync.Mutex
