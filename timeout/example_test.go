@@ -76,19 +76,30 @@ func Example_contextAwareness() {
 		DefaultTimeout: time.Second * 5,
 	})
 
-	_, err := tm.Execute(context.Background(), time.Second, func(ctx context.Context) (int, error) {
-		// Check context periodically
-		for i := 0; i < 10; i++ {
+	msgChan := make(chan string, 1)
+	_, err := tm.Execute(context.Background(), time.Millisecond*100, func(ctx context.Context) (int, error) {
+		// Simulate long-running operation that checks context
+		for i := 0; i < 50; i++ {
 			select {
 			case <-ctx.Done():
-				fmt.Println("Operation cancelled")
+				msgChan <- "Operation cancelled"
 				return 0, ctx.Err()
 			default:
-				time.Sleep(time.Millisecond * 150)
+				time.Sleep(time.Millisecond * 5)
 			}
 		}
 		return 42, nil
 	})
+
+	// Wait briefly to ensure message is sent
+	time.Sleep(time.Millisecond * 10)
+
+	// Print message if sent
+	select {
+	case msg := <-msgChan:
+		fmt.Println(msg)
+	default:
+	}
 
 	fmt.Printf("Error: %v\n", err)
 	// Output:
@@ -98,18 +109,22 @@ func Example_contextAwareness() {
 
 // Example_callback demonstrates timeout event callbacks.
 func Example_callback() {
+	done := make(chan bool)
 	tm := timeout.New[string](timeout.Config{
 		DefaultTimeout: time.Second * 5,
 		OnTimeout: func() {
 			fmt.Println("Operation timed out")
+			close(done)
 		},
 	})
 
-	_, err := tm.Execute(context.Background(), time.Millisecond*100, func(ctx context.Context) (string, error) {
+	_, err := tm.Execute(context.Background(), time.Millisecond*50, func(ctx context.Context) (string, error) {
+		// Simulate slow operation
 		time.Sleep(time.Millisecond * 200)
 		return "too slow", nil
 	})
 
+	<-done // Wait for callback to complete
 	if err != nil {
 		fmt.Println("Timeout occurred")
 	}
@@ -292,26 +307,32 @@ func Example_retryWithTimeout() {
 		DefaultTimeout: time.Second * 10,
 	})
 
-	attempt := 0
-	// Each attempt has a 500ms timeout
-	result, err := tm.Execute(context.Background(), time.Millisecond*500, func(ctx context.Context) (string, error) {
-		attempt++
+	// Simulate retry logic with timeout protection
+	var result string
+	var lastErr error
+	maxAttempts := 3
 
-		// First two attempts fail
-		if attempt < 3 {
-			return "", errors.New("temporary failure")
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		r, err := tm.Execute(context.Background(), time.Millisecond*500, func(ctx context.Context) (string, error) {
+			// First two attempts fail
+			if attempt < 3 {
+				time.Sleep(time.Millisecond * 10) // Small delay
+				return "", errors.New("temporary failure")
+			}
+
+			// Third attempt succeeds quickly
+			return "success", nil
+		})
+
+		if err == nil {
+			result = r
+			fmt.Printf("Result: %s after %d attempts\n", result, attempt)
+			return
 		}
-
-		// Third attempt succeeds quickly
-		return "success", nil
-	})
-
-	if err != nil {
-		fmt.Printf("Operation failed: %v\n", err)
-		return
+		lastErr = err
 	}
 
-	fmt.Printf("Result: %s after %d attempts\n", result, attempt)
+	fmt.Printf("Operation failed: %v\n", lastErr)
 	// Output: Result: success after 3 attempts
 }
 
