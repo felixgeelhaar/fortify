@@ -44,9 +44,6 @@ func Example_customConfiguration() {
 			// Open circuit after 3 consecutive failures
 			return counts.ConsecutiveFailures >= 3
 		},
-		OnStateChange: func(from, to circuitbreaker.State) {
-			fmt.Printf("Circuit breaker state: %s -> %s\n", from, to)
-		},
 	})
 
 	// Simulate 5 requests
@@ -64,12 +61,17 @@ func Example_customConfiguration() {
 		} else {
 			fmt.Printf("Request %d: succeeded\n", i+1)
 		}
+
+		// Check state after 3rd request
+		if i == 2 {
+			fmt.Printf("Circuit breaker state: %s\n", cb.State())
+		}
 	}
 	// Output:
 	// Request 1: failed
 	// Request 2: failed
 	// Request 3: failed
-	// Circuit breaker state: closed -> open
+	// Circuit breaker state: open
 	// Request 4: failed
 	// Request 5: failed
 }
@@ -84,9 +86,6 @@ func Example_errorRateThreshold() {
 			// Open circuit if error rate exceeds 50% with minimum 10 requests
 			failureRate := float64(counts.TotalFailures) / float64(counts.Requests)
 			return counts.Requests >= 10 && failureRate >= 0.5
-		},
-		OnStateChange: func(from, to circuitbreaker.State) {
-			fmt.Printf("State changed: %s -> %s\n", from, to)
 		},
 	})
 
@@ -105,6 +104,11 @@ func Example_errorRateThreshold() {
 		} else {
 			fmt.Printf("Request %d: success\n", i+1)
 		}
+
+		// Check state after 11th request (first failure after threshold)
+		if i == 10 {
+			fmt.Printf("State after 11 requests: %s\n", cb.State())
+		}
 	}
 	// Output:
 	// Request 1: error
@@ -117,8 +121,8 @@ func Example_errorRateThreshold() {
 	// Request 8: error
 	// Request 9: success
 	// Request 10: success
-	// State changed: closed -> open
 	// Request 11: error
+	// State after 11 requests: open
 	// Request 12: error
 	// Request 13: error
 	// Request 14: error
