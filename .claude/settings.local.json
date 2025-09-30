@@ -18,7 +18,8 @@
       "Bash(for i in {1..10})",
       "Bash(do go test ./http -run TestTimeoutMiddleware/returns_504 -count=1)",
       "Bash(exit 1)",
-      "Bash(do go test ./ratelimit -run TestRateLimiterConcurrent/handles_concurrent -count=1)"
+      "Bash(do go test ./ratelimit -run TestRateLimiterConcurrent/handles_concurrent -count=1)",
+      "Bash(go test:*)"
     ],
     "deny": [],
     "ask": []

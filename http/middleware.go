@@ -89,15 +89,13 @@ func Timeout(tm timeout.Timeout[*http.Response], duration time.Duration) func(ht
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			done := make(chan struct{})
-			var timedOut bool
+			rec := &responseRecorder{
+				ResponseWriter: w,
+				statusCode:     http.StatusOK,
+			}
 
 			_, err := tm.Execute(r.Context(), duration, func(ctx context.Context) (*http.Response, error) {
 				defer close(done)
-
-				rec := &responseRecorder{
-					ResponseWriter: w,
-					statusCode:     http.StatusOK,
-				}
 				next.ServeHTTP(rec, r.WithContext(ctx))
 				return &http.Response{StatusCode: rec.statusCode}, nil
 			})
@@ -106,15 +104,13 @@ func Timeout(tm timeout.Timeout[*http.Response], duration time.Duration) func(ht
 				// Check if handler already completed
 				select {
 				case <-done:
-					// Handler completed, don't write timeout error
+					// Handler completed, response already written
 					return
 				default:
-					// Handler still running or timed out
-					timedOut = true
-				}
-
-				if timedOut {
-					http.Error(w, "Gateway Timeout", http.StatusGatewayTimeout)
+					// Handler still running or timed out, write error
+					rec.WriteHeader(http.StatusGatewayTimeout)
+					//nolint:errcheck // intentionally ignoring error in middleware
+					_, _ = rec.Write([]byte("Gateway Timeout"))
 					return
 				}
 			}
