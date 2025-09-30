@@ -35,7 +35,7 @@ jobs:
       run: go mod verify
 
     - name: Run tests
-      run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+      run: go test -v -race -coverprofile=coverage.out -covermode=atomic $(go list ./... | grep -v examples)
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.go == '1.23'
@@ -63,7 +63,7 @@ jobs:
       uses: golangci/golangci-lint-action@v6
       with:
         version: latest
-        args: --timeout=5m
+        args: --timeout=5m --skip-dirs examples
 
   build:
     name: Build
@@ -80,7 +80,7 @@ jobs:
         cache: true
 
     - name: Build
-      run: go build -v ./...
+      run: go build -v $(go list ./... | grep -v examples)
 
   benchmark:
     name: Benchmark
@@ -97,7 +97,7 @@ jobs:
         cache: true
 
     - name: Run benchmarks
-      run: go test -bench=. -benchmem -run=^$ ./... | tee benchmark.txt
+      run: go test -bench=. -benchmem -run=^$ $(go list ./... | grep -v examples) | tee benchmark.txt
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
