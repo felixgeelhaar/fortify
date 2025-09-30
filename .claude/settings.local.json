@@ -6,7 +6,9 @@
       "Bash(bash:*)",
       "Read(//private/tmp/**)",
       "Bash(rg:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(for i in {1..5})",
+      "Bash(do go test ./timeout -run \"Example_contextAwareness\")"
     ],
     "deny": [],
     "ask": []

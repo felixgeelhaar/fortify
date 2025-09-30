@@ -163,12 +163,13 @@ func TestTimeoutSimulator_AlwaysTimeout(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		ctx, cancel := sim.Context(context.Background())
-		defer cancel()
 
 		select {
 		case <-ctx.Done():
 			// Expected timeout
+			cancel()
 		case <-time.After(50 * time.Millisecond):
+			cancel()
 			t.Error("Expected context to timeout")
 		}
 	}

@@ -209,7 +209,8 @@ func (pt *PerformanceTracker) CheckRegressions(results []BenchmarkResult) Regres
 		TotalChecks: len(results),
 	}
 
-	for _, result := range results {
+	for i := range results {
+		result := &results[i]
 		baseline, exists := pt.baselines[result.Name]
 		if !exists {
 			continue
@@ -289,7 +290,8 @@ func (pt *PerformanceTracker) GenerateBaselineFromResults(results []BenchmarkRes
 		safetyFactor = 1.0
 	}
 
-	for _, result := range results {
+	for i := range results {
+		result := &results[i]
 		baseline := PerformanceBaseline{
 			Name:        result.Name,
 			MaxNsPerOp:  result.NsPerOp * safetyFactor,
@@ -303,14 +305,16 @@ func (pt *PerformanceTracker) GenerateBaselineFromResults(results []BenchmarkRes
 
 // CompareReports compares two benchmark reports and returns performance changes.
 func CompareReports(baseline, current BenchmarkReport) map[string]map[string]float64 {
-	baselineMap := make(map[string]BenchmarkResult)
-	for _, result := range baseline.Results {
+	baselineMap := make(map[string]*BenchmarkResult)
+	for i := range baseline.Results {
+		result := &baseline.Results[i]
 		baselineMap[result.Name] = result
 	}
 
 	changes := make(map[string]map[string]float64)
 
-	for _, currResult := range current.Results {
+	for i := range current.Results {
+		currResult := &current.Results[i]
 		baseResult, exists := baselineMap[currResult.Name]
 		if !exists {
 			continue
