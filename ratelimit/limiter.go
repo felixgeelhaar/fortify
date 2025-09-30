@@ -51,8 +51,8 @@ type RateLimiter interface {
 
 // rateLimiter is the concrete implementation of RateLimiter.
 type rateLimiter struct {
-	config  Config
 	buckets sync.Map // map[string]*tokenBucket
+	config  Config
 }
 
 // New creates a new RateLimiter with the given configuration.
