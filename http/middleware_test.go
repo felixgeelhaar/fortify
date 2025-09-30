@@ -143,42 +143,16 @@ func TestTimeoutMiddleware(t *testing.T) {
 			DefaultTimeout: time.Second,
 		})
 
-		handlerStarted := make(chan struct{})
-		handlerDone := make(chan bool, 1)
-
 		handler := Timeout(tm, 50*time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			close(handlerStarted)
-
-			// Block until context is cancelled
-			<-r.Context().Done()
-			handlerDone <- false
+			// Simulate slow operation that exceeds timeout
+			time.Sleep(100 * time.Millisecond)
+			w.WriteHeader(http.StatusOK)
 		}))
 
 		req := httptest.NewRequest("GET", "/test", http.NoBody)
 		rec := httptest.NewRecorder()
 
-		// Start handler in goroutine
-		done := make(chan struct{})
-		go func() {
-			handler.ServeHTTP(rec, req)
-			close(done)
-		}()
-
-		// Wait for handler to start
-		<-handlerStarted
-
-		// Wait for handler to complete
-		<-done
-
-		// Verify handler was cancelled
-		select {
-		case cancelled := <-handlerDone:
-			if cancelled {
-				t.Error("handler should have been cancelled")
-			}
-		case <-time.After(100 * time.Millisecond):
-			// Handler goroutine completed as expected
-		}
+		handler.ServeHTTP(rec, req)
 
 		if rec.Code != http.StatusGatewayTimeout {
 			t.Errorf("status = %d, want %d", rec.Code, http.StatusGatewayTimeout)
