@@ -15,21 +15,21 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Mock unary handler for testing
+// Mock unary handler for testing.
 func mockUnaryHandler(resp interface{}, err error) grpc.UnaryHandler {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		return resp, err
 	}
 }
 
-// Mock stream handler for testing
+// Mock stream handler for testing.
 func mockStreamHandler(err error) grpc.StreamHandler {
 	return func(srv interface{}, stream grpc.ServerStream) error {
 		return err
 	}
 }
 
-// Mock server stream for testing
+// Mock server stream for testing.
 type mockServerStream struct {
 	grpc.ServerStream
 	ctx context.Context
