@@ -57,20 +57,7 @@ linters-settings:
       - G104 # Audit errors not checked (we use errcheck for this)
 
 issues:
-  exclude-dirs:
-    - examples
-  exclude-files:
-    - "examples/.*\\.go$"
   exclude-rules:
-    - path: examples/
-      linters:
-        - typecheck
-        - errcheck
-        - gosimple
-        - govet
-        - ineffassign
-        - staticcheck
-        - unused
     - path: _test\.go
       linters:
         - dupl

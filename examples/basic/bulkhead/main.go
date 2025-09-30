@@ -53,7 +53,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*100)
 	defer cancel()
 
-	_, err := bh.Execute(ctx, func(ctx context.Context) (int, error) {
+	result, err := bh.Execute(ctx, func(ctx context.Context) (int, error) {
 		fmt.Println("Starting long-running operation...")
 		select {
 		case <-ctx.Done():
@@ -66,15 +66,7 @@ func main() {
 
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
+	} else {
+		fmt.Printf("Result: %d\n", result)
 	}
-
-	// Show final stats
-	fmt.Println("\n--- Final Statistics ---")
-	stats := bh.Stats()
-	fmt.Printf("Total requests: %d\n", stats.TotalRequests)
-	fmt.Printf("Successful: %d\n", stats.SuccessfulRequests)
-	fmt.Printf("Failed: %d\n", stats.FailedRequests)
-	fmt.Printf("Rejected: %d\n", stats.RejectedRequests)
-	fmt.Printf("Currently active: %d\n", stats.ActiveRequests)
-	fmt.Printf("Currently queued: %d\n", stats.QueuedRequests)
 }
