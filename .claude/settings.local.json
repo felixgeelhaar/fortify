@@ -8,7 +8,8 @@
       "Bash(rg:*)",
       "Bash(tee:*)",
       "Bash(for i in {1..5})",
-      "Bash(do go test ./timeout -run \"Example_contextAwareness\")"
+      "Bash(do go test ./timeout -run \"Example_contextAwareness\")",
+      "Bash(gh pr list:*)"
     ],
     "deny": [],
     "ask": []

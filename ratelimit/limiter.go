@@ -147,6 +147,7 @@ func (rl *rateLimiter) Take(ctx context.Context, key string, tokens int) bool {
 func (rl *rateLimiter) getBucket(key string) *tokenBucket {
 	// Try to load existing bucket
 	if bucket, ok := rl.buckets.Load(key); ok {
+		//nolint:errcheck // type assertion safe here
 		tb, _ := bucket.(*tokenBucket)
 		return tb
 	}
@@ -156,6 +157,7 @@ func (rl *rateLimiter) getBucket(key string) *tokenBucket {
 
 	// Store and return (LoadOrStore handles race conditions)
 	actual, _ := rl.buckets.LoadOrStore(key, newBucket)
+	//nolint:errcheck // type assertion safe here
 	tb, _ := actual.(*tokenBucket)
 	return tb
 }
