@@ -20,6 +20,7 @@ func TestCircuitBreakerMiddleware(t *testing.T) {
 
 		handler := CircuitBreaker(cb)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
+			//nolint:errcheck // intentionally ignoring error in test
 			_, _ = w.Write([]byte("success"))
 		}))
 
