@@ -121,7 +121,7 @@ func Example_retryWithCircuitBreaker() {
 		WithRetry(r)
 
 	attempt := 0
-	chain.Execute(context.Background(), func(ctx context.Context) (string, error) {
+	_, _ = chain.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		return "", errors.New("service failure")
 	})

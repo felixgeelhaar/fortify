@@ -7,15 +7,6 @@ import (
 
 // Config holds the configuration for a CircuitBreaker.
 type Config struct {
-	// Interval is the cyclic period of the Closed state for the circuit breaker
-	// to clear the internal Counts. If Interval is 0, the circuit breaker doesn't
-	// clear internal Counts during the Closed state.
-	Interval time.Duration
-
-	// Timeout is the period of the Open state after which the state transitions
-	// to Half-Open. If Timeout is 0, the circuit breaker uses a default timeout of 60 seconds.
-	Timeout time.Duration
-
 	// ReadyToTrip is called with a copy of Counts whenever a request fails in the Closed state.
 	// If ReadyToTrip returns true, the circuit breaker transitions from Closed to Open.
 	// If ReadyToTrip is nil, the circuit breaker uses a default function that returns true
@@ -34,6 +25,15 @@ type Config struct {
 
 	// Logger is used for structured logging. If nil, no logging is performed.
 	Logger *slog.Logger
+
+	// Interval is the cyclic period of the Closed state for the circuit breaker
+	// to clear the internal Counts. If Interval is 0, the circuit breaker doesn't
+	// clear internal Counts during the Closed state.
+	Interval time.Duration
+
+	// Timeout is the period of the Open state after which the state transitions
+	// to Half-Open. If Timeout is 0, the circuit breaker uses a default timeout of 60 seconds.
+	Timeout time.Duration
 
 	// MaxRequests is the maximum number of requests allowed to pass through
 	// when the circuit breaker is in the Half-Open state.

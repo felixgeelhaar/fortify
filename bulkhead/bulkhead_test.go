@@ -44,7 +44,7 @@ func TestBulkheadExecute(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				bh.Execute(ctx, func(ctx context.Context) (int, error) {
+				_, _ = bh.Execute(ctx, func(ctx context.Context) (int, error) {
 					current := executing.Add(1)
 					defer executing.Add(-1)
 

@@ -20,7 +20,7 @@ func TestCircuitBreakerMiddleware(t *testing.T) {
 
 		handler := CircuitBreaker(cb)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("success"))
+			_, _ = w.Write([]byte("success"))
 		}))
 
 		req := httptest.NewRequest("GET", "/test", nil)
@@ -187,7 +187,7 @@ func TestMiddlewareChaining(t *testing.T) {
 			return "test-key"
 		})(Timeout(tm, 100*time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("success"))
+			_, _ = w.Write([]byte("success"))
 		})))
 
 		req := httptest.NewRequest("GET", "/test", nil)

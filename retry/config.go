@@ -7,18 +7,6 @@ import (
 
 // Config holds the configuration for a Retry instance.
 type Config struct {
-	// InitialDelay is the delay before the first retry attempt.
-	// If InitialDelay is 0, defaults to 100ms.
-	InitialDelay time.Duration
-
-	// MaxDelay is the maximum delay between retries.
-	// If MaxDelay is 0, no maximum is enforced.
-	MaxDelay time.Duration
-
-	// Multiplier is the factor by which the delay increases for exponential backoff.
-	// If Multiplier is 0, defaults to 2.0.
-	Multiplier float64
-
 	// RetryableErrors is a list of errors that should trigger a retry.
 	// Uses errors.Is for comparison. If both RetryableErrors and NonRetryableErrors
 	// are nil/empty, and IsRetryable is nil, all errors are considered retryable.
@@ -40,13 +28,25 @@ type Config struct {
 	// Logger is used for structured logging. If nil, no logging is performed.
 	Logger *slog.Logger
 
-	// BackoffPolicy determines the backoff strategy.
-	// Defaults to BackoffExponential.
-	BackoffPolicy BackoffPolicy
+	// InitialDelay is the delay before the first retry attempt.
+	// If InitialDelay is 0, defaults to 100ms.
+	InitialDelay time.Duration
+
+	// MaxDelay is the maximum delay between retries.
+	// If MaxDelay is 0, no maximum is enforced.
+	MaxDelay time.Duration
+
+	// Multiplier is the factor by which the delay increases for exponential backoff.
+	// If Multiplier is 0, defaults to 2.0.
+	Multiplier float64
 
 	// MaxAttempts is the maximum number of attempts (including the initial attempt).
 	// If MaxAttempts is 0, defaults to 3.
 	MaxAttempts int
+
+	// BackoffPolicy determines the backoff strategy.
+	// Defaults to BackoffExponential.
+	BackoffPolicy BackoffPolicy
 
 	// Jitter adds random variance to retry delays to prevent thundering herd.
 	// When true, adds 0-10% random jitter to each delay.

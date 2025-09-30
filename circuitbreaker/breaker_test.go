@@ -58,7 +58,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		})
 
 		// Trigger failure to open circuit
-		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
+		_, _ = cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
 
@@ -89,7 +89,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		})
 
 		// Open the circuit
-		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
+		_, _ = cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
 
@@ -337,12 +337,12 @@ func TestCircuitBreakerCounts(t *testing.T) {
 	})
 
 	for i := 0; i < 3; i++ {
-		testCB.Execute(context.Background(), func(ctx context.Context) (int, error) {
+		_, _ = testCB.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 42, nil
 		})
 	}
 	for i := 0; i < 2; i++ {
-		testCB.Execute(context.Background(), func(ctx context.Context) (int, error) {
+		_, _ = testCB.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
 	}
