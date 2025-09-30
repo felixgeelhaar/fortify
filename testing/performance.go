@@ -9,6 +9,7 @@ import (
 )
 
 // BenchmarkResult represents a single benchmark measurement.
+//nolint:govet // fieldalignment: data struct with many fields, readability prioritized
 type BenchmarkResult struct {
 	Name           string    `json:"name"`
 	GitCommit      string    `json:"git_commit,omitempty"`
