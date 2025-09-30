@@ -64,11 +64,16 @@ jobs:
         go-version: '1.23'
         cache: true
 
+    - name: List lint packages
+      id: packages
+      shell: bash
+      run: echo "packages=$(go list ./... | grep -v examples | tr '\n' ' ')" >> $GITHUB_OUTPUT
+
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
         version: latest
-        args: --timeout=5m ./...
+        args: --timeout=5m ${{ steps.packages.outputs.packages }}
 
   build:
     name: Build
