@@ -10,19 +10,19 @@ import (
 
 // BenchmarkResult represents a single benchmark measurement.
 type BenchmarkResult struct {
-	Name        string    `json:"name"`
-	GitCommit   string    `json:"git_commit,omitempty"`
-	GitBranch   string    `json:"git_branch,omitempty"`
-	GoVersion   string    `json:"go_version,omitempty"`
-	OS          string    `json:"os,omitempty"`
-	Arch        string    `json:"arch,omitempty"`
-	CPUModel    string    `json:"cpu_model,omitempty"`
-	Timestamp   time.Time `json:"timestamp"`
-	NsPerOp     float64   `json:"ns_per_op"`
-	AllocsPerOp uint64    `json:"allocs_per_op"`
-	BytesPerOp  uint64    `json:"bytes_per_op"`
-	MemoryTotal uint64    `json:"memory_total,omitempty"`
-	IterationCount int    `json:"iteration_count"`
+	Name           string    `json:"name"`
+	GitCommit      string    `json:"git_commit,omitempty"`
+	GitBranch      string    `json:"git_branch,omitempty"`
+	GoVersion      string    `json:"go_version,omitempty"`
+	OS             string    `json:"os,omitempty"`
+	Arch           string    `json:"arch,omitempty"`
+	CPUModel       string    `json:"cpu_model,omitempty"`
+	Timestamp      time.Time `json:"timestamp"`
+	NsPerOp        float64   `json:"ns_per_op"`
+	AllocsPerOp    uint64    `json:"allocs_per_op"`
+	BytesPerOp     uint64    `json:"bytes_per_op"`
+	MemoryTotal    uint64    `json:"memory_total,omitempty"`
+	IterationCount int       `json:"iteration_count"`
 }
 
 // BenchmarkReport contains a collection of benchmark results.
