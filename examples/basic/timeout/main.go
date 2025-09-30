@@ -13,8 +13,8 @@ func main() {
 	// Create timeout manager
 	tm := timeout.New[string](timeout.Config{
 		DefaultTimeout: time.Second * 5,
-		OnTimeout: func(duration time.Duration) {
-			fmt.Printf("Operation timed out after %v\n", duration)
+		OnTimeout: func() {
+			fmt.Println("Operation timed out")
 		},
 	})
 
@@ -65,7 +65,7 @@ func main() {
 
 	// Example 4: Using default timeout
 	fmt.Println("\n--- Example 4: Using default timeout ---")
-	result, err = tm.ExecuteWithDefault(context.Background(), func(ctx context.Context) (string, error) {
+	result, err = tm.Execute(context.Background(), 0, func(ctx context.Context) (string, error) {
 		time.Sleep(time.Millisecond * 100)
 		return "using default timeout", nil
 	})

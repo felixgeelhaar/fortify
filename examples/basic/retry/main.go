@@ -18,8 +18,8 @@ func main() {
 		MaxDelay:      time.Second * 5,
 		BackoffPolicy: retry.BackoffExponential,
 		Multiplier:    2.0,
-		OnRetry: func(attempt int, err error, delay time.Duration) {
-			fmt.Printf("Attempt %d failed: %v (retrying in %v)\n", attempt, err, delay)
+		OnRetry: func(attempt int, err error) {
+			fmt.Printf("Attempt %d failed: %v\n", attempt, err)
 		},
 	})
 

@@ -120,12 +120,12 @@ func buildResilientChain() *middleware.Chain[*APIResponse] {
 		MaxDelay:      time.Second * 2,
 		BackoffPolicy: retry.BackoffExponential,
 		Multiplier:    2.0,
-		ShouldRetry: func(err error) bool {
+		IsRetryable: func(err error) bool {
 			// Only retry on specific errors
 			return err != nil && err.Error() == "external API error"
 		},
-		OnRetry: func(attempt int, err error, delay time.Duration) {
-			fmt.Printf("   ⟳ Retry attempt %d after %v: %v\n", attempt, delay, err)
+		OnRetry: func(attempt int, err error) {
+			fmt.Printf("   ⟳ Retry attempt %d: %v\n", attempt, err)
 		},
 	})
 
@@ -139,8 +139,8 @@ func buildResilientChain() *middleware.Chain[*APIResponse] {
 	// 4. Timeout - Enforce response time SLA
 	tm := timeout.New[*APIResponse](timeout.Config{
 		DefaultTimeout: time.Second * 5,
-		OnTimeout: func(duration time.Duration) {
-			fmt.Printf("   ⏱ Timeout after %v\n", duration)
+		OnTimeout: func() {
+			fmt.Println("   ⏱ Timeout occurred")
 		},
 	})
 

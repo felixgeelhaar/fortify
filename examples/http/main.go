@@ -36,8 +36,8 @@ func main() {
 
 	tm := timeout.New[*http.Response](timeout.Config{
 		DefaultTimeout: time.Second * 30,
-		OnTimeout: func(duration time.Duration) {
-			log.Printf("Request timed out after %v", duration)
+		OnTimeout: func() {
+			log.Println("Request timed out")
 		},
 	})
 
