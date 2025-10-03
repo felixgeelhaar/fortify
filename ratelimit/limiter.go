@@ -78,7 +78,9 @@ func (rl *rateLimiter) Allow(ctx context.Context, key string) bool {
 	if !allowed {
 		rl.logRateLimit(ctx, resolvedKey)
 		if rl.config.OnLimit != nil {
-			rl.config.OnLimit(resolvedKey)
+			rl.safeCallback(func() {
+				rl.config.OnLimit(resolvedKey)
+			})
 		}
 	}
 
@@ -136,7 +138,9 @@ func (rl *rateLimiter) Take(ctx context.Context, key string, tokens int) bool {
 	if !taken {
 		rl.logRateLimit(ctx, resolvedKey)
 		if rl.config.OnLimit != nil {
-			rl.config.OnLimit(resolvedKey)
+			rl.safeCallback(func() {
+				rl.config.OnLimit(resolvedKey)
+			})
 		}
 	}
 
@@ -147,7 +151,13 @@ func (rl *rateLimiter) Take(ctx context.Context, key string, tokens int) bool {
 func (rl *rateLimiter) getBucket(key string) *tokenBucket {
 	// Try to load existing bucket
 	if bucket, ok := rl.buckets.Load(key); ok {
-		//nolint:errcheck // type assertion safe here
+		// Type assertion is guaranteed safe because:
+		// 1. The sync.Map (rl.buckets) is private to this struct
+		// 2. Only this method stores values in the map
+		// 3. All stored values are *tokenBucket (see line 163 below)
+		// 4. Go's type system ensures no other type can be stored
+		// Therefore, this assertion will never fail in normal operation
+		//nolint:errcheck // Safe type assertion - see comment above
 		tb, _ := bucket.(*tokenBucket)
 		return tb
 	}
@@ -157,7 +167,12 @@ func (rl *rateLimiter) getBucket(key string) *tokenBucket {
 
 	// Store and return (LoadOrStore handles race conditions)
 	actual, _ := rl.buckets.LoadOrStore(key, newBucket)
-	//nolint:errcheck // type assertion safe here
+	// Type assertion is guaranteed safe because:
+	// 1. We just attempted to store newBucket (*tokenBucket) above
+	// 2. If LoadOrStore returns an existing value, it was stored by this same method
+	// 3. All values stored by this method are *tokenBucket (see line 160 above)
+	// Therefore, actual is always *tokenBucket regardless of whether we stored or loaded
+	//nolint:errcheck // Safe type assertion - see comment above
 	tb, _ := actual.(*tokenBucket)
 	return tb
 }
@@ -179,4 +194,19 @@ func (rl *rateLimiter) logRateLimit(ctx context.Context, key string) {
 			slog.Int("burst", rl.config.Burst),
 		)
 	}
+}
+
+// safeCallback executes a callback with panic recovery.
+func (rl *rateLimiter) safeCallback(fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			if rl.config.Logger != nil {
+				rl.config.Logger.Error("rate limiter callback panic",
+					slog.String("pattern", "rate_limit"),
+					slog.Any("panic", r),
+				)
+			}
+		}
+	}()
+	fn()
 }

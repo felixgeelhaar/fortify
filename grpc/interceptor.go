@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+	"github.com/felixgeelhaar/fortify/ferrors"
 	"github.com/felixgeelhaar/fortify/ratelimit"
 	"github.com/felixgeelhaar/fortify/timeout"
 	"google.golang.org/grpc"
@@ -45,7 +45,7 @@ func UnaryCircuitBreakerInterceptor(cb circuitbreaker.CircuitBreaker[interface{}
 
 		if err != nil {
 			// Convert circuit breaker errors to gRPC status codes
-			if err == fortifyerrors.ErrCircuitOpen {
+			if err == ferrors.ErrCircuitOpen {
 				return nil, status.Error(codes.Unavailable, "circuit breaker is open")
 			}
 			return nil, status.Error(codes.Unavailable, err.Error())
@@ -99,7 +99,7 @@ func StreamCircuitBreakerInterceptor(cb circuitbreaker.CircuitBreaker[interface{
 
 		if err != nil {
 			// Convert circuit breaker errors to gRPC status codes
-			if err == fortifyerrors.ErrCircuitOpen {
+			if err == ferrors.ErrCircuitOpen {
 				return status.Error(codes.Unavailable, "circuit breaker is open")
 			}
 			return status.Error(codes.Unavailable, err.Error())

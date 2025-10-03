@@ -63,7 +63,12 @@ func addJitter(delay time.Duration) time.Duration {
 	}
 
 	// Add random jitter between 0% and 10% of the delay.
-	//nolint:gosec // G404: weak random acceptable for retry jitter
+	// Using math/rand instead of crypto/rand because:
+	// 1. Retry jitter doesn't require cryptographic security
+	// 2. The goal is preventing thundering herd, not security
+	// 3. math/rand is significantly faster (no syscalls)
+	// 4. Predictability of math/rand is acceptable for retry timing
+	//nolint:gosec // G404: weak random is intentional and appropriate for retry jitter
 	jitterAmount := time.Duration(rand.Float64() * float64(delay) * 0.1)
 	return delay + jitterAmount
 }

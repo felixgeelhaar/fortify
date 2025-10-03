@@ -1,8 +1,8 @@
-// Package errors provides standard error types and utilities for the fortify resilience package.
+// Package ferrors provides standard error types and utilities for the fortify resilience package.
 //
 // This package defines sentinel errors used across all resilience patterns and provides
 // a RetryableError interface for classifying errors that should trigger retry logic.
-package errors
+package ferrors
 
 import "errors"
 

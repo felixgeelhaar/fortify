@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+	"github.com/felixgeelhaar/fortify/ferrors"
 )
 
 func TestCircuitBreakerStates(t *testing.T) {
@@ -74,8 +74,8 @@ func TestCircuitBreakerStates(t *testing.T) {
 			return 0, nil
 		})
 
-		if !errors.Is(err, fortifyerrors.ErrCircuitOpen) {
-			t.Errorf("error = %v, want %v", err, fortifyerrors.ErrCircuitOpen)
+		if !errors.Is(err, ferrors.ErrCircuitOpen) {
+			t.Errorf("error = %v, want %v", err, ferrors.ErrCircuitOpen)
 		}
 	})
 

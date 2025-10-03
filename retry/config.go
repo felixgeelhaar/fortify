@@ -7,7 +7,13 @@ import (
 
 // Config holds the configuration for a Retry instance.
 //
-//nolint:govet // fieldalignment: public API struct, preserving logical grouping
+// Field alignment optimization is intentionally disabled for this public API struct because:
+// 1. This is a user-facing configuration struct that appears in documentation
+// 2. Fields are logically grouped (errors, callbacks, timing, policy) for better API comprehension
+// 3. The struct is only instantiated once per retry instance (not in hot paths)
+// 4. Memory overhead is negligible compared to API clarity
+// 5. Reordering fields would break logical documentation flow
+//nolint:govet // fieldalignment: API clarity prioritized over memory optimization
 type Config struct {
 	// RetryableErrors is a list of errors that should trigger a retry.
 	// Uses errors.Is for comparison. If both RetryableErrors and NonRetryableErrors

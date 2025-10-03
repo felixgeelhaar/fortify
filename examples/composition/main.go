@@ -114,7 +114,7 @@ func buildResilientChain() *middleware.Chain[*APIResponse] {
 	})
 
 	// 2. Retry - Handle transient failures
-	r := retry.New[*APIResponse](&retry.Config{
+	r := retry.New[*APIResponse](retry.Config{
 		MaxAttempts:   3,
 		InitialDelay:  time.Millisecond * 100,
 		MaxDelay:      time.Second * 2,
@@ -194,7 +194,7 @@ func buildFastFailChain() *middleware.Chain[*APIResponse] {
 // Background job composition
 func buildBackgroundJobChain() *middleware.Chain[*APIResponse] {
 	// For background jobs that can tolerate longer delays and more retries
-	r := retry.New[*APIResponse](&retry.Config{
+	r := retry.New[*APIResponse](retry.Config{
 		MaxAttempts:   10, // More attempts for background jobs
 		InitialDelay:  time.Second,
 		MaxDelay:      time.Minute,
