@@ -7,6 +7,11 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Required permissions for benchmark action to push to gh-pages
+permissions:
+  contents: write
+  deployments: write
+
 jobs:
   benchmark:
     name: Run Performance Benchmarks
