@@ -144,9 +144,14 @@ func TestTimeoutMiddleware(t *testing.T) {
 		})
 
 		handler := Timeout(tm, 50*time.Millisecond)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Simulate slow operation that exceeds timeout
-			time.Sleep(100 * time.Millisecond)
-			w.WriteHeader(http.StatusOK)
+			// Simulate slow operation that respects context cancellation
+			select {
+			case <-time.After(100 * time.Millisecond):
+				w.WriteHeader(http.StatusOK)
+			case <-r.Context().Done():
+				// Context cancelled due to timeout
+				return
+			}
 		}))
 
 		req := httptest.NewRequest("GET", "/test", http.NoBody)

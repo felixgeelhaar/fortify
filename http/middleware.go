@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+	"github.com/felixgeelhaar/fortify/ferrors"
 	"github.com/felixgeelhaar/fortify/ratelimit"
 	"github.com/felixgeelhaar/fortify/timeout"
 )
@@ -48,7 +48,7 @@ func CircuitBreaker(cb circuitbreaker.CircuitBreaker[*http.Response]) func(http.
 
 				// Return error if status code indicates failure
 				if rec.statusCode >= 500 {
-					return &http.Response{StatusCode: rec.statusCode}, fortifyerrors.ErrCircuitOpen
+					return &http.Response{StatusCode: rec.statusCode}, ferrors.ErrCircuitOpen
 				}
 
 				return &http.Response{StatusCode: rec.statusCode}, nil
@@ -88,30 +88,28 @@ func RateLimit(rl ratelimit.RateLimiter, keyExtractor KeyExtractor) func(http.Ha
 func Timeout(tm timeout.Timeout[*http.Response], duration time.Duration) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			done := make(chan struct{})
 			rec := &responseRecorder{
 				ResponseWriter: w,
 				statusCode:     http.StatusOK,
 			}
 
 			_, err := tm.Execute(r.Context(), duration, func(ctx context.Context) (*http.Response, error) {
-				defer close(done)
 				next.ServeHTTP(rec, r.WithContext(ctx))
+
+				// Check if context was cancelled (timeout occurred)
+				if ctx.Err() != nil {
+					return nil, ctx.Err()
+				}
+
 				return &http.Response{StatusCode: rec.statusCode}, nil
 			})
 
 			if err != nil {
-				// Check if handler already completed
-				select {
-				case <-done:
-					// Handler completed, response already written
-					return
-				default:
-					// Handler still running or timed out, write error
+				// Timeout occurred - write error response if handler hasn't written anything substantial
+				if !rec.written || rec.statusCode == http.StatusOK {
 					rec.WriteHeader(http.StatusGatewayTimeout)
 					//nolint:errcheck // intentionally ignoring error in middleware
 					_, _ = rec.Write([]byte("Gateway Timeout"))
-					return
 				}
 			}
 		})

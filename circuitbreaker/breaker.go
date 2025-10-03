@@ -33,7 +33,7 @@ import (
 	"sync"
 	"time"
 
-	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+	"github.com/felixgeelhaar/fortify/ferrors"
 )
 
 // CircuitBreaker is a generic interface for circuit breaker pattern implementation.
@@ -125,7 +125,9 @@ func (cb *circuitBreaker[T]) Reset() {
 
 	if cb.config.OnStateChange != nil {
 		// Call outside of lock to prevent potential deadlock
-		go cb.config.OnStateChange(cb.state, StateClosed)
+		go cb.safeCallback(func() {
+			cb.config.OnStateChange(cb.state, StateClosed)
+		})
 	}
 }
 
@@ -139,11 +141,11 @@ func (cb *circuitBreaker[T]) beforeRequest() (uint64, error) {
 	state, generation := cb.currentState(now)
 
 	if state == StateOpen {
-		return generation, fortifyerrors.ErrCircuitOpen
+		return generation, ferrors.ErrCircuitOpen
 	}
 
 	if state == StateHalfOpen && cb.counts.Requests >= cb.config.MaxRequests {
-		return generation, fortifyerrors.ErrCircuitOpen
+		return generation, ferrors.ErrCircuitOpen
 	}
 
 	return generation, nil
@@ -241,8 +243,25 @@ func (cb *circuitBreaker[T]) setState(newState State, now time.Time) {
 
 	if cb.config.OnStateChange != nil {
 		// Call outside of lock to prevent potential deadlock
-		go cb.config.OnStateChange(oldState, newState)
+		go cb.safeCallback(func() {
+			cb.config.OnStateChange(oldState, newState)
+		})
 	}
+}
+
+// safeCallback executes a callback with panic recovery.
+func (cb *circuitBreaker[T]) safeCallback(fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			if cb.config.Logger != nil {
+				cb.config.Logger.Error("circuit breaker callback panic",
+					slog.String("pattern", "circuit_breaker"),
+					slog.Any("panic", r),
+				)
+			}
+		}
+	}()
+	fn()
 }
 
 // logStateChange logs state transitions using structured logging.

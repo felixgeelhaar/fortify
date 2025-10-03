@@ -6,7 +6,7 @@
 //
 // Example usage:
 //
-//	r := retry.New[*User](&retry.Config{
+//	r := retry.New[*User](retry.Config{
 //	    MaxAttempts:   3,
 //	    InitialDelay:  100 * time.Millisecond,
 //	    Multiplier:    2.0,
@@ -25,7 +25,7 @@ import (
 	"log/slog"
 	"time"
 
-	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+	"github.com/felixgeelhaar/fortify/ferrors"
 )
 
 // Retry is a generic interface for retry pattern implementation.
@@ -43,13 +43,10 @@ type retry[T any] struct {
 }
 
 // New creates a new Retry instance with the given configuration.
-func New[T any](config *Config) Retry[T] {
-	if config == nil {
-		config = &Config{}
-	}
+func New[T any](config Config) Retry[T] {
 	config.setDefaults()
 	return &retry[T]{
-		config: *config,
+		config: config,
 	}
 }
 
@@ -89,7 +86,9 @@ func (r *retry[T]) Do(ctx context.Context, fn func(context.Context) (T, error)) 
 
 		// Call OnRetry callback
 		if r.config.OnRetry != nil {
-			r.config.OnRetry(attempt+1, err)
+			r.safeCallback(func() {
+				r.config.OnRetry(attempt+1, err)
+			})
 		}
 
 		// Calculate backoff delay
@@ -144,7 +143,7 @@ func (r *retry[T]) isRetryable(err error) bool {
 	}
 
 	// Check if error implements RetryableError interface
-	if fortifyerrors.IsRetryable(err) {
+	if ferrors.IsRetryable(err) {
 		return true
 	}
 
@@ -171,4 +170,19 @@ func (r *retry[T]) logAttempt(ctx context.Context, attempt int, err error, willR
 			slog.String("error", err.Error()),
 		)
 	}
+}
+
+// safeCallback executes a callback with panic recovery.
+func (r *retry[T]) safeCallback(fn func()) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			if r.config.Logger != nil {
+				r.config.Logger.Error("retry callback panic",
+					slog.String("pattern", "retry"),
+					slog.Any("panic", rec),
+				)
+			}
+		}
+	}()
+	fn()
 }

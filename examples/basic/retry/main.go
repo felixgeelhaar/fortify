@@ -12,7 +12,7 @@ import (
 
 func main() {
 	// Create retry with exponential backoff
-	r := retry.New[int](&retry.Config{
+	r := retry.New[int](retry.Config{
 		MaxAttempts:   5,
 		InitialDelay:  time.Millisecond * 100,
 		MaxDelay:      time.Second * 5,

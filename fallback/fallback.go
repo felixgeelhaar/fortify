@@ -59,7 +59,7 @@ func (f *fallback[T]) Execute(ctx context.Context, primary func(context.Context)
 	// If successful, return immediately
 	if err == nil {
 		if f.config.OnSuccess != nil {
-			f.config.OnSuccess()
+			f.safeCallback(f.config.OnSuccess)
 		}
 		f.logEvent("primary_success", slog.Attr{})
 		return result, nil
@@ -79,7 +79,9 @@ func (f *fallback[T]) Execute(ctx context.Context, primary func(context.Context)
 
 	// Call OnFallback callback
 	if f.config.OnFallback != nil {
-		f.config.OnFallback(err)
+		f.safeCallback(func() {
+			f.config.OnFallback(err)
+		})
 	}
 
 	f.logEvent("fallback_triggered", slog.String("primary_error", err.Error()))
@@ -113,4 +115,19 @@ func (f *fallback[T]) logEvent(event string, attr slog.Attr) {
 	}
 
 	f.config.Logger.Info("fallback event", args...)
+}
+
+// safeCallback executes a callback with panic recovery.
+func (f *fallback[T]) safeCallback(fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			if f.config.Logger != nil {
+				f.config.Logger.Error("fallback callback panic",
+					slog.String("pattern", "fallback"),
+					slog.Any("panic", r),
+				)
+			}
+		}
+	}()
+	fn()
 }

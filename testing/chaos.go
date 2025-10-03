@@ -7,7 +7,13 @@ package testing
 import (
 	"context"
 	"errors"
-	"math/rand" //nolint:gosec // G404: weak random acceptable for testing utilities
+	// Using math/rand instead of crypto/rand in chaos testing utilities because:
+	// 1. This is a testing package for simulating failures, not production code
+	// 2. Random failures don't require cryptographic security - just statistical variance
+	// 3. math/rand provides sufficient randomness for chaos engineering
+	// 4. crypto/rand would add unnecessary overhead to test utilities
+	// 5. Predictable seeds can actually be useful for reproducing test scenarios
+	"math/rand" //nolint:gosec // G404: weak random is intentional and appropriate for testing utilities
 	"sync"
 	"sync/atomic"
 	"time"
@@ -48,7 +54,9 @@ func (e *ErrorInjector) ShouldFail() bool {
 	prob := e.probability
 	e.mu.RUnlock()
 
-	//nolint:gosec // G404: weak random acceptable for testing
+	// Weak random is appropriate here because this is a testing utility
+	// that simulates probabilistic failures for chaos engineering
+	//nolint:gosec // G404: weak random is intentional for testing
 	if rand.Float64() < prob {
 		e.failures.Add(1)
 		return true
@@ -135,7 +143,9 @@ func (l *LatencyInjector) Delay(ctx context.Context) error {
 	// Calculate random delay
 	delay := minDelay
 	if maxDelay > minDelay {
-		//nolint:gosec // G404: weak random acceptable for testing
+		// Weak random is appropriate here because this is a testing utility
+		// that simulates variable latency for chaos engineering
+		//nolint:gosec // G404: weak random is intentional for testing
 		delay = minDelay + time.Duration(rand.Int63n(int64(maxDelay-minDelay)))
 	}
 
@@ -217,7 +227,9 @@ func (t *TimeoutSimulator) Context(parent context.Context) (context.Context, con
 	t.mu.RUnlock()
 
 	// Decide if we should simulate timeout
-	//nolint:gosec // G404: weak random acceptable for testing
+	// Weak random is appropriate here because this is a testing utility
+	// that simulates probabilistic timeouts for chaos engineering
+	//nolint:gosec // G404: weak random is intentional for testing
 	if rand.Float64() < prob {
 		t.timeouts.Add(1)
 		return context.WithTimeout(parent, timeout)

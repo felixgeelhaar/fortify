@@ -325,3 +325,104 @@ func TestRateLimiterDefaults(t *testing.T) {
 		}
 	})
 }
+
+// TestTokenBucketWaitTimeEdgeCases tests edge cases in waitTime calculation
+func TestTokenBucketWaitTimeEdgeCases(t *testing.T) {
+	t.Run("returns zero when tokens available", func(t *testing.T) {
+		bucket := newTokenBucket(10, 10, time.Second)
+		wait := bucket.waitTime()
+		if wait != 0 {
+			t.Errorf("expected 0 wait time when tokens available, got %v", wait)
+		}
+	})
+
+	t.Run("handles zero rate gracefully", func(t *testing.T) {
+		// Create bucket with exhausted tokens
+		bucket := &tokenBucket{
+			tokens:     0,
+			burst:      1,
+			rate:       0, // Zero rate
+			interval:   time.Second,
+			lastRefill: time.Now(),
+		}
+
+		wait := bucket.waitTime()
+		// Should return a reasonable maximum wait time instead of infinity
+		if wait <= 0 || wait > time.Hour*25 {
+			t.Errorf("expected bounded wait time for zero rate, got %v", wait)
+		}
+	})
+
+	t.Run("handles very small interval", func(t *testing.T) {
+		bucket := &tokenBucket{
+			tokens:     0,
+			burst:      1,
+			rate:       1,
+			interval:   time.Nanosecond, // Very small interval
+			lastRefill: time.Now().Add(-time.Millisecond), // In the past to avoid refill
+		}
+
+		wait := bucket.waitTime()
+		// With very small interval, wait should be minimal
+		if wait < 0 {
+			t.Errorf("expected non-negative wait time, got %v", wait)
+		}
+		if wait > time.Second {
+			t.Errorf("expected small wait time for tiny interval, got %v", wait)
+		}
+	})
+
+	t.Run("caps maximum wait time", func(t *testing.T) {
+		bucket := &tokenBucket{
+			tokens:     0,
+			burst:      1,
+			rate:       0.000001, // Very small rate
+			interval:   time.Hour * 24 * 365,
+			lastRefill: time.Now(),
+		}
+
+		wait := bucket.waitTime()
+		maxWait := time.Hour * 24
+		if wait > maxWait {
+			t.Errorf("expected wait time <= %v, got %v", maxWait, wait)
+		}
+	})
+
+	t.Run("calculates correct wait time for normal case", func(t *testing.T) {
+		// Rate: 10 tokens per second
+		// Need 1 token, have 0.5 tokens
+		// Should wait ~50ms for the remaining 0.5 tokens
+		bucket := &tokenBucket{
+			tokens:     0.5,
+			burst:      10,
+			rate:       10,
+			interval:   time.Second,
+			lastRefill: time.Now(),
+		}
+
+		wait := bucket.waitTime()
+
+		// Should be approximately 50ms (0.5 tokens / 10 tokens per second)
+		expectedWait := time.Millisecond * 50
+		tolerance := time.Millisecond * 10
+
+		if wait < expectedWait-tolerance || wait > expectedWait+tolerance {
+			t.Errorf("expected wait time ~%v, got %v", expectedWait, wait)
+		}
+	})
+
+	t.Run("handles negative token calculation edge case", func(t *testing.T) {
+		bucket := &tokenBucket{
+			tokens:     1.5, // More than needed
+			burst:      2,
+			rate:       10,
+			interval:   time.Second,
+			lastRefill: time.Now(),
+		}
+
+		wait := bucket.waitTime()
+		if wait != 0 {
+			t.Errorf("expected 0 wait time when tokens > 1, got %v", wait)
+		}
+	})
+}

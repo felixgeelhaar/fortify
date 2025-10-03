@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+	"github.com/felixgeelhaar/fortify/ferrors"
 )
 
 func TestBulkheadExecute(t *testing.T) {
@@ -100,7 +100,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		close(done)
 
-		if !errors.Is(err, fortifyerrors.ErrBulkheadFull) {
+		if !errors.Is(err, ferrors.ErrBulkheadFull) {
 			t.Errorf("error = %v, want ErrBulkheadFull", err)
 		}
 	})
@@ -191,7 +191,7 @@ func TestBulkheadExecute(t *testing.T) {
 
 		close(release)
 
-		if !errors.Is(err, fortifyerrors.ErrBulkheadFull) {
+		if !errors.Is(err, ferrors.ErrBulkheadFull) {
 			t.Errorf("error = %v, want ErrBulkheadFull", err)
 		}
 	})
@@ -326,6 +326,84 @@ func TestBulkheadDefaults(t *testing.T) {
 		}
 		if result != 42 {
 			t.Errorf("result = %v, want 42", result)
+		}
+	})
+}
+
+func TestBulkheadClose(t *testing.T) {
+	t.Run("closes gracefully without queue", func(t *testing.T) {
+		bh := New[int](Config{
+			MaxConcurrent: 2,
+			MaxQueue:      0,
+		})
+
+		err := bh.Close()
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		// Multiple closes should be safe
+		err = bh.Close()
+		if err != nil {
+			t.Errorf("unexpected error on second close: %v", err)
+		}
+	})
+
+	t.Run("closes gracefully with queue", func(t *testing.T) {
+		bh := New[int](Config{
+			MaxConcurrent: 1,
+			MaxQueue:      5,
+		})
+
+		ctx := context.Background()
+
+		// Start a long-running operation
+		var wg sync.WaitGroup
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			//nolint:errcheck // intentionally ignoring error in test
+			_, _ = bh.Execute(ctx, func(ctx context.Context) (int, error) {
+				time.Sleep(50 * time.Millisecond)
+				return 1, nil
+			})
+		}()
+
+		// Give it time to start
+		time.Sleep(10 * time.Millisecond)
+
+		// Close should succeed even with in-flight request
+		err := bh.Close()
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		// Wait for completion
+		wg.Wait()
+	})
+
+	t.Run("rejects new requests after close", func(t *testing.T) {
+		bh := New[int](Config{
+			MaxConcurrent: 1,
+			MaxQueue:      2,
+		})
+
+		// Close immediately
+		err := bh.Close()
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+
+		// New request should be rejected
+		// This test validates that requests fail gracefully after shutdown
+		// The exact error may vary based on timing
+		_, err = bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
+			return 42, nil
+		})
+
+		// We expect some error (either bulkhead full or context error)
+		if err == nil {
+			t.Error("expected error after close, got nil")
 		}
 	})
 }

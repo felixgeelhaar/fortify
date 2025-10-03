@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+	"github.com/felixgeelhaar/fortify/ferrors"
 	"github.com/felixgeelhaar/fortify/ratelimit"
 	"github.com/felixgeelhaar/fortify/timeout"
 	"google.golang.org/grpc"
@@ -243,7 +243,7 @@ func TestStreamCircuitBreakerInterceptor(t *testing.T) {
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
-		if !errors.Is(err, fortifyerrors.ErrCircuitOpen) {
+		if !errors.Is(err, ferrors.ErrCircuitOpen) {
 			st, ok := status.FromError(err)
 			if !ok {
 				t.Fatal("expected gRPC status error")

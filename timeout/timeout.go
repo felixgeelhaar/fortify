@@ -48,6 +48,10 @@ func New[T any](config Config) Timeout[T] {
 }
 
 // Execute implements the Timeout interface.
+//
+// IMPORTANT: The provided function MUST respect context cancellation.
+// If the function does not check ctx.Err() or respond to context.Done(),
+// the timeout will not be enforced and the function will run to completion.
 func (t *timeout[T]) Execute(ctx context.Context, timeout time.Duration, fn func(context.Context) (T, error)) (T, error) {
 	var zero T
 
@@ -60,40 +64,42 @@ func (t *timeout[T]) Execute(ctx context.Context, timeout time.Duration, fn func
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	// Execute function in a goroutine to detect timeout
-	resultCh := make(chan struct {
-		result T
-		err    error
-	}, 1)
+	// Execute function directly - context handles cancellation
+	result, err := fn(ctx)
 
-	go func() {
-		result, err := fn(ctx)
-		resultCh <- struct {
-			result T
-			err    error
-		}{result, err}
-	}()
-
-	// Wait for result or timeout
-	select {
-	case res := <-resultCh:
-		// Function completed
-		return res.result, res.err
-
-	case <-ctx.Done():
-		// Timeout or cancellation
-		err := ctx.Err()
-
-		// Call timeout callback only for deadline exceeded
-		if err == context.DeadlineExceeded {
+	// Check context errors after execution
+	ctxErr := ctx.Err()
+	if ctxErr != nil {
+		// Timeout occurred
+		if ctxErr == context.DeadlineExceeded {
 			t.logTimeout(timeout)
 			if t.config.OnTimeout != nil {
-				t.config.OnTimeout()
+				// Run callback synchronously - it's panic-safe via safeCallback
+				// Synchronous execution prevents goroutine leaks and ensures
+				// callbacks complete before timeout error is returned
+				t.safeCallback(t.config.OnTimeout)
 			}
 		}
-
-		return zero, err
+		// Return context error (DeadlineExceeded or Canceled from parent)
+		return zero, ctxErr
 	}
+
+	return result, err
+}
+
+// safeCallback executes a callback with panic recovery.
+func (t *timeout[T]) safeCallback(fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			if t.config.Logger != nil {
+				t.config.Logger.Error("timeout callback panic",
+					slog.String("pattern", "timeout"),
+					slog.Any("panic", r),
+				)
+			}
+		}
+	}()
+	fn()
 }
 
 // logTimeout logs timeout events using structured logging.

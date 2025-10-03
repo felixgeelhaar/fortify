@@ -10,7 +10,13 @@ import (
 
 // BenchmarkResult represents a single benchmark measurement.
 //
-//nolint:govet // fieldalignment: data struct with many fields, readability prioritized
+// Field alignment optimization is intentionally disabled for this data struct because:
+// 1. This is a data transfer object (DTO) used for benchmark result serialization
+// 2. Fields are logically grouped (metadata, timing, memory) for better JSON structure
+// 3. The struct is created once per benchmark run, not in performance-critical paths
+// 4. Memory overhead is negligible compared to readability and API clarity
+// 5. JSON marshaling order benefits from logical field grouping
+//nolint:govet // fieldalignment: data struct with many fields, readability prioritized over memory
 type BenchmarkResult struct {
 	Name           string    `json:"name"`
 	GitCommit      string    `json:"git_commit,omitempty"`
@@ -29,7 +35,12 @@ type BenchmarkResult struct {
 
 // BenchmarkReport contains a collection of benchmark results.
 //
-//nolint:govet // fieldalignment: data struct, readability prioritized
+// Field alignment optimization is intentionally disabled for this data struct because:
+// 1. This is a data container for benchmark reporting, not a hot-path struct
+// 2. Fields are logically ordered (results first, metadata second, timestamp last)
+// 3. Memory overhead is negligible for a struct created once per benchmark session
+// 4. Readability and logical grouping are prioritized for API clarity
+//nolint:govet // fieldalignment: data struct, readability prioritized over memory
 type BenchmarkReport struct {
 	Results   []BenchmarkResult `json:"results"`
 	Metadata  map[string]string `json:"metadata,omitempty"`
@@ -75,7 +86,12 @@ type PerformanceRegression struct {
 
 // RegressionReport contains all detected regressions.
 //
-//nolint:govet // fieldalignment: data struct, readability prioritized
+// Field alignment optimization is intentionally disabled for this data struct because:
+// 1. This is a report struct for regression analysis results
+// 2. Fields are logically grouped (regressions first, statistics last)
+// 3. Memory overhead is negligible for analysis reports
+// 4. Readability and API clarity are prioritized
+//nolint:govet // fieldalignment: data struct, readability prioritized over memory
 type RegressionReport struct {
 	Regressions []PerformanceRegression `json:"regressions"`
 	Timestamp   time.Time               `json:"timestamp"`
@@ -86,7 +102,12 @@ type RegressionReport struct {
 
 // PerformanceTracker tracks and analyzes benchmark results over time.
 //
-//nolint:govet // fieldalignment: data struct, readability prioritized
+// Field alignment optimization is intentionally disabled for this struct because:
+// 1. This is a utility struct for performance tracking, not a hot-path allocation
+// 2. Fields are logically grouped (configuration and state)
+// 3. Only one instance is typically created per tracking session
+// 4. Memory overhead is negligible compared to API clarity
+//nolint:govet // fieldalignment: utility struct, readability prioritized over memory
 type PerformanceTracker struct {
 	resultsDir string
 	baselines  map[string]PerformanceBaseline
@@ -143,7 +164,9 @@ func (pt *PerformanceTracker) SaveBaselines(path string) error {
 		return fmt.Errorf("failed to marshal baselines: %w", err)
 	}
 
-	//nolint:gosec // G306: baseline file permissions intentionally set to 0o644 for readability
+	// Baseline files are performance reference data, not secrets
+	// Using 0o644 permissions allows team members to read baseline files
+	//nolint:gosec // G306: baseline file permissions intentionally set to 0o644 for team readability
 	if err := os.WriteFile(path, data, 0o644); err != nil {
 		return fmt.Errorf("failed to write baselines: %w", err)
 	}

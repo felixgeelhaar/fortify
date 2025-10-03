@@ -8,7 +8,13 @@ import (
 // tokenBucket implements the token bucket algorithm for rate limiting.
 // It maintains a bucket of tokens that refills at a constant rate.
 //
-//nolint:govet // fieldalignment: internal struct, optimization not critical
+// Field alignment optimization is intentionally disabled for this internal struct because:
+// 1. This is an internal implementation detail, not exposed in the public API
+// 2. Fields are logically grouped (sync primitives, time tracking, token state) for code clarity
+// 3. The struct is instantiated once per key, not in hot allocation paths
+// 4. Memory overhead from misalignment is negligible (few extra bytes per bucket)
+// 5. The mutex and time fields need to be at the top for clear synchronization semantics
+//nolint:govet // fieldalignment: internal struct, code clarity prioritized over memory optimization
 type tokenBucket struct {
 	mu sync.Mutex
 
@@ -74,12 +80,21 @@ func (tb *tokenBucket) take(n int) bool {
 }
 
 // waitTime returns the duration to wait for at least 1 token to become available.
+// Returns 0 if a token is immediately available.
+//
+// IMPORTANT: This is a best-effort calculation. The returned wait time is based on
+// the current token count and refill rate, but is NOT a guarantee. Between calculating
+// the wait time and the caller using it, other goroutines may consume tokens, making
+// the wait time stale. The caller should be prepared to wait again if needed.
+//
+// Includes safeguards against edge cases like zero rate or very small intervals.
 func (tb *tokenBucket) waitTime() time.Duration {
 	tb.mu.Lock()
 	defer tb.mu.Unlock()
 
 	tb.refill()
 
+	// If tokens available, no wait needed
 	if tb.tokens >= 1.0 {
 		return 0
 	}
@@ -87,12 +102,51 @@ func (tb *tokenBucket) waitTime() time.Duration {
 	// Calculate how many tokens we need
 	tokensNeeded := 1.0 - tb.tokens
 
+	// Safety check: ensure tokensNeeded is positive
+	if tokensNeeded <= 0 {
+		return 0
+	}
+
+	// Safety check: if rate is 0 or negative, tokens will never be added
+	// Return maximum wait time to prevent infinite blocking
+	if tb.rate <= 0 {
+		return time.Hour * 24
+	}
+
 	// Calculate time to generate those tokens
 	// tokens per nanosecond = rate / interval
-	tokensPerNs := tb.rate / float64(tb.interval.Nanoseconds())
+	intervalNs := tb.interval.Nanoseconds()
+
+	// Safety check: prevent division by zero or very small intervals
+	if intervalNs <= 0 {
+		return time.Hour * 24 // Maximum wait for edge case
+	}
+
+	tokensPerNs := tb.rate / float64(intervalNs)
+
+	// Safety check: if tokens per nanosecond is effectively zero (very small rate)
+	// use direct calculation to avoid division by zero
+	if tokensPerNs <= 0 {
+		return time.Hour * 24
+	}
+
 	nsToWait := tokensNeeded / tokensPerNs
 
-	return time.Duration(nsToWait)
+	// Safety check: ensure result is within reasonable bounds
+	// Prevent negative durations and cap maximum wait time
+	if nsToWait < 0 {
+		return 0
+	}
+
+	wait := time.Duration(nsToWait)
+
+	// Cap maximum wait time to 24 hours to prevent overflow and unreasonable waits
+	maxWait := time.Hour * 24
+	if wait > maxWait {
+		return maxWait
+	}
+
+	return wait
 }
 
 // refill adds tokens to the bucket based on time elapsed since last refill.
@@ -103,6 +157,12 @@ func (tb *tokenBucket) refill() {
 
 	if elapsed <= 0 {
 		return
+	}
+
+	// Cap elapsed time to prevent overflow from clock skew or system sleep
+	// Maximum 1 hour of elapsed time is reasonable for token refill
+	if elapsed > time.Hour {
+		elapsed = time.Hour
 	}
 
 	// Calculate tokens to add: (elapsed / interval) * rate
