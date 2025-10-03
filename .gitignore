@@ -28,6 +28,7 @@ go.work
 
 # Local configuration
 .claude/
+CLAUDE.md
 
 # OS specific files
 .DS_Store
