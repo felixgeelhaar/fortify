@@ -326,7 +326,7 @@ func TestRateLimiterDefaults(t *testing.T) {
 	})
 }
 
-// TestTokenBucketWaitTimeEdgeCases tests edge cases in waitTime calculation
+// TestTokenBucketWaitTimeEdgeCases tests edge cases in waitTime calculation.
 func TestTokenBucketWaitTimeEdgeCases(t *testing.T) {
 	t.Run("returns zero when tokens available", func(t *testing.T) {
 		bucket := newTokenBucket(10, 10, time.Second)
@@ -358,7 +358,7 @@ func TestTokenBucketWaitTimeEdgeCases(t *testing.T) {
 			tokens:     0,
 			burst:      1,
 			rate:       1,
-			interval:   time.Nanosecond, // Very small interval
+			interval:   time.Nanosecond,                   // Very small interval
 			lastRefill: time.Now().Add(-time.Millisecond), // In the past to avoid refill
 		}
 

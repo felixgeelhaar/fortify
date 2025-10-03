@@ -16,6 +16,7 @@ import (
 // 3. The struct is created once per benchmark run, not in performance-critical paths
 // 4. Memory overhead is negligible compared to readability and API clarity
 // 5. JSON marshaling order benefits from logical field grouping
+//
 //nolint:govet // fieldalignment: data struct with many fields, readability prioritized over memory
 type BenchmarkResult struct {
 	Name           string    `json:"name"`
@@ -40,6 +41,7 @@ type BenchmarkResult struct {
 // 2. Fields are logically ordered (results first, metadata second, timestamp last)
 // 3. Memory overhead is negligible for a struct created once per benchmark session
 // 4. Readability and logical grouping are prioritized for API clarity
+//
 //nolint:govet // fieldalignment: data struct, readability prioritized over memory
 type BenchmarkReport struct {
 	Results   []BenchmarkResult `json:"results"`
@@ -91,6 +93,7 @@ type PerformanceRegression struct {
 // 2. Fields are logically grouped (regressions first, statistics last)
 // 3. Memory overhead is negligible for analysis reports
 // 4. Readability and API clarity are prioritized
+//
 //nolint:govet // fieldalignment: data struct, readability prioritized over memory
 type RegressionReport struct {
 	Regressions []PerformanceRegression `json:"regressions"`
@@ -107,6 +110,7 @@ type RegressionReport struct {
 // 2. Fields are logically grouped (configuration and state)
 // 3. Only one instance is typically created per tracking session
 // 4. Memory overhead is negligible compared to API clarity
+//
 //nolint:govet // fieldalignment: utility struct, readability prioritized over memory
 type PerformanceTracker struct {
 	resultsDir string

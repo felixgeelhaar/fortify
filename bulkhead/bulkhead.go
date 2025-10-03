@@ -57,12 +57,14 @@ type Bulkhead[T any] interface {
 }
 
 // bulkhead is the concrete implementation of Bulkhead.
+//
+//nolint:govet // fieldalignment: field order optimized for logical grouping and sync.Once size
 type bulkhead[T any] struct {
+	once     sync.Once     // Ensures Close is called only once (16 bytes with padding)
 	sem      chan struct{} // Semaphore for concurrency control
 	queue    chan *request[T]
 	queueSem chan struct{} // Semaphore for queue capacity
 	done     chan struct{} // Signals shutdown to worker
-	once     sync.Once     // Ensures Close is called only once
 	config   Config
 }
 

@@ -7,12 +7,13 @@ package testing
 import (
 	"context"
 	"errors"
+
 	// Using math/rand instead of crypto/rand in chaos testing utilities because:
 	// 1. This is a testing package for simulating failures, not production code
 	// 2. Random failures don't require cryptographic security - just statistical variance
 	// 3. math/rand provides sufficient randomness for chaos engineering
-	// 4. crypto/rand would add unnecessary overhead to test utilities
-	// 5. Predictable seeds can actually be useful for reproducing test scenarios
+	// 4. crypto/rand would add unnecessary overhead to test utilities.
+	// 5. Predictable seeds can actually be useful for reproducing test scenarios.
 	"math/rand" //nolint:gosec // G404: weak random is intentional and appropriate for testing utilities
 	"sync"
 	"sync/atomic"

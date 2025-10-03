@@ -43,6 +43,8 @@ type retry[T any] struct {
 }
 
 // New creates a new Retry instance with the given configuration.
+//
+//nolint:gocritic // hugeParam: Config passed by value for API consistency across all patterns
 func New[T any](config Config) Retry[T] {
 	config.setDefaults()
 	return &retry[T]{

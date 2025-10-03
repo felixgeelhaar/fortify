@@ -13,6 +13,7 @@ import (
 // 3. The struct is only instantiated once per retry instance (not in hot paths)
 // 4. Memory overhead is negligible compared to API clarity
 // 5. Reordering fields would break logical documentation flow
+//
 //nolint:govet // fieldalignment: API clarity prioritized over memory optimization
 type Config struct {
 	// RetryableErrors is a list of errors that should trigger a retry.

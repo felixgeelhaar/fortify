@@ -14,6 +14,7 @@ import (
 // 3. The struct is instantiated once per key, not in hot allocation paths
 // 4. Memory overhead from misalignment is negligible (few extra bytes per bucket)
 // 5. The mutex and time fields need to be at the top for clear synchronization semantics
+//
 //nolint:govet // fieldalignment: internal struct, code clarity prioritized over memory optimization
 type tokenBucket struct {
 	mu sync.Mutex
