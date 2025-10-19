@@ -171,6 +171,48 @@ if err := rl.Wait(ctx, "user-123"); err == nil {
 - Ensuring fair resource usage
 - Implementing user quotas
 
+#### Distributed Rate Limiting (Redis Backend)
+
+For distributed systems, use the Redis-backed rate limiter to share rate limits across multiple application instances:
+
+```go
+import (
+    "github.com/redis/go-redis/v9"
+    redisrl "github.com/felixgeelhaar/fortify/backends/redis"
+)
+
+// Create Redis client
+client := redis.NewClient(&redis.Options{
+    Addr: "localhost:6379",
+})
+
+// Create distributed rate limiter
+rl, _ := redisrl.New(redisrl.Config{
+    Client:   client,
+    Rate:     100,
+    Burst:    200,
+    Interval: time.Second,
+})
+
+// Same interface as in-memory - works across all instances!
+if rl.Allow(ctx, "user-123") {
+    handleRequest()
+}
+```
+
+**Features:**
+- Atomic operations via Lua scripts (no race conditions)
+- Supports Redis Cluster and Sentinel
+- Same interface as in-memory limiter (drop-in replacement)
+- Configurable fail-open or fail-closed behavior
+
+**Installation:**
+```bash
+go get github.com/felixgeelhaar/fortify/backends/redis
+```
+
+See [Redis Backend Documentation](./backends/redis/README.md) and [Migration Guide](./docs/MIGRATION_REDIS.md) for details.
+
 ### Timeout
 
 Enforces time limits on operations with context propagation.

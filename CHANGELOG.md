@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Distributed Rate Limiting
+- **Redis backend for distributed rate limiting** (`backends/redis`)
+  - Separate Go module maintains zero-dependency promise for core
+  - Atomic operations via Lua scripts (production-grade, no race conditions)
+  - Same `RateLimiter` interface as in-memory (drop-in replacement)
+  - Support for Redis Cluster, Redis Sentinel, and standalone Redis
+  - Configurable fail-open or fail-closed behavior
+  - Automatic bucket expiration with configurable TTL
+  - Full observability integration (slog, OpenTelemetry)
+  - Comprehensive test suite with miniredis (>90% coverage)
+  - Benchmark tests comparing Redis vs in-memory performance
+
+#### Documentation
+- **Redis backend README** with installation, configuration, and usage examples
+- **Migration guide** (`docs/MIGRATION_REDIS.md`) for moving from in-memory to Redis
+- **Complete working example** with Docker Compose demonstrating distributed rate limiting
+- Added distributed rate limiting section to main README
+
+#### Examples
+- Multi-instance distributed rate limiting example (`examples/backends/redis`)
+  - Docker Compose setup with 3 application instances + Redis
+  - Makefile for easy testing and demonstration
+  - HTTP API with rate limiting across instances
+  - Health checks and observability
+
 ## [1.0.0] - 2025-10-03
 
 ### Added
