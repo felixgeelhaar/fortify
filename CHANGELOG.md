@@ -7,6 +7,104 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+#### Pluggable Storage Interface
+- **Store interface** for custom storage backends (`ratelimit/store.go`)
+  - `AtomicUpdate` method for atomic read-modify-write operations
+  - `Get` method for read-only state access without side effects
+  - `Delete` and `Close` methods for resource management
+  - `BucketState` struct for serializable token bucket state
+- **MemoryStore** default in-memory implementation (`ratelimit/memory.go`)
+  - Uses `sync.Map` with per-key mutex for thread-safe atomicity
+  - Zero-configuration default for single-instance deployments
+  - TTL-based automatic cleanup of stale entries (default: 1 hour)
+  - Configurable maximum key limit (default: 100,000) for memory protection
+  - Configurable maximum key length (default: 1,024) to prevent memory exhaustion
+  - Functional options: `WithMaxKeys()`, `WithCleanupInterval()`, `WithEntryTTL()`, `WithMaxKeyLength()`
+
+#### Configuration Options
+- **Store** field in Config for custom storage backends
+- **FailOpen** field for configurable failure behavior
+  - `FailOpen: false` (default) - deny requests when storage fails (consistency)
+  - `FailOpen: true` - allow requests when storage fails (availability)
+- **MaxTokensPerRequest** field (default: Burst × 10) to prevent DoS via excessive token requests
+- **Metrics** field for observability integration
+
+#### Interfaces
+- **HealthChecker** interface for distributed store health monitoring
+  - `HealthCheck(ctx context.Context) error` method
+  - MemoryStore implements HealthChecker by default
+- **Metrics** interface for observability hooks (all methods now receive context)
+  - `OnAllow(ctx, key)` - called when request is allowed
+  - `OnDeny(ctx, key)` - called when request is denied
+  - `OnError(ctx, key, err)` - called on storage errors
+  - `OnStoreLatency(ctx, operation, duration)` - storage latency tracking
+- **RateLimiter.HealthCheck()** method for health monitoring
+- **RateLimiter.Close()** method for proper resource cleanup
+- **RateLimiter closed flag** - Prevents operations after Close() is called
+
+#### Error Handling
+- **Sentinel errors** for better error handling (`ratelimit/errors.go`)
+  - `ErrLimitExceeded` - rate limit exceeded
+  - `ErrStorageUnavailable` - storage backend unavailable
+  - `ErrInvalidTokenCount` - invalid token count in Take()
+  - `ErrExcessiveTokens` - token request exceeds MaxTokensPerRequest
+  - `ErrStoreClosed` - operation attempted on closed store
+  - `ErrKeyLimitExceeded` - maximum key limit reached
+  - `ErrKeyTooLong` - key exceeds maximum length
+  - `ErrWaitTimeout` - Wait() exceeded maximum iterations or time limit
+  - `ErrRateLimiterClosed` - operation attempted on closed rate limiter
+
+#### Documentation
+- **Package documentation** moved to `ratelimit/doc.go` per Go conventions
+- Comprehensive usage examples in doc.go
+- **Store interface stability guarantee** - Documented interface stability and extension patterns
+- **KeyFunc key length constraints** - Documented that keys must respect Store's maximum length
+
+### Changed
+- Rate limiter now uses pluggable `Store` interface instead of internal `sync.Map`
+- Token bucket algorithm logic moved from separate file to `limiter.go`
+- In-memory storage now uses `Store` interface (unified architecture)
+- `calculateWaitTime()` now uses `Get()` for read-only access (no side effects)
+- `refill()` optimized to avoid unnecessary allocations when state unchanged
+- **`OnLimit` callback** now receives `context.Context` as first argument for observability
+- **Magic numbers extracted** to named constants for maintainability
+- **Config validation** now caps Rate, Burst, Interval, and MaxTokensPerRequest to maximum values
+- **Metrics interface** now receives context in all methods for distributed tracing
+- **KeyFunc** documentation clarified: when set, it takes precedence and the key parameter is ignored
+- **Wait()** now has iteration and time limits (10,000 iterations / 5 minutes) to prevent infinite loops
+
+### Fixed
+- **Timer leak in Wait()** - Now uses `time.NewTimer` with proper `Stop()` and channel draining
+- **Timer reuse optimization** - Wait() now reuses timer with Reset() to reduce allocations
+- **Delete() race condition** - Entry lock acquired before deletion to prevent races with AtomicUpdate
+- **Delete() key length check** - Now validates key length like other operations
+- **Input validation in Take()** - Rejects zero, negative, and excessive token requests
+- **calculateWaitTime() side effect** - No longer modifies state via AtomicUpdate
+- **TOCTOU race in key creation** - Fixed using pre-increment approach with proper rollback
+- **Clear() race condition** - Fixed with two-phase delete (collect then delete)
+- **Panic recovery** - Now includes stack trace for debugging
+- **Closed rate limiter operations** - Allow/Wait/Take/HealthCheck now check closed flag before proceeding
+
+### Removed
+
+#### Breaking Changes
+- **Removed `backends/redis/` module** - Users should implement their own Redis adapter
+- **Removed `examples/backends/redis/`** - Docker Compose example removed
+- **Removed `ratelimit/tokenbucket.go`** - Logic consolidated into limiter
+
+### Migration
+- **In-memory users**: No changes required - works exactly as before
+- **Redis users**: Implement custom `Store` adapter (see `docs/MIGRATION_REDIS.md` for examples)
+
+### Documentation
+- Updated `docs/MIGRATION_REDIS.md` to be a comprehensive custom storage backend guide
+  - Redis implementation example with WATCH/MULTI/EXEC
+  - DynamoDB implementation example with conditional writes
+  - Testing strategies for custom stores
+  - Production deployment best practices
+
 ## [1.1.0] - 2025-10-19
 
 ### Added

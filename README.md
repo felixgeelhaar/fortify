@@ -144,7 +144,7 @@ result, err := r.Do(ctx, func(ctx context.Context) (Response, error) {
 
 ### Rate Limiting
 
-Controls the rate of operations using a token bucket algorithm.
+Controls the rate of operations using a token bucket algorithm with a pluggable storage backend.
 
 ```go
 import "github.com/felixgeelhaar/fortify/ratelimit"
@@ -171,47 +171,47 @@ if err := rl.Wait(ctx, "user-123"); err == nil {
 - Ensuring fair resource usage
 - Implementing user quotas
 
-#### Distributed Rate Limiting (Redis Backend)
+#### Custom Storage Backends
 
-For distributed systems, use the Redis-backed rate limiter to share rate limits across multiple application instances:
+For distributed systems, implement the `Store` interface to share rate limits across multiple application instances:
 
 ```go
-import (
-    "github.com/redis/go-redis/v9"
-    redisrl "github.com/felixgeelhaar/fortify/backends/redis"
-)
+import "github.com/felixgeelhaar/fortify/ratelimit"
 
-// Create Redis client
-client := redis.NewClient(&redis.Options{
-    Addr: "localhost:6379",
-})
+// Implement the Store interface for your backend (Redis, DynamoDB, etc.)
+type RedisStore struct {
+    client redis.UniversalClient
+    prefix string
+    ttl    time.Duration
+}
 
-// Create distributed rate limiter
-rl, _ := redisrl.New(redisrl.Config{
-    Client:   client,
+func (r *RedisStore) AtomicUpdate(ctx context.Context, key string,
+    updateFn func(*ratelimit.BucketState) *ratelimit.BucketState) (*ratelimit.BucketState, error) {
+    // Use WATCH/MULTI/EXEC or Lua scripts for atomic operations
+    // See examples for full implementation
+}
+
+func (r *RedisStore) Delete(ctx context.Context, key string) error { /* ... */ }
+func (r *RedisStore) Close() error { /* ... */ }
+
+// Use custom store
+rl := ratelimit.New(ratelimit.Config{
     Rate:     100,
     Burst:    200,
     Interval: time.Second,
+    Store:    &RedisStore{client: redisClient, prefix: "rl:", ttl: time.Hour},
+    FailOpen: true,  // Allow requests if storage fails
 })
-
-// Same interface as in-memory - works across all instances!
-if rl.Allow(ctx, "user-123") {
-    handleRequest()
-}
 ```
 
-**Features:**
-- Atomic operations via Lua scripts (no race conditions)
-- Supports Redis Cluster and Sentinel
-- Same interface as in-memory limiter (drop-in replacement)
-- Configurable fail-open or fail-closed behavior
+**Store Interface:**
+- `AtomicUpdate`: Atomic read-modify-write for token bucket state
+- `Delete`: Remove a bucket from storage
+- `Close`: Release resources
 
-**Installation:**
-```bash
-go get github.com/felixgeelhaar/fortify/backends/redis
-```
-
-See [Redis Backend Documentation](./backends/redis/README.md) and [Migration Guide](./docs/MIGRATION_REDIS.md) for details.
+**Configuration:**
+- `Store`: Custom storage backend (defaults to in-memory)
+- `FailOpen`: Allow requests when storage fails (availability over consistency)
 
 ### Timeout
 
@@ -471,15 +471,21 @@ collector.RecordRetrySuccess("database-query")
 
 Fortify is designed for production use with minimal overhead:
 
-| Pattern          | Overhead | Allocations |
-|-----------------|----------|-------------|
-| Circuit Breaker | ~30ns    | 0           |
-| Retry           | ~25ns    | 0           |
-| Rate Limiter    | ~45ns    | 0           |
-| Timeout         | ~50ns    | 0           |
-| Bulkhead        | ~39ns    | 0           |
+| Pattern          | Overhead | Allocations | Notes |
+|-----------------|----------|-------------|-------|
+| Circuit Breaker | ~30ns    | 0           | State check only |
+| Retry           | ~25ns    | 0           | Per attempt overhead |
+| Rate Limiter    | ~200ns   | 3           | Full token bucket with atomic update |
+| Timeout         | ~50ns    | 0           | Context wrapping |
+| Bulkhead        | ~39ns    | 0           | Semaphore check |
 
 *Benchmarks on Apple M1, Go 1.23*
+
+**Rate Limiter Details:**
+- `Allow()`: ~200ns, 74B, 3 allocs (token bucket state + slog attributes)
+- `Take()`: ~197ns, 65B, 3 allocs
+- `BucketCount()`: ~3ns, 0 allocs (O(1) atomic read)
+- Concurrent operations: ~395ns with contention (8 goroutines)
 
 ## Examples
 

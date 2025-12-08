@@ -1,23 +1,27 @@
-# Redis Backend Migration Guide
+# Custom Storage Backend Migration Guide
 
-This guide helps you migrate from Fortify's in-memory rate limiter to the Redis-backed distributed rate limiter.
+This guide helps you implement custom storage backends for Fortify's rate limiter using the `Store` interface.
 
 ## Table of Contents
 
-- [When to Use Redis Backend](#when-to-use-redis-backend)
-- [When to Use In-Memory](#when-to-use-in-memory)
-- [Migration Steps](#migration-steps)
-- [Configuration Comparison](#configuration-comparison)
-- [Code Changes](#code-changes)
+- [Overview](#overview)
+- [Store Interface](#store-interface)
+- [Implementation Examples](#implementation-examples)
+  - [Redis Implementation](#redis-implementation)
+  - [DynamoDB Implementation](#dynamodb-implementation)
+- [Migration from In-Memory](#migration-from-in-memory)
+- [Configuration](#configuration)
 - [Testing Strategy](#testing-strategy)
-- [Performance Considerations](#performance-considerations)
 - [Production Deployment](#production-deployment)
-- [Rollback Plan](#rollback-plan)
 - [Troubleshooting](#troubleshooting)
 
-## When to Use Redis Backend
+## Overview
 
-Use the Redis backend when you have:
+Fortify's rate limiter uses a pluggable `Store` interface for state management. By default, an in-memory store is used. For distributed rate limiting across multiple application instances, implement a custom `Store` backed by Redis, DynamoDB, or another distributed backend.
+
+### When to Use a Custom Store
+
+Use a custom distributed store when you have:
 
 ✅ **Multiple Application Instances**
 - Horizontally scaled applications (Kubernetes, ECS, etc.)
@@ -32,13 +36,9 @@ Use the Redis backend when you have:
 - Rate limits must survive application restarts
 - Need audit trail of rate limit events
 
-✅ **Dynamic Scaling**
-- Auto-scaling based on load
-- Need rate limits to remain consistent during scale events
+### When to Use In-Memory (Default)
 
-## When to Use In-Memory
-
-Keep the in-memory limiter when you have:
+Keep the default in-memory store when you have:
 
 ✅ **Single Instance Deployment**
 - Monolithic applications
@@ -48,508 +48,405 @@ Keep the in-memory limiter when you have:
 - Sub-microsecond latency needed
 - Network latency unacceptable
 
-✅ **No External Dependencies**
-- Minimal infrastructure
-- Embedded applications
+## Store Interface
 
-✅ **Simple Use Cases**
-- Basic request throttling
-- No need for distributed coordination
-
-## Migration Steps
-
-### Step 1: Add Redis Backend Dependency
-
-```bash
-go get github.com/felixgeelhaar/fortify/backends/redis
-```
-
-### Step 2: Set Up Redis
-
-Choose your Redis deployment:
-
-**Option A: Standalone Redis**
-```bash
-docker run -d -p 6379:6379 redis:7-alpine
-```
-
-**Option B: Redis Cluster** (production)
-```bash
-# See Redis Cluster documentation
-# https://redis.io/docs/manual/scaling/
-```
-
-**Option C: Managed Redis** (recommended for production)
-- AWS ElastiCache
-- Azure Cache for Redis
-- Google Cloud Memorystore
-- Redis Enterprise Cloud
-
-### Step 3: Update Code
-
-**Before (in-memory):**
+The `Store` interface defines three methods:
 
 ```go
-package main
+type BucketState struct {
+    Tokens     float64   // Current available tokens
+    LastRefill time.Time // Last refill timestamp
+}
 
-import (
-    "github.com/felixgeelhaar/fortify/ratelimit"
-)
+type Store interface {
+    // AtomicUpdate atomically reads, modifies, and writes bucket state.
+    // The updateFn receives current state (nil if new) and returns new state.
+    // Implementation must ensure atomic read-modify-write.
+    AtomicUpdate(ctx context.Context, key string, updateFn func(*BucketState) *BucketState) (*BucketState, error)
 
-func setupRateLimiter() ratelimit.RateLimiter {
-    return ratelimit.New(ratelimit.Config{
-        Rate:     100,
-        Burst:    200,
-        Interval: time.Second,
-        KeyFunc: func(ctx context.Context) string {
-            return ctx.Value("user_id").(string)
-        },
-        Logger:  logger,
-        OnLimit: onLimitCallback,
-    })
+    // Delete removes a bucket from the store.
+    Delete(ctx context.Context, key string) error
+
+    // Close releases resources held by the store.
+    Close() error
 }
 ```
 
-**After (Redis):**
+### Atomicity Requirements
+
+The `AtomicUpdate` method must guarantee:
+
+1. **Atomic read-modify-write** - The entire operation must be indivisible
+2. **No race conditions** - Concurrent calls for the same key must be serialized
+3. **Correct token bucket algorithm** - The `updateFn` contains the algorithm logic
+
+For distributed backends, achieve atomicity using:
+- **Redis**: WATCH/MULTI/EXEC or Lua scripts
+- **DynamoDB**: Conditional writes with version attributes
+- **PostgreSQL**: SELECT FOR UPDATE transactions
+
+## Implementation Examples
+
+### Redis Implementation
 
 ```go
-package main
+package redisstore
 
 import (
+    "context"
+    "encoding/json"
+    "time"
+
+    "github.com/felixgeelhaar/fortify/ratelimit"
     "github.com/redis/go-redis/v9"
-    redisrl "github.com/felixgeelhaar/fortify/backends/redis"
 )
 
-func setupRateLimiter() (ratelimit.RateLimiter, error) {
-    // Create Redis client
-    client := redis.NewClient(&redis.Options{
-        Addr:     "localhost:6379",
-        Password: os.Getenv("REDIS_PASSWORD"),
-        DB:       0,
-    })
+type RedisStore struct {
+    client redis.UniversalClient
+    prefix string
+    ttl    time.Duration
+}
 
-    // Create Redis-backed rate limiter
-    return redisrl.New(redisrl.Config{
-        Client:   client,  // ← Add Redis client
-        Rate:     100,
-        Burst:    200,
-        Interval: time.Second,
-        KeyFunc: func(ctx context.Context) string {
-            return ctx.Value("user_id").(string)
-        },
-        Logger:  logger,
-        OnLimit: onLimitCallback,
-    })
+func New(client redis.UniversalClient, prefix string, ttl time.Duration) *RedisStore {
+    return &RedisStore{
+        client: client,
+        prefix: prefix,
+        ttl:    ttl,
+    }
+}
+
+func (r *RedisStore) AtomicUpdate(ctx context.Context, key string,
+    updateFn func(*ratelimit.BucketState) *ratelimit.BucketState) (*ratelimit.BucketState, error) {
+
+    redisKey := r.prefix + key
+    var finalState *ratelimit.BucketState
+
+    // Use WATCH for optimistic locking with retries
+    err := r.client.Watch(ctx, func(tx *redis.Tx) error {
+        // Get current state
+        var state *ratelimit.BucketState
+        data, err := tx.Get(ctx, redisKey).Bytes()
+        if err == nil {
+            state = &ratelimit.BucketState{}
+            if err := json.Unmarshal(data, state); err != nil {
+                return err
+            }
+        } else if err != redis.Nil {
+            return err
+        }
+
+        // Apply update function (token bucket algorithm runs here)
+        newState := updateFn(state)
+        finalState = newState
+
+        if newState == nil {
+            return nil // No change needed
+        }
+
+        // Store atomically
+        newData, err := json.Marshal(newState)
+        if err != nil {
+            return err
+        }
+
+        _, err = tx.TxPipelined(ctx, func(pipe redis.Pipeliner) error {
+            pipe.Set(ctx, redisKey, newData, r.ttl)
+            return nil
+        })
+        return err
+    }, redisKey)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return finalState, nil
+}
+
+func (r *RedisStore) Delete(ctx context.Context, key string) error {
+    return r.client.Del(ctx, r.prefix+key).Err()
+}
+
+func (r *RedisStore) Close() error {
+    return r.client.Close()
 }
 ```
 
-### Step 4: Update Imports
+### DynamoDB Implementation
 
 ```go
-// Add new import
-import (
-    "github.com/redis/go-redis/v9"
-    redisrl "github.com/felixgeelhaar/fortify/backends/redis"
-)
+package dynamostore
 
-// Keep interface import unchanged
 import (
+    "context"
+    "strconv"
+    "time"
+
+    "github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+    "github.com/aws/aws-sdk-go-v2/service/dynamodb"
+    "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
     "github.com/felixgeelhaar/fortify/ratelimit"
 )
+
+type DynamoStore struct {
+    client    *dynamodb.Client
+    tableName string
+    ttl       time.Duration
+}
+
+type bucketItem struct {
+    Key        string  `dynamodbav:"pk"`
+    Tokens     float64 `dynamodbav:"tokens"`
+    LastRefill int64   `dynamodbav:"last_refill"`
+    Version    int64   `dynamodbav:"version"`
+    TTL        int64   `dynamodbav:"ttl"`
+}
+
+func New(client *dynamodb.Client, tableName string, ttl time.Duration) *DynamoStore {
+    return &DynamoStore{
+        client:    client,
+        tableName: tableName,
+        ttl:       ttl,
+    }
+}
+
+func (d *DynamoStore) AtomicUpdate(ctx context.Context, key string,
+    updateFn func(*ratelimit.BucketState) *ratelimit.BucketState) (*ratelimit.BucketState, error) {
+
+    // Retry loop for conditional write conflicts
+    for attempts := 0; attempts < 10; attempts++ {
+        // Get current item
+        result, err := d.client.GetItem(ctx, &dynamodb.GetItemInput{
+            TableName: &d.tableName,
+            Key: map[string]types.AttributeValue{
+                "pk": &types.AttributeValueMemberS{Value: key},
+            },
+        })
+        if err != nil {
+            return nil, err
+        }
+
+        var state *ratelimit.BucketState
+        var version int64 = 0
+
+        if result.Item != nil {
+            var item bucketItem
+            if err := attributevalue.UnmarshalMap(result.Item, &item); err != nil {
+                return nil, err
+            }
+            state = &ratelimit.BucketState{
+                Tokens:     item.Tokens,
+                LastRefill: time.Unix(0, item.LastRefill),
+            }
+            version = item.Version
+        }
+
+        // Apply update function
+        newState := updateFn(state)
+        if newState == nil {
+            return state, nil
+        }
+
+        // Conditional write with version check
+        newItem := bucketItem{
+            Key:        key,
+            Tokens:     newState.Tokens,
+            LastRefill: newState.LastRefill.UnixNano(),
+            Version:    version + 1,
+            TTL:        time.Now().Add(d.ttl).Unix(),
+        }
+
+        item, err := attributevalue.MarshalMap(newItem)
+        if err != nil {
+            return nil, err
+        }
+
+        conditionExpr := "attribute_not_exists(pk) OR version = :v"
+        _, err = d.client.PutItem(ctx, &dynamodb.PutItemInput{
+            TableName:           &d.tableName,
+            Item:                item,
+            ConditionExpression: &conditionExpr,
+            ExpressionAttributeValues: map[string]types.AttributeValue{
+                ":v": &types.AttributeValueMemberN{Value: strconv.FormatInt(version, 10)},
+            },
+        })
+
+        if err == nil {
+            return newState, nil
+        }
+
+        // Check if it's a condition check failure (retry)
+        var ccf *types.ConditionalCheckFailedException
+        if !errors.As(err, &ccf) {
+            return nil, err
+        }
+        // Retry on conflict
+    }
+
+    return nil, errors.New("max retries exceeded")
+}
+
+func (d *DynamoStore) Delete(ctx context.Context, key string) error {
+    _, err := d.client.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+        TableName: &d.tableName,
+        Key: map[string]types.AttributeValue{
+            "pk": &types.AttributeValueMemberS{Value: key},
+        },
+    })
+    return err
+}
+
+func (d *DynamoStore) Close() error {
+    return nil
+}
 ```
 
-### Step 5: Test Locally
+## Migration from In-Memory
 
-```bash
-# Start Redis
-docker run -d -p 6379:6379 redis:7-alpine
+### Step 1: Implement Your Store
 
-# Run your application
-go run main.go
+Choose your backend and implement the `Store` interface (see examples above).
 
-# Test rate limiting
-for i in {1..15}; do
-  curl http://localhost:8080/api/endpoint
-done
-```
+### Step 2: Update Configuration
 
-### Step 6: Deploy to Staging
-
-1. Deploy Redis infrastructure
-2. Update application with Redis configuration
-3. Run integration tests
-4. Monitor for errors and performance
-
-### Step 7: Production Rollout
-
-Use a phased rollout:
-
-1. **Canary Deployment** (10% of traffic)
-2. **Monitor Metrics** (latency, errors, rate limit accuracy)
-3. **Gradual Rollout** (25% → 50% → 100%)
-4. **Full Deployment**
-
-## Configuration Comparison
-
-### In-Memory Configuration
+**Before (default in-memory):**
 
 ```go
-ratelimit.New(ratelimit.Config{
+limiter := ratelimit.New(ratelimit.Config{
     Rate:     100,
     Burst:    200,
     Interval: time.Second,
-    KeyFunc:  extractKey,
-    Logger:   logger,
-    OnLimit:  callback,
 })
 ```
 
-### Redis Configuration
+**After (custom store):**
 
 ```go
-redisrl.New(redisrl.Config{
-    // Required: Add Redis client
-    Client: redisClient,
+// Create your custom store
+redisStore := redisstore.New(redisClient, "ratelimit:", time.Hour)
 
-    // Same as in-memory
+limiter := ratelimit.New(ratelimit.Config{
     Rate:     100,
     Burst:    200,
     Interval: time.Second,
-    KeyFunc:  extractKey,
-    Logger:   logger,
-    OnLimit:  callback,
-
-    // Redis-specific options
-    KeyPrefix:       "myapp:rl:",    // Optional
-    BucketTTL:       time.Hour,      // Optional
-    FallbackOnError: false,          // Optional
+    Store:    redisStore,
+    FailOpen: true,  // Allow requests if storage fails
 })
 ```
 
-### New Configuration Options
+### Step 3: Handle Errors
+
+Configure `FailOpen` based on your requirements:
+
+- `FailOpen: false` (default) - Deny requests when storage fails (consistency)
+- `FailOpen: true` - Allow requests when storage fails (availability)
+
+## Configuration
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `Client` | *required* | Redis client (standalone, cluster, or sentinel) |
-| `KeyPrefix` | `"fortify:ratelimit:"` | Redis key namespace |
-| `BucketTTL` | `1 hour` | Auto-expire idle buckets |
-| `FallbackOnError` | `false` | Behavior on Redis failure |
-
-## Code Changes
-
-### Minimal Migration (Drop-In Replacement)
-
-```go
-// 1. Add Redis client creation
-client := redis.NewClient(&redis.Options{
-    Addr: "localhost:6379",
-})
-
-// 2. Change constructor
-- limiter := ratelimit.New(config)
-+ limiter, err := redisrl.New(redisrl.Config{
-+     Client: client,
-+     ...config,
-+ })
-+ if err != nil {
-+     log.Fatal(err)
-+ }
-
-// 3. Everything else stays the same!
-limiter.Allow(ctx, key)
-limiter.Wait(ctx, key)
-limiter.Take(ctx, key, n)
-```
-
-### Recommended Migration (With Error Handling)
-
-```go
-func createRateLimiter(redisURL string, logger *slog.Logger) (ratelimit.RateLimiter, error) {
-    // Parse Redis URL
-    opts, err := redis.ParseURL(redisURL)
-    if err != nil {
-        return nil, fmt.Errorf("invalid redis URL: %w", err)
-    }
-
-    // Create client with connection pool
-    client := redis.NewClient(opts)
-
-    // Verify connection
-    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-    defer cancel()
-
-    if err := client.Ping(ctx).Err(); err != nil {
-        return nil, fmt.Errorf("redis connection failed: %w", err)
-    }
-
-    // Create rate limiter
-    limiter, err := redisrl.New(redisrl.Config{
-        Client:          client,
-        Rate:            100,
-        Burst:           200,
-        Interval:        time.Second,
-        Logger:          logger,
-        BucketTTL:       time.Hour,
-        FallbackOnError: false, // Fail-closed for security
-    })
-    if err != nil {
-        return nil, fmt.Errorf("failed to create limiter: %w", err)
-    }
-
-    return limiter, nil
-}
-```
+| `Store` | `MemoryStore` | Storage backend implementation |
+| `FailOpen` | `false` | Behavior on storage failure |
+| `Rate` | `100` | Tokens added per interval |
+| `Burst` | `Rate` | Maximum bucket capacity |
+| `Interval` | `1s` | Refill interval |
 
 ## Testing Strategy
 
-### Unit Tests
-
-No changes needed if using the `RateLimiter` interface:
+### Unit Tests with Mock Store
 
 ```go
-func TestMyHandler(t *testing.T) {
-    // Use miniredis for testing
-    mr := miniredis.RunT(t)
-    client := redis.NewClient(&redis.Options{
-        Addr: mr.Addr(),
+type mockStore struct {
+    states map[string]*ratelimit.BucketState
+    mu     sync.Mutex
+}
+
+func (m *mockStore) AtomicUpdate(ctx context.Context, key string,
+    updateFn func(*ratelimit.BucketState) *ratelimit.BucketState) (*ratelimit.BucketState, error) {
+    m.mu.Lock()
+    defer m.mu.Unlock()
+
+    state := m.states[key]
+    newState := updateFn(state)
+    if newState != nil {
+        m.states[key] = newState
+    }
+    return newState, nil
+}
+
+func TestWithMockStore(t *testing.T) {
+    store := &mockStore{states: make(map[string]*ratelimit.BucketState)}
+    limiter := ratelimit.New(ratelimit.Config{
+        Rate:  10,
+        Burst: 10,
+        Store: store,
     })
 
-    limiter, _ := redisrl.New(redisrl.Config{
-        Client: client,
-        Rate:   10,
-        Burst:  10,
-    })
-
-    // Test as before
-    testHandler(t, limiter)
+    // Test as normal
 }
 ```
 
 ### Integration Tests
 
-Test distributed behavior:
-
 ```go
 func TestDistributedRateLimiting(t *testing.T) {
-    // Start real Redis for integration test
-    // Or use miniredis
+    // Create shared store
+    store := redisstore.New(redisClient, "test:", time.Hour)
 
     // Create multiple limiters (simulating multiple instances)
-    limiter1, _ := redisrl.New(config)
-    limiter2, _ := redisrl.New(config)
+    limiter1 := ratelimit.New(ratelimit.Config{Rate: 10, Burst: 10, Store: store})
+    limiter2 := ratelimit.New(ratelimit.Config{Rate: 10, Burst: 10, Store: store})
 
-    // Both should share same limits
+    ctx := context.Background()
+
+    // Exhaust quota from limiter1
     for i := 0; i < 10; i++ {
         limiter1.Allow(ctx, "user-123")
     }
 
-    // This should be denied (bucket empty)
+    // limiter2 should see empty bucket
     if limiter2.Allow(ctx, "user-123") {
         t.Error("should be rate limited across instances")
     }
 }
 ```
 
-### Load Tests
-
-Compare performance before/after:
-
-```bash
-# Before (in-memory)
-hey -n 100000 -c 100 http://localhost:8080/api/endpoint
-
-# After (Redis)
-hey -n 100000 -c 100 http://localhost:8080/api/endpoint
-```
-
-## Performance Considerations
-
-### Latency Impact
-
-Expect these latency increases:
-
-| Deployment | Additional Latency |
-|------------|-------------------|
-| Local Redis | ~0.5ms |
-| Same-AZ Redis | ~1-2ms |
-| Cross-AZ Redis | ~5-10ms |
-| Cross-Region | ~50-100ms |
-
-**Mitigation:**
-- Deploy Redis in same availability zone
-- Use Redis Cluster for better distribution
-- Monitor p99 latency
-
-### Throughput
-
-Redis backend can handle:
-- **50k-100k ops/sec** on single Redis instance
-- **500k+ ops/sec** with Redis Cluster
-
-**Tuning:**
-```go
-client := redis.NewClient(&redis.Options{
-    Addr:         "localhost:6379",
-    PoolSize:     100,  // Increase for high concurrency
-    MinIdleConns: 20,
-})
-```
-
-### Memory Usage
-
-Each rate limit bucket uses ~100 bytes in Redis:
-- 1M buckets ≈ 100 MB
-- 10M buckets ≈ 1 GB
-
-**Optimization:**
-```go
-redisrl.Config{
-    BucketTTL: 10 * time.Minute,  // Shorter TTL = less memory
-    // ...
-}
-```
-
 ## Production Deployment
 
-### Infrastructure Setup
+### Redis Best Practices
 
-**1. Redis Deployment**
+1. **Use Redis Cluster** for high availability
+2. **Deploy in same availability zone** to minimize latency
+3. **Configure appropriate TTL** for bucket expiration
+4. **Monitor Redis metrics** (memory, connections, latency)
 
-```yaml
-# Kubernetes example
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: redis
-spec:
-  serviceName: redis
-  replicas: 3
-  selector:
-    matchLabels:
-      app: redis
-  template:
-    metadata:
-      labels:
-        app: redis
-    spec:
-      containers:
-      - name: redis
-        image: redis:7-alpine
-        ports:
-        - containerPort: 6379
-        resources:
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-```
+### DynamoDB Best Practices
 
-**2. Application Configuration**
-
-```go
-// Use environment variables
-redisURL := os.Getenv("REDIS_URL")
-if redisURL == "" {
-    redisURL = "redis://localhost:6379"
-}
-
-opts, _ := redis.ParseURL(redisURL)
-client := redis.NewClient(opts)
-```
-
-**3. Connection Pooling**
-
-```go
-client := redis.NewClient(&redis.Options{
-    Addr:         redisURL,
-    PoolSize:     runtime.NumCPU() * 10,
-    MinIdleConns: runtime.NumCPU() * 2,
-    DialTimeout:  5 * time.Second,
-    ReadTimeout:  3 * time.Second,
-    WriteTimeout: 3 * time.Second,
-})
-```
-
-### Monitoring
-
-Track these metrics:
-
-**Application Metrics:**
-- Rate limit hits/misses
-- Redis connection errors
-- Latency percentiles (p50, p95, p99)
-
-**Redis Metrics:**
-- Memory usage
-- Commands per second
-- Evicted keys
-- Connection count
-
-**Example with Prometheus:**
-
-```go
-import "github.com/felixgeelhaar/fortify/metrics"
-
-// Register metrics
-metrics.MustRegister(prometheus.DefaultRegisterer)
-
-// Metrics automatically collected
-```
+1. **Enable TTL** on the table for automatic cleanup
+2. **Use on-demand capacity** for variable workloads
+3. **Configure appropriate WCU/RCU** for provisioned capacity
+4. **Enable point-in-time recovery** for data protection
 
 ### Health Checks
 
 ```go
-func healthCheck(redisClient *redis.Client) http.HandlerFunc {
+func healthCheck(store ratelimit.Store) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
         defer cancel()
 
-        if err := redisClient.Ping(ctx).Err(); err != nil {
-            http.Error(w, "Redis unhealthy", http.StatusServiceUnavailable)
+        // Test store operation
+        _, err := store.AtomicUpdate(ctx, "_health", func(s *ratelimit.BucketState) *ratelimit.BucketState {
+            return s // No-op
+        })
+
+        if err != nil {
+            http.Error(w, "Store unhealthy", http.StatusServiceUnavailable)
             return
         }
 
         w.WriteHeader(http.StatusOK)
-        w.Write([]byte("OK"))
     }
-}
-```
-
-## Rollback Plan
-
-If issues arise, rollback quickly:
-
-### Quick Rollback (Emergency)
-
-```go
-// Switch back to in-memory (no Redis dependency)
-- import redisrl "github.com/felixgeelhaar/fortify/backends/redis"
-+ import "github.com/felixgeelhaar/fortify/ratelimit"
-
-- limiter, _ := redisrl.New(redisrl.Config{
--     Client: client,
-+ limiter := ratelimit.New(ratelimit.Config{
-      Rate:   100,
-      Burst:  200,
-  })
-```
-
-### Gradual Rollback
-
-1. Deploy in-memory version to canary instances
-2. Monitor for improvements
-3. Gradually roll back remaining instances
-
-### Feature Flag Approach
-
-```go
-func createRateLimiter() ratelimit.RateLimiter {
-    if os.Getenv("USE_REDIS_RATE_LIMIT") == "true" {
-        return createRedisLimiter()
-    }
-    return createInMemoryLimiter()
 }
 ```
 
@@ -560,77 +457,33 @@ func createRateLimiter() ratelimit.RateLimiter {
 **Symptoms:** Slow API responses
 
 **Solutions:**
-1. Check Redis latency: `redis-cli --latency`
-2. Verify network connectivity
-3. Move Redis closer to app (same AZ)
-4. Increase Redis resources
-
-### Memory Issues
-
-**Symptoms:** Redis OOM errors
-
-**Solutions:**
-1. Reduce `BucketTTL`
-2. Set `maxmemory-policy allkeys-lru`
-3. Scale Redis vertically or horizontally
-4. Monitor evicted keys
+1. Move storage closer to application (same AZ)
+2. Increase connection pool size
+3. Check network connectivity
+4. Monitor storage backend metrics
 
 ### Rate Limits Not Enforced
 
 **Symptoms:** More requests than expected
 
 **Solutions:**
-1. Verify Redis connectivity
-2. Check Lua script execution
-3. Ensure consistent `KeyFunc` across instances
+1. Verify storage connectivity
+2. Check atomicity implementation
+3. Ensure consistent key generation
 4. Verify clock synchronization
 
-### Connection Pool Exhausted
+### Storage Errors
 
-**Symptoms:** Connection timeout errors
+**Symptoms:** Requests failing or being allowed unexpectedly
 
 **Solutions:**
-1. Increase `PoolSize`
-2. Increase `MinIdleConns`
-3. Reduce connection idle timeout
-4. Scale application horizontally
-
-## Best Practices
-
-✅ **Use Separate Redis Instance**
-- Don't share with application cache
-- Easier capacity planning
-
-✅ **Monitor Redis Health**
-- Set up alerts for connection failures
-- Track memory and CPU usage
-
-✅ **Configure Appropriate TTLs**
-- Balance memory vs. bucket reuse
-- Typical: 1 hour to 24 hours
-
-✅ **Test Failover Scenarios**
-- Redis restart
-- Network partition
-- High load conditions
-
-✅ **Use Structured Logging**
-- Log rate limit events
-- Include user/key identifiers
-
-## Next Steps
-
-After successful migration:
-
-1. Monitor metrics for 1-2 weeks
-2. Tune configuration based on production load
-3. Set up automated alerts
-4. Document Redis runbooks
-5. Plan for capacity growth
+1. Check `FailOpen` configuration
+2. Verify storage backend health
+3. Increase connection timeouts
+4. Add retry logic to store implementation
 
 ## Support
 
-- 📖 [Redis Backend README](../backends/redis/README.md)
 - 📖 [Main Documentation](../README.md)
 - 🐛 [Issue Tracker](https://github.com/felixgeelhaar/fortify/issues)
 - 💬 [Discussions](https://github.com/felixgeelhaar/fortify/discussions)

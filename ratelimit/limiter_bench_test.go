@@ -92,18 +92,48 @@ func BenchmarkRateLimiterConcurrent(b *testing.B) {
 	})
 }
 
-func BenchmarkTokenBucketRefill(b *testing.B) {
-	bucket := newTokenBucket(100, 100, time.Second)
+func BenchmarkMemoryStoreAtomicUpdate(b *testing.B) {
+	store := NewMemoryStore()
+	ctx := context.Background()
 
-	// Exhaust bucket
-	for i := 0; i < 100; i++ {
-		bucket.allow()
-	}
+	// Initialize bucket
+	store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+		return &BucketState{Tokens: 100, LastRefill: time.Now()}
+	})
 
 	b.ResetTimer()
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		bucket.refill()
+		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+			if s == nil {
+				return &BucketState{Tokens: 100, LastRefill: time.Now()}
+			}
+			return &BucketState{Tokens: s.Tokens - 1, LastRefill: time.Now()}
+		})
 	}
+}
+
+func BenchmarkMemoryStoreConcurrentUpdate(b *testing.B) {
+	store := NewMemoryStore()
+	ctx := context.Background()
+
+	// Initialize bucket
+	store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+		return &BucketState{Tokens: 1000000, LastRefill: time.Now()}
+	})
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+				if s == nil {
+					return &BucketState{Tokens: 1000000, LastRefill: time.Now()}
+				}
+				return &BucketState{Tokens: s.Tokens - 1, LastRefill: time.Now()}
+			})
+		}
+	})
 }

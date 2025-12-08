@@ -135,7 +135,7 @@ func Example_callbacks() {
 		Rate:     1,
 		Burst:    1,
 		Interval: time.Second,
-		OnLimit: func(key string) {
+		OnLimit: func(ctx context.Context, key string) {
 			limitedCount++
 			fmt.Printf("Rate limit exceeded for key: %s\n", key)
 		},
@@ -186,7 +186,7 @@ func Example_apiRateLimit() {
 		Rate:     1000,
 		Burst:    1000,
 		Interval: time.Hour,
-		OnLimit: func(key string) {
+		OnLimit: func(ctx context.Context, key string) {
 			fmt.Printf("API rate limit exceeded for key: %s\n", key)
 		},
 	})
@@ -277,7 +277,7 @@ func Example_ipBasedRateLimit() {
 		Rate:     100,
 		Burst:    150,
 		Interval: time.Minute,
-		OnLimit: func(key string) {
+		OnLimit: func(ctx context.Context, key string) {
 			fmt.Printf("Rate limit exceeded for IP: %s\n", key)
 		},
 	})
@@ -312,4 +312,110 @@ func Example_contextCancellation() {
 	err := rl.Wait(ctx, "test-key")
 	fmt.Printf("Error: %v\n", err)
 	// Output: Error: context deadline exceeded
+}
+
+// Example_execute demonstrates using Execute to combine rate limiting with operation execution.
+func Example_execute() {
+	rl := ratelimit.New(ratelimit.Config{
+		Rate:     10,
+		Burst:    10,
+		Interval: time.Second,
+	})
+	defer rl.Close()
+
+	ctx := context.Background()
+
+	// Execute combines rate limiting check with operation execution.
+	// The operation only runs if rate limiting allows.
+	err := rl.Execute(ctx, "api-call", func() error {
+		fmt.Println("Operation executed successfully")
+		return nil
+	})
+
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	// Output: Operation executed successfully
+}
+
+// Example_executeN demonstrates using ExecuteN for operations consuming multiple tokens.
+func Example_executeN() {
+	rl := ratelimit.New(ratelimit.Config{
+		Rate:     100,
+		Burst:    100,
+		Interval: time.Second,
+	})
+	defer rl.Close()
+
+	ctx := context.Background()
+
+	// ExecuteN is useful for operations with variable cost.
+	// For example, batch operations might consume tokens proportional to batch size.
+	batchSize := 5
+	err := rl.ExecuteN(ctx, "batch-operation", batchSize, func() error {
+		fmt.Printf("Batch operation executed (consumed %d tokens)\n", batchSize)
+		return nil
+	})
+
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	// Output: Batch operation executed (consumed 5 tokens)
+}
+
+// Example_reset demonstrates using Reset for testing scenarios.
+func Example_reset() {
+	rl := ratelimit.New(ratelimit.Config{
+		Rate:     1,
+		Burst:    1,
+		Interval: time.Second,
+	})
+	defer rl.Close()
+
+	ctx := context.Background()
+
+	// Use up the rate limit
+	rl.Allow(ctx, "test-key")
+	fmt.Printf("Before reset - buckets: %d\n", rl.BucketCount())
+
+	// Reset clears all rate limiting state.
+	// SECURITY NOTE: In production, wrap Reset() with authorization checks.
+	err := rl.Reset(ctx)
+	if err != nil {
+		fmt.Printf("Reset error: %v\n", err)
+		return
+	}
+
+	fmt.Printf("After reset - buckets: %d\n", rl.BucketCount())
+	// Output:
+	// Before reset - buckets: 1
+	// After reset - buckets: 0
+}
+
+// Example_bucketCount demonstrates monitoring active rate limit buckets.
+func Example_bucketCount() {
+	rl := ratelimit.New(ratelimit.Config{
+		Rate:     10,
+		Burst:    10,
+		Interval: time.Second,
+	})
+	defer rl.Close()
+
+	ctx := context.Background()
+
+	// Initially no buckets
+	fmt.Printf("Initial bucket count: %d\n", rl.BucketCount())
+
+	// Each unique key creates a bucket
+	rl.Allow(ctx, "user-1")
+	rl.Allow(ctx, "user-2")
+	rl.Allow(ctx, "user-3")
+
+	// Same key doesn't create new bucket
+	rl.Allow(ctx, "user-1")
+
+	fmt.Printf("After operations: %d buckets\n", rl.BucketCount())
+	// Output:
+	// Initial bucket count: 0
+	// After operations: 3 buckets
 }
