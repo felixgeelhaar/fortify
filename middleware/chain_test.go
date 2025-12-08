@@ -91,7 +91,7 @@ func TestChainExecution(t *testing.T) {
 		r := retry.New[int](retry.Config{
 			MaxAttempts: 2,
 		})
-		rl := ratelimit.New(ratelimit.Config{
+		rl := ratelimit.New(&ratelimit.Config{
 			Rate:     100,
 			Interval: time.Second,
 		})

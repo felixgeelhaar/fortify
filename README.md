@@ -149,7 +149,7 @@ Controls the rate of operations using a token bucket algorithm with a pluggable 
 ```go
 import "github.com/felixgeelhaar/fortify/ratelimit"
 
-rl := ratelimit.New(ratelimit.Config{
+rl := ratelimit.New(&ratelimit.Config{
     Rate:     100,               // 100 requests
     Burst:    200,               // burst of 200
     Interval: time.Second,       // per second
@@ -195,7 +195,7 @@ func (r *RedisStore) Delete(ctx context.Context, key string) error { /* ... */ }
 func (r *RedisStore) Close() error { /* ... */ }
 
 // Use custom store
-rl := ratelimit.New(ratelimit.Config{
+rl := ratelimit.New(&ratelimit.Config{
     Rate:     100,
     Burst:    200,
     Interval: time.Second,

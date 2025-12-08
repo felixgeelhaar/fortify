@@ -84,7 +84,7 @@
 //
 //	import "github.com/felixgeelhaar/fortify/ratelimit"
 //
-//	rl := ratelimit.New(ratelimit.Config{
+//	rl := ratelimit.New(&ratelimit.Config{
 //	    Rate:     100,
 //	    Burst:    10,
 //	    Interval: time.Second,

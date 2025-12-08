@@ -12,13 +12,13 @@ import (
 // The updateFn in AtomicUpdate should always return a new BucketState
 // instance rather than modifying the input.
 type BucketState struct {
-	// Tokens is the current number of available tokens.
-	// This can be fractional to allow precise token accumulation.
-	Tokens float64
-
 	// LastRefill is the timestamp of the last refill calculation.
 	// Used to calculate how many tokens to add based on elapsed time.
 	LastRefill time.Time
+
+	// Tokens is the current number of available tokens.
+	// This can be fractional to allow precise token accumulation.
+	Tokens float64
 }
 
 // Store defines the storage interface for rate limiter state.

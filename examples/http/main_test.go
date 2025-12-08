@@ -20,7 +20,7 @@ func TestHTTPExample(t *testing.T) {
 }
 
 func TestHTTPMiddleware(t *testing.T) {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     10,
 		Burst:    10,
 		Interval: time.Second,
@@ -51,7 +51,7 @@ func TestHTTPMiddleware(t *testing.T) {
 }
 
 func TestHTTPRateLimit(t *testing.T) {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     1,
 		Burst:    1,
 		Interval: time.Hour, // Very slow refill

@@ -217,7 +217,7 @@ if err := limiter.Wait(ctx); err != nil {
 ```go
 import "github.com/felixgeelhaar/fortify/ratelimit"
 
-limiter := ratelimit.New(ratelimit.Config{
+limiter := ratelimit.New(&ratelimit.Config{
     Rate:     100,
     Burst:    150,
     Interval: time.Second,
@@ -267,7 +267,7 @@ func getLimiter(key string) *rate.Limiter {
 
 **Fortify** (built-in):
 ```go
-limiter := ratelimit.New(ratelimit.Config{
+limiter := ratelimit.New(&ratelimit.Config{
     Rate:     100,
     Burst:    150,
     Interval: time.Second,

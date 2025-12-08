@@ -12,7 +12,7 @@ import (
 func main() {
 	// Create a token bucket rate limiter
 	// Allows 5 requests per second with burst of 10
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     5,
 		Burst:    10,
 		Interval: time.Second,

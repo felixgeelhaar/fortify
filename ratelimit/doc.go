@@ -10,7 +10,7 @@
 //
 // Create a rate limiter with default in-memory storage:
 //
-//	limiter := ratelimit.New(ratelimit.Config{
+//	limiter := ratelimit.New(&ratelimit.Config{
 //	    Rate:     100,           // 100 tokens per second
 //	    Burst:    150,           // Allow bursts up to 150
 //	    Interval: time.Second,
@@ -29,7 +29,7 @@
 // across multiple instances, provide a custom Store implementation backed
 // by Redis, DynamoDB, or another distributed backend.
 //
-//	limiter := ratelimit.New(ratelimit.Config{
+//	limiter := ratelimit.New(&ratelimit.Config{
 //	    Rate:     100,
 //	    Burst:    150,
 //	    Interval: time.Second,
@@ -41,7 +41,7 @@
 //
 // Use KeyFunc to extract rate limiting keys from context:
 //
-//	limiter := ratelimit.New(ratelimit.Config{
+//	limiter := ratelimit.New(&ratelimit.Config{
 //	    Rate: 100,
 //	    KeyFunc: func(ctx context.Context) string {
 //	        return ctx.Value("user_id").(string)
@@ -53,7 +53,7 @@
 // The rate limiter supports structured logging via slog and metrics collection
 // via the optional Metrics interface:
 //
-//	limiter := ratelimit.New(ratelimit.Config{
+//	limiter := ratelimit.New(&ratelimit.Config{
 //	    Rate:    100,
 //	    Logger:  slog.Default(),
 //	    Metrics: myMetricsRecorder,

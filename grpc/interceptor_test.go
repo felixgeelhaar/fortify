@@ -94,7 +94,7 @@ func TestUnaryCircuitBreakerInterceptor(t *testing.T) {
 
 func TestUnaryRateLimitInterceptor(t *testing.T) {
 	t.Run("allows requests within rate limit", func(t *testing.T) {
-		rl := ratelimit.New(ratelimit.Config{
+		rl := ratelimit.New(&ratelimit.Config{
 			Rate:     10,
 			Interval: time.Second,
 		})
@@ -117,7 +117,7 @@ func TestUnaryRateLimitInterceptor(t *testing.T) {
 	})
 
 	t.Run("returns resource exhausted when rate limit exceeded", func(t *testing.T) {
-		rl := ratelimit.New(ratelimit.Config{
+		rl := ratelimit.New(&ratelimit.Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Hour,
@@ -257,7 +257,7 @@ func TestStreamCircuitBreakerInterceptor(t *testing.T) {
 
 func TestStreamRateLimitInterceptor(t *testing.T) {
 	t.Run("allows streams within rate limit", func(t *testing.T) {
-		rl := ratelimit.New(ratelimit.Config{
+		rl := ratelimit.New(&ratelimit.Config{
 			Rate:     10,
 			Interval: time.Second,
 		})
@@ -278,7 +278,7 @@ func TestStreamRateLimitInterceptor(t *testing.T) {
 	})
 
 	t.Run("returns resource exhausted when rate limit exceeded", func(t *testing.T) {
-		rl := ratelimit.New(ratelimit.Config{
+		rl := ratelimit.New(&ratelimit.Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Hour,

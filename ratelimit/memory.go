@@ -27,10 +27,10 @@ type MemoryStoreOption func(*MemoryStore)
 
 // WithMaxKeys sets the maximum number of keys allowed in the store.
 // When the limit is reached, new keys will be rejected with ErrKeyLimitExceeded.
-func WithMaxKeys(max int) MemoryStoreOption {
+func WithMaxKeys(maxKeys int) MemoryStoreOption {
 	return func(m *MemoryStore) {
-		if max > 0 {
-			m.maxKeys = int64(max)
+		if maxKeys > 0 {
+			m.maxKeys = int64(maxKeys)
 		}
 	}
 }
@@ -80,23 +80,25 @@ func WithMaxKeyLength(maxLen int) MemoryStoreOption {
 //   - Configurable maximum key limit to prevent memory exhaustion
 //   - Configurable maximum key length to prevent memory exhaustion from long keys
 //   - Health check support via HealthChecker interface
+//
+//nolint:govet // fieldalignment: sync.Map has internal pointer padding
 type MemoryStore struct {
 	buckets         sync.Map // map[string]*bucketEntry
+	wg              sync.WaitGroup
+	done            chan struct{}
 	keyCount        atomic.Int64
 	maxKeys         int64
-	maxKeyLength    int
 	cleanupInterval time.Duration
 	entryTTL        time.Duration
-	done            chan struct{}
-	wg              sync.WaitGroup
+	maxKeyLength    int
 	closed          atomic.Bool
 }
 
 // bucketEntry holds the state and mutex for a single bucket.
 type bucketEntry struct {
-	mu         sync.Mutex
 	state      *BucketState
 	lastAccess atomic.Int64 // Unix nano timestamp
+	mu         sync.Mutex
 }
 
 // NewMemoryStore creates a new in-memory store with default settings.
@@ -217,7 +219,7 @@ func (m *MemoryStore) AtomicUpdate(ctx context.Context, key string, updateFn fun
 		}
 	}
 
-	entry := entryI.(*bucketEntry)
+	entry := entryI.(*bucketEntry) //nolint:errcheck // type assertion always succeeds
 
 	// Lock this specific bucket for atomic update
 	entry.mu.Lock()
@@ -263,7 +265,7 @@ func (m *MemoryStore) Get(ctx context.Context, key string) (*BucketState, error)
 		return nil, nil
 	}
 
-	entry := entryI.(*bucketEntry)
+	entry := entryI.(*bucketEntry) //nolint:errcheck // type assertion always succeeds
 
 	entry.mu.Lock()
 	defer entry.mu.Unlock()
@@ -303,7 +305,7 @@ func (m *MemoryStore) Delete(ctx context.Context, key string) error {
 		return nil // Already deleted or never existed
 	}
 
-	entry := entryI.(*bucketEntry)
+	entry := entryI.(*bucketEntry) //nolint:errcheck // type assertion always succeeds
 
 	// Lock entry before deletion to prevent race with AtomicUpdate
 	entry.mu.Lock()
@@ -364,7 +366,7 @@ func (m *MemoryStore) Reset(ctx context.Context) error {
 		if !exists {
 			continue
 		}
-		entry := entryI.(*bucketEntry)
+		entry := entryI.(*bucketEntry) //nolint:errcheck // type assertion always succeeds
 		entry.mu.Lock()
 		// Use LoadAndDelete to atomically check if we're the one deleting.
 		// This prevents double-decrement if cleanup() or Delete() runs concurrently.
@@ -381,7 +383,7 @@ func (m *MemoryStore) Reset(ctx context.Context) error {
 // Deprecated: Use Reset(ctx) instead for context support.
 // This method is kept for backwards compatibility.
 func (m *MemoryStore) Clear() {
-	_ = m.Reset(context.Background())
+	_ = m.Reset(context.Background()) //nolint:errcheck // backwards compatibility method
 }
 
 // BucketCount implements the BucketCounter interface.
@@ -408,7 +410,7 @@ func (m *MemoryStore) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-// Compile-time interface checks
+// Compile-time interface checks.
 var (
 	_ Store         = (*MemoryStore)(nil)
 	_ HealthChecker = (*MemoryStore)(nil)

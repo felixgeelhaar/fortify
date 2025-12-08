@@ -28,7 +28,7 @@ func main() {
 		},
 	})
 
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     10, // 10 requests
 		Burst:    20, // burst of 20
 		Interval: time.Second,

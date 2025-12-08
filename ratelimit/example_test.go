@@ -11,7 +11,7 @@ import (
 // Example demonstrates basic rate limiting usage.
 func Example() {
 	// Create rate limiter: 10 requests per second with burst of 20
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     10,
 		Burst:    20,
 		Interval: time.Second,
@@ -29,7 +29,7 @@ func Example() {
 // Example_wait demonstrates waiting for rate limit availability.
 func Example_wait() {
 	// Create strict rate limiter: 2 requests per second, no burst
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     2,
 		Burst:    2,
 		Interval: time.Second,
@@ -55,7 +55,7 @@ func Example_wait() {
 // Example_perUserRateLimit demonstrates rate limiting per user.
 func Example_perUserRateLimit() {
 	// 5 requests per second per user
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     5,
 		Burst:    10,
 		Interval: time.Second,
@@ -75,7 +75,7 @@ func Example_perUserRateLimit() {
 // Example_burstCapacity demonstrates burst capacity handling.
 func Example_burstCapacity() {
 	// 10 requests per second, but allow burst of 50
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     10,
 		Burst:    50,
 		Interval: time.Second,
@@ -105,7 +105,7 @@ func Example_keyFunc() {
 	const userIDKey contextKey = "user_id"
 
 	// Configure rate limiter to extract user ID from context
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     100,
 		Burst:    200,
 		Interval: time.Second,
@@ -131,7 +131,7 @@ func Example_keyFunc() {
 func Example_callbacks() {
 	limitedCount := 0
 
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     1,
 		Burst:    1,
 		Interval: time.Second,
@@ -158,7 +158,7 @@ func Example_callbacks() {
 // Example_take demonstrates taking multiple tokens at once.
 func Example_take() {
 	// 100 requests per second
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     100,
 		Burst:    100,
 		Interval: time.Second,
@@ -182,7 +182,7 @@ func Example_take() {
 // Example_apiRateLimit demonstrates API rate limiting pattern.
 func Example_apiRateLimit() {
 	// API rate limit: 1000 requests per hour per API key
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     1000,
 		Burst:    1000,
 		Interval: time.Hour,
@@ -208,13 +208,13 @@ func Example_apiRateLimit() {
 // Example_tieredRateLimit demonstrates different limits for different user tiers.
 func Example_tieredRateLimit() {
 	// Create rate limiters for different tiers
-	freeTier := ratelimit.New(ratelimit.Config{
+	freeTier := ratelimit.New(&ratelimit.Config{
 		Rate:     10,
 		Burst:    10,
 		Interval: time.Minute,
 	})
 
-	premiumTier := ratelimit.New(ratelimit.Config{
+	premiumTier := ratelimit.New(&ratelimit.Config{
 		Rate:     100,
 		Burst:    200,
 		Interval: time.Minute,
@@ -240,7 +240,7 @@ func Example_dynamicRateLimit() {
 	// Start with normal rate limit
 	normalRate := 100
 
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     normalRate,
 		Burst:    normalRate * 2,
 		Interval: time.Second,
@@ -256,7 +256,7 @@ func Example_dynamicRateLimit() {
 	// During high load, you could create a new rate limiter with lower limits
 	// This is a simplified example - in practice, you'd monitor system metrics
 	highLoadRate := 50
-	rlHighLoad := ratelimit.New(ratelimit.Config{
+	rlHighLoad := ratelimit.New(&ratelimit.Config{
 		Rate:     highLoadRate,
 		Burst:    highLoadRate,
 		Interval: time.Second,
@@ -273,7 +273,7 @@ func Example_dynamicRateLimit() {
 // Example_ipBasedRateLimit demonstrates rate limiting by IP address.
 func Example_ipBasedRateLimit() {
 	// 100 requests per minute per IP
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     100,
 		Burst:    150,
 		Interval: time.Minute,
@@ -295,7 +295,7 @@ func Example_ipBasedRateLimit() {
 
 // Example_contextCancellation demonstrates rate limiter respecting context cancellation.
 func Example_contextCancellation() {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     1,
 		Burst:    1,
 		Interval: time.Second,
@@ -316,7 +316,7 @@ func Example_contextCancellation() {
 
 // Example_execute demonstrates using Execute to combine rate limiting with operation execution.
 func Example_execute() {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     10,
 		Burst:    10,
 		Interval: time.Second,
@@ -340,7 +340,7 @@ func Example_execute() {
 
 // Example_executeN demonstrates using ExecuteN for operations consuming multiple tokens.
 func Example_executeN() {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     100,
 		Burst:    100,
 		Interval: time.Second,
@@ -365,7 +365,7 @@ func Example_executeN() {
 
 // Example_reset demonstrates using Reset for testing scenarios.
 func Example_reset() {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     1,
 		Burst:    1,
 		Interval: time.Second,
@@ -394,7 +394,7 @@ func Example_reset() {
 
 // Example_bucketCount demonstrates monitoring active rate limit buckets.
 func Example_bucketCount() {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     10,
 		Burst:    10,
 		Interval: time.Second,

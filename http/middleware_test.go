@@ -68,7 +68,7 @@ func TestCircuitBreakerMiddleware(t *testing.T) {
 
 func TestRateLimitMiddleware(t *testing.T) {
 	t.Run("allows requests within rate limit", func(t *testing.T) {
-		rl := ratelimit.New(ratelimit.Config{
+		rl := ratelimit.New(&ratelimit.Config{
 			Rate:     10,
 			Interval: time.Second,
 		})
@@ -90,7 +90,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 	})
 
 	t.Run("returns 429 when rate limit exceeded", func(t *testing.T) {
-		rl := ratelimit.New(ratelimit.Config{
+		rl := ratelimit.New(&ratelimit.Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Hour, // Very slow refill
@@ -167,7 +167,7 @@ func TestTimeoutMiddleware(t *testing.T) {
 
 func TestMiddlewareChaining(t *testing.T) {
 	t.Run("chains multiple middlewares", func(t *testing.T) {
-		rl := ratelimit.New(ratelimit.Config{
+		rl := ratelimit.New(&ratelimit.Config{
 			Rate:     100,
 			Interval: time.Second,
 		})

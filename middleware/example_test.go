@@ -54,7 +54,7 @@ func Example_fullStack() {
 		MaxQueue:      20,
 	})
 
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     100,
 		Burst:    200,
 		Interval: time.Second,
@@ -165,7 +165,7 @@ func Example_timeoutWithRetry() {
 
 // Example_rateLimitWithBulkhead demonstrates rate limiting and concurrency control.
 func Example_rateLimitWithBulkhead() {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     10,
 		Burst:    20,
 		Interval: time.Second,
@@ -201,7 +201,7 @@ func Example_apiClient() {
 		MaxQueue:      50,
 	})
 
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     1000,
 		Burst:    1500,
 		Interval: time.Hour, // 1000 requests per hour

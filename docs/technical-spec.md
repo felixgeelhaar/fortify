@@ -267,7 +267,7 @@ func New(config Config) RateLimiter
 **Example:**
 
 ```go
-limiter := ratelimit.New(ratelimit.Config{
+limiter := ratelimit.New(&ratelimit.Config{
     Rate:     100,
     Burst:    150,
     Interval: time.Second,

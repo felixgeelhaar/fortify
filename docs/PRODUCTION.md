@@ -151,7 +151,7 @@ r := retry.New[T](&retry.Config{
 **Production-Ready Configuration:**
 
 ```go
-rl := ratelimit.New(ratelimit.Config{
+rl := ratelimit.New(&ratelimit.Config{
     // 100 requests per second per key
     Rate: 100,
 
@@ -423,7 +423,7 @@ bh := bulkhead.New[T](bulkhead.Config{
     QueueTimeout: 30 * time.Second,  // Prevent indefinite queueing
 })
 
-rl := ratelimit.New(ratelimit.Config{
+rl := ratelimit.New(&ratelimit.Config{
     Rate: 1000,
     Burst: 1500,  // Limit burst size
     Interval: time.Second,

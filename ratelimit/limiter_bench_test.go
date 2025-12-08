@@ -7,7 +7,7 @@ import (
 )
 
 func BenchmarkRateLimiterAllow(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000, // Very high rate to avoid blocking
 		Burst:    1000000,
 		Interval: time.Second,
@@ -23,7 +23,7 @@ func BenchmarkRateLimiterAllow(b *testing.B) {
 }
 
 func BenchmarkRateLimiterAllowRateLimited(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1,
 		Burst:    1,
 		Interval: time.Hour, // No refill during benchmark
@@ -41,7 +41,7 @@ func BenchmarkRateLimiterAllowRateLimited(b *testing.B) {
 }
 
 func BenchmarkRateLimiterTake(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -57,7 +57,7 @@ func BenchmarkRateLimiterTake(b *testing.B) {
 }
 
 func BenchmarkRateLimiterMultipleKeys(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -75,7 +75,7 @@ func BenchmarkRateLimiterMultipleKeys(b *testing.B) {
 }
 
 func BenchmarkRateLimiterConcurrent(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,

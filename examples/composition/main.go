@@ -130,7 +130,7 @@ func buildResilientChain() *middleware.Chain[*APIResponse] {
 	})
 
 	// 3. Rate Limiter - Prevent overwhelming the API
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     5,
 		Burst:    10,
 		Interval: time.Second,

@@ -8,29 +8,6 @@ import (
 
 // Config holds the configuration for a RateLimiter.
 type Config struct {
-	// Rate is the number of tokens added to the bucket per Interval.
-	// Must be positive. Defaults to 100 if zero or negative.
-	//
-	// Example: Rate=10 with Interval=time.Second allows 10 requests per second.
-	Rate int
-
-	// Burst is the maximum number of tokens in the bucket (bucket capacity).
-	// This allows short bursts of requests up to this limit.
-	// Must be positive. Defaults to Rate if zero or negative.
-	//
-	// Setting Burst > Rate allows temporary bursts above the sustained rate.
-	// Setting Burst == Rate enforces strict rate limiting with no burst.
-	Burst int
-
-	// Interval is the time period over which Rate tokens are added.
-	// Defaults to 1 second if zero.
-	Interval time.Duration
-
-	// MaxTokensPerRequest limits the maximum tokens that can be requested
-	// in a single Take() call. This prevents integer overflow and DoS attacks.
-	// Defaults to Burst * 10 if zero or negative.
-	MaxTokensPerRequest int
-
 	// KeyFunc extracts the rate limiting key from the context.
 	// If nil, the key parameter passed to Allow/Wait/Take is used.
 	// This is useful for extracting keys from request context (user ID, IP, tenant, etc.)
@@ -70,6 +47,29 @@ type Config struct {
 	// For distributed rate limiting across multiple instances, provide a custom
 	// Store implementation backed by Redis, DynamoDB, or another distributed backend.
 	Store Store
+
+	// Interval is the time period over which Rate tokens are added.
+	// Defaults to 1 second if zero.
+	Interval time.Duration
+
+	// Rate is the number of tokens added to the bucket per Interval.
+	// Must be positive. Defaults to 100 if zero or negative.
+	//
+	// Example: Rate=10 with Interval=time.Second allows 10 requests per second.
+	Rate int
+
+	// Burst is the maximum number of tokens in the bucket (bucket capacity).
+	// This allows short bursts of requests up to this limit.
+	// Must be positive. Defaults to Rate if zero or negative.
+	//
+	// Setting Burst > Rate allows temporary bursts above the sustained rate.
+	// Setting Burst == Rate enforces strict rate limiting with no burst.
+	Burst int
+
+	// MaxTokensPerRequest limits the maximum tokens that can be requested
+	// in a single Take() call. This prevents integer overflow and DoS attacks.
+	// Defaults to Burst * 10 if zero or negative.
+	MaxTokensPerRequest int
 
 	// FailOpen determines behavior when storage operations fail.
 	// If true, allows requests when storage is unavailable (favors availability).

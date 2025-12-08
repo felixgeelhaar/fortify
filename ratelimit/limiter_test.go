@@ -15,7 +15,7 @@ import (
 
 func TestRateLimiterAllow(t *testing.T) {
 	t.Run("allows requests within rate limit", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     5,
 			Burst:    5,
 			Interval: time.Second,
@@ -30,7 +30,7 @@ func TestRateLimiterAllow(t *testing.T) {
 	})
 
 	t.Run("blocks requests exceeding burst", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     5,
 			Burst:    3,
 			Interval: time.Second,
@@ -51,7 +51,7 @@ func TestRateLimiterAllow(t *testing.T) {
 	})
 
 	t.Run("separate keys have independent limits", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     2,
 			Burst:    2,
 			Interval: time.Second,
@@ -73,7 +73,7 @@ func TestRateLimiterAllow(t *testing.T) {
 	})
 
 	t.Run("refills tokens over time", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    2,
 			Interval: 100 * time.Millisecond,
@@ -102,7 +102,7 @@ func TestRateLimiterAllow(t *testing.T) {
 
 func TestRateLimiterWait(t *testing.T) {
 	t.Run("waits for token availability", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    1,
 			Interval: 100 * time.Millisecond,
@@ -129,7 +129,7 @@ func TestRateLimiterWait(t *testing.T) {
 	})
 
 	t.Run("respects context cancellation", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Second,
@@ -154,7 +154,7 @@ func TestRateLimiterWait(t *testing.T) {
 
 func TestRateLimiterTake(t *testing.T) {
 	t.Run("takes multiple tokens at once", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -179,7 +179,7 @@ func TestRateLimiterTake(t *testing.T) {
 	})
 
 	t.Run("rejects when insufficient tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    5,
 			Interval: time.Second,
@@ -204,7 +204,7 @@ func TestRateLimiterKeyFunc(t *testing.T) {
 	const userIDKey contextKey = "user_id"
 
 	t.Run("uses custom key function", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     2,
 			Burst:    2,
 			Interval: time.Second,
@@ -235,7 +235,7 @@ func TestRateLimiterKeyFunc(t *testing.T) {
 
 func TestRateLimiterConcurrent(t *testing.T) {
 	t.Run("handles concurrent requests safely", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -280,7 +280,7 @@ func TestRateLimiterCallbacks(t *testing.T) {
 	t.Run("calls OnLimit callback", func(t *testing.T) {
 		limitedKeys := make(chan string, 10)
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Second,
@@ -310,7 +310,7 @@ func TestRateLimiterCallbacks(t *testing.T) {
 
 func TestRateLimiterDefaults(t *testing.T) {
 	t.Run("applies default configuration", func(t *testing.T) {
-		limiter := New(Config{})
+		limiter := New(&Config{})
 
 		ctx := context.Background()
 
@@ -332,6 +332,8 @@ func TestRateLimiterDefaults(t *testing.T) {
 }
 
 // TestMemoryStore tests the in-memory Store implementation.
+//
+//nolint:gocyclo // test function with many subtests
 func TestMemoryStore(t *testing.T) {
 	t.Run("AtomicUpdate creates new state", func(t *testing.T) {
 		store := NewMemoryStore()
@@ -357,7 +359,8 @@ func TestMemoryStore(t *testing.T) {
 		ctx := context.Background()
 
 		// Create initial state
-		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+		//nolint:errcheck // test setup
+		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
 
@@ -382,7 +385,8 @@ func TestMemoryStore(t *testing.T) {
 		ctx := context.Background()
 
 		// Create initial state with 100 tokens
-		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+		//nolint:errcheck // test setup
+		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 100, LastRefill: time.Now()}
 		})
 
@@ -392,7 +396,8 @@ func TestMemoryStore(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+				//nolint:errcheck // test setup
+				_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 					if s == nil {
 						return nil
 					}
@@ -403,6 +408,7 @@ func TestMemoryStore(t *testing.T) {
 		wg.Wait()
 
 		// Verify final state
+		//nolint:errcheck // test verification
 		state, _ := store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return s
 		})
@@ -417,6 +423,7 @@ func TestMemoryStore(t *testing.T) {
 		ctx := context.Background()
 
 		// Create state
+		//nolint:errcheck // test setup
 		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
@@ -428,6 +435,7 @@ func TestMemoryStore(t *testing.T) {
 		}
 
 		// Verify deleted
+		//nolint:errcheck // test verification
 		state, _ := store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			if s != nil {
 				t.Error("expected nil state after delete")
@@ -462,7 +470,7 @@ func TestCustomStore(t *testing.T) {
 			states: make(map[string]*BucketState),
 		}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     5,
 			Burst:    5,
 			Interval: time.Second,
@@ -497,7 +505,7 @@ func TestFailOpen(t *testing.T) {
 			err: errors.New("storage error"),
 		}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     5,
 			Burst:    5,
 			Interval: time.Second,
@@ -518,7 +526,7 @@ func TestFailOpen(t *testing.T) {
 			err: errors.New("storage error"),
 		}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     5,
 			Burst:    5,
 			Interval: time.Second,
@@ -537,10 +545,10 @@ func TestFailOpen(t *testing.T) {
 
 // mockStore is a test implementation of Store.
 type mockStore struct {
-	mu          sync.Mutex
 	states      map[string]*BucketState
-	updateCalls int
 	err         error
+	mu          sync.Mutex
+	updateCalls int
 }
 
 func (m *mockStore) AtomicUpdate(ctx context.Context, key string, updateFn func(*BucketState) *BucketState) (*BucketState, error) {
@@ -624,6 +632,7 @@ func TestMemoryStoreGet(t *testing.T) {
 
 		// Create state
 		now := time.Now()
+		//nolint:errcheck // test setup
 		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: now}
 		})
@@ -643,7 +652,7 @@ func TestMemoryStoreGet(t *testing.T) {
 		// Modify the returned state and verify original is unchanged
 		state.Tokens = 999
 
-		state2, _ := store.Get(ctx, "test-key")
+		state2, _ := store.Get(ctx, "test-key") //nolint:errcheck // test helper
 		if state2.Tokens != 10 {
 			t.Errorf("original state was modified, got %v tokens", state2.Tokens)
 		}
@@ -659,6 +668,7 @@ func TestMemoryStoreClose(t *testing.T) {
 		ctx := context.Background()
 
 		// Create some state
+		//nolint:errcheck // test setup
 		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
@@ -733,13 +743,14 @@ func TestMemoryStoreKeyLimit(t *testing.T) {
 
 		// Create 3 keys
 		for i := 0; i < 3; i++ {
-			store.AtomicUpdate(ctx, fmt.Sprintf("key-%d", i), func(s *BucketState) *BucketState {
+			//nolint:errcheck // test setup
+			_, _ = store.AtomicUpdate(ctx, fmt.Sprintf("key-%d", i), func(s *BucketState) *BucketState {
 				return &BucketState{Tokens: 10, LastRefill: time.Now()}
 			})
 		}
 
 		// Delete one key
-		store.Delete(ctx, "key-1")
+		_ = store.Delete(ctx, "key-1") //nolint:errcheck // test setup
 
 		if store.KeyCount() != 2 {
 			t.Errorf("expected 2 keys after delete, got %d", store.KeyCount())
@@ -766,6 +777,7 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a key
+		//nolint:errcheck // test setup
 		store.AtomicUpdate(ctx, "stale-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
@@ -792,6 +804,7 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a key
+		//nolint:errcheck // test setup
 		store.AtomicUpdate(ctx, "active-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
@@ -799,6 +812,7 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 		// Keep accessing the key to prevent expiry
 		for i := 0; i < 5; i++ {
 			time.Sleep(40 * time.Millisecond)
+			//nolint:errcheck // test setup
 			store.AtomicUpdate(ctx, "active-key", func(s *BucketState) *BucketState {
 				return s
 			})
@@ -851,7 +865,7 @@ func TestMemoryStoreHealthCheck(t *testing.T) {
 func TestRateLimiterClose(t *testing.T) {
 	t.Run("closes underlying store", func(t *testing.T) {
 		store := NewMemoryStore()
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -874,7 +888,7 @@ func TestRateLimiterClose(t *testing.T) {
 // TestRateLimiterTakeValidation tests Take() input validation.
 func TestRateLimiterTakeValidation(t *testing.T) {
 	t.Run("rejects zero tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -887,7 +901,7 @@ func TestRateLimiterTakeValidation(t *testing.T) {
 	})
 
 	t.Run("rejects negative tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -900,7 +914,7 @@ func TestRateLimiterTakeValidation(t *testing.T) {
 	})
 
 	t.Run("rejects tokens exceeding MaxTokensPerRequest", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:                10,
 			Burst:               10,
 			Interval:            time.Second,
@@ -914,7 +928,7 @@ func TestRateLimiterTakeValidation(t *testing.T) {
 	})
 
 	t.Run("allows tokens within MaxTokensPerRequest", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:                100,
 			Burst:               100,
 			Interval:            time.Second,
@@ -930,12 +944,12 @@ func TestRateLimiterTakeValidation(t *testing.T) {
 
 // mockMetrics is a test implementation of Metrics.
 type mockMetrics struct {
+	lastOperation string
 	mu            sync.Mutex
 	allowCount    int
 	denyCount     int
 	errorCount    int
 	latencyCount  int
-	lastOperation string
 }
 
 func (m *mockMetrics) OnAllow(ctx context.Context, key string) {
@@ -967,7 +981,7 @@ func (m *mockMetrics) OnStoreLatency(ctx context.Context, operation string, dura
 func TestRateLimiterMetrics(t *testing.T) {
 	t.Run("records allow metrics", func(t *testing.T) {
 		metrics := &mockMetrics{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     5,
 			Burst:    5,
 			Interval: time.Second,
@@ -992,7 +1006,7 @@ func TestRateLimiterMetrics(t *testing.T) {
 
 	t.Run("records deny metrics", func(t *testing.T) {
 		metrics := &mockMetrics{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     2,
 			Burst:    2,
 			Interval: time.Second,
@@ -1022,7 +1036,7 @@ func TestRateLimiterMetrics(t *testing.T) {
 		metrics := &mockMetrics{}
 		failingStore := &mockStore{err: errors.New("storage error")}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     5,
 			Burst:    5,
 			Interval: time.Second,
@@ -1043,7 +1057,7 @@ func TestRateLimiterMetrics(t *testing.T) {
 
 	t.Run("records latency for Take operation", func(t *testing.T) {
 		metrics := &mockMetrics{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1070,6 +1084,7 @@ func TestMemoryStoreClear(t *testing.T) {
 
 		// Create multiple keys
 		for i := 0; i < 10; i++ {
+			//nolint:errcheck // test setup
 			store.AtomicUpdate(ctx, fmt.Sprintf("key-%d", i), func(s *BucketState) *BucketState {
 				return &BucketState{Tokens: 10, LastRefill: time.Now()}
 			})
@@ -1139,7 +1154,7 @@ func TestMemoryStoreKeyLengthLimit(t *testing.T) {
 // TestRateLimiterHealthCheck tests the HealthCheck method on RateLimiter.
 func TestRateLimiterHealthCheck(t *testing.T) {
 	t.Run("returns nil when store is healthy", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1153,7 +1168,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 	})
 
 	t.Run("returns error when rate limiter is closed", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1170,7 +1185,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 	t.Run("returns nil for store without HealthChecker", func(t *testing.T) {
 		// mockStore doesn't implement HealthChecker
 		store := &mockStore{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1190,7 +1205,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 
 		// mockStore doesn't implement HealthChecker
 		store := &mockStore{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1200,7 +1215,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 		defer limiter.Close()
 
 		// First call should log warning
-		_ = limiter.HealthCheck(context.Background())
+		_ = limiter.HealthCheck(context.Background()) //nolint:errcheck // testing log behavior
 		logOutput := logBuffer.String()
 		if !strings.Contains(logOutput, "Store does not implement HealthChecker") {
 			t.Errorf("expected warning log on first call, got: %s", logOutput)
@@ -1211,7 +1226,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 
 		// Reset buffer and call again - should NOT log again (sync.Once)
 		logBuffer.Reset()
-		_ = limiter.HealthCheck(context.Background())
+		_ = limiter.HealthCheck(context.Background()) //nolint:errcheck // testing log behavior
 		secondOutput := logBuffer.String()
 		if strings.Contains(secondOutput, "Store does not implement HealthChecker") {
 			t.Errorf("expected no warning on second call, got: %s", secondOutput)
@@ -1261,7 +1276,7 @@ func TestConfigUpperBounds(t *testing.T) {
 func TestWaitLatencyMetrics(t *testing.T) {
 	t.Run("records latency on success", func(t *testing.T) {
 		metrics := &mockMetrics{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1289,7 +1304,7 @@ func TestOnLimitCallbackWithContext(t *testing.T) {
 		const testKey ctxKey = "test"
 		var receivedCtxValue interface{}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Second,
@@ -1319,7 +1334,7 @@ func TestCallbackPanicRecovery(t *testing.T) {
 		var logBuffer bytes.Buffer
 		logger := slog.New(slog.NewTextHandler(&logBuffer, nil))
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Second,
@@ -1354,7 +1369,7 @@ func TestCallbackPanicRecovery(t *testing.T) {
 // TestRateLimiterClosedBehavior tests behavior after Close() is called.
 func TestRateLimiterClosedBehavior(t *testing.T) {
 	t.Run("Allow returns false after Close", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1368,7 +1383,7 @@ func TestRateLimiterClosedBehavior(t *testing.T) {
 	})
 
 	t.Run("Wait returns error after Close", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1383,7 +1398,7 @@ func TestRateLimiterClosedBehavior(t *testing.T) {
 	})
 
 	t.Run("Take returns false after Close", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1397,7 +1412,7 @@ func TestRateLimiterClosedBehavior(t *testing.T) {
 	})
 
 	t.Run("double Close is safe", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1450,7 +1465,7 @@ func TestMaxTokensPerRequestCap(t *testing.T) {
 // TestConcurrentWaitOnSameKey tests concurrent Wait() calls on the same key.
 func TestConcurrentWaitOnSameKey(t *testing.T) {
 	t.Run("handles concurrent Wait calls on same key", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1526,7 +1541,7 @@ func TestWaitTimeoutLimits(t *testing.T) {
 
 	t.Run("Wait respects context cancellation during token wait", func(t *testing.T) {
 		store := &alwaysEmptyStore{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Second,
@@ -1563,7 +1578,7 @@ func TestWaitTimeoutLimits(t *testing.T) {
 
 	t.Run("Wait eventually succeeds when tokens become available", func(t *testing.T) {
 		// Use real memory store with low rate to force waiting
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    1,
 			Interval: time.Second,
@@ -1594,7 +1609,7 @@ func TestWaitTimeoutLimits(t *testing.T) {
 	})
 
 	t.Run("Wait returns immediately when tokens are available", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1616,7 +1631,7 @@ func TestWaitTimeoutLimits(t *testing.T) {
 	})
 
 	t.Run("HealthCheck returns ErrRateLimiterClosed after Close", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1637,7 +1652,7 @@ func TestWaitEdgeCases(t *testing.T) {
 		// Create a store that never allows tokens to be consumed
 		// but responds to AtomicUpdate calls
 		store := &neverAllowStore{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1000000, // Very high rate so tokens should be available
 			Burst:    1000000,
 			Interval: time.Second,
@@ -1658,7 +1673,7 @@ func TestWaitEdgeCases(t *testing.T) {
 
 	t.Run("Wait handles very low rate gracefully", func(t *testing.T) {
 		// Very low rate (1 per minute) means long wait between tokens
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1, // 1 token per minute
 			Burst:    1,
 			Interval: time.Minute,
@@ -1688,7 +1703,7 @@ func TestWaitEdgeCases(t *testing.T) {
 	t.Run("Wait with FailOpen on store error", func(t *testing.T) {
 		failingStore := &mockStore{err: errors.New("storage error")}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1706,7 +1721,7 @@ func TestWaitEdgeCases(t *testing.T) {
 	t.Run("Wait with FailClosed on store error uses backoff", func(t *testing.T) {
 		failingStore := &mockStore{err: errors.New("storage error")}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -1766,9 +1781,11 @@ func (s *neverAllowStore) Close() error {
 }
 
 // TestMultiKeyConcurrency tests concurrent access across multiple keys (H4).
+//
+//nolint:gocyclo // test function with many subtests
 func TestMultiKeyConcurrency(t *testing.T) {
 	t.Run("independent key limits under high concurrency", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1829,7 +1846,7 @@ func TestMultiKeyConcurrency(t *testing.T) {
 		)
 		defer store.Close()
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1874,7 +1891,7 @@ func TestMultiKeyConcurrency(t *testing.T) {
 	})
 
 	t.Run("concurrent Wait and Allow on same key", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     50,
 			Burst:    5,
 			Interval: time.Second,
@@ -1924,6 +1941,8 @@ func TestMultiKeyConcurrency(t *testing.T) {
 }
 
 // TestRefillEdgeCases tests token refill edge cases (H5).
+//
+//nolint:gocyclo // test function with many subtests
 func TestRefillEdgeCases(t *testing.T) {
 	t.Run("handles clock backwards gracefully", func(t *testing.T) {
 		store := NewMemoryStore()
@@ -1932,6 +1951,7 @@ func TestRefillEdgeCases(t *testing.T) {
 
 		// Create initial state with a future timestamp
 		futureTime := time.Now().Add(time.Hour)
+		//nolint:errcheck // test setup
 		store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     5,
@@ -1939,7 +1959,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			}
 		})
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -1955,7 +1975,7 @@ func TestRefillEdgeCases(t *testing.T) {
 	})
 
 	t.Run("handles very small intervals without overflow", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1000,
 			Burst:    100,
 			Interval: time.Millisecond, // Very small interval
@@ -1992,6 +2012,7 @@ func TestRefillEdgeCases(t *testing.T) {
 
 		// Create state with very old timestamp (simulating system sleep/wake)
 		oldTime := time.Now().Add(-24 * time.Hour)
+		//nolint:errcheck // test setup
 		store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     0,
@@ -1999,7 +2020,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			}
 		})
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2027,7 +2048,7 @@ func TestRefillEdgeCases(t *testing.T) {
 	})
 
 	t.Run("handles fractional token accumulation precisely", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     3,  // 3 tokens per second
 			Burst:    10, // Can hold up to 10
 			Interval: time.Second,
@@ -2061,6 +2082,7 @@ func TestRefillEdgeCases(t *testing.T) {
 		ctx := context.Background()
 
 		// Create state at burst limit
+		//nolint:errcheck // test setup
 		store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     10, // At burst limit
@@ -2068,7 +2090,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			}
 		})
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1000,
 			Burst:    10,
 			Interval: time.Second,
@@ -2079,14 +2101,14 @@ func TestRefillEdgeCases(t *testing.T) {
 		// Try to refill beyond burst - should be capped
 		limiter.Allow(ctx, "test") // Triggers refill calculation
 
-		state, _ := store.Get(ctx, "test")
+		state, _ := store.Get(ctx, "test") //nolint:errcheck // test helper
 		if state.Tokens > 10 {
 			t.Errorf("tokens exceeded burst limit: %v", state.Tokens)
 		}
 	})
 
 	t.Run("zero elapsed time returns same state", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    10,
 			Interval: time.Second,
@@ -2113,9 +2135,11 @@ func TestRefillEdgeCases(t *testing.T) {
 }
 
 // TestTakeBoundaryConditions tests Take() edge cases.
+//
+//nolint:gocyclo // test function with many subtests
 func TestTakeBoundaryConditions(t *testing.T) {
 	t.Run("rejects zero tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -2128,7 +2152,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	})
 
 	t.Run("rejects negative tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -2144,7 +2168,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	})
 
 	t.Run("allows exactly burst tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    10,
 			Interval: time.Second,
@@ -2158,7 +2182,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	})
 
 	t.Run("rejects tokens exceeding burst even if first request", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    10,
 			Interval: time.Second,
@@ -2172,7 +2196,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	})
 
 	t.Run("Take at MaxTokensPerRequest boundary", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:                1000,
 			Burst:               1000,
 			Interval:            time.Second,
@@ -2192,7 +2216,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	})
 
 	t.Run("partial consumption preserves remaining tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    10,
 			Interval: time.Second,
@@ -2223,7 +2247,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	})
 
 	t.Run("failed Take does not consume tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    5,
 			Interval: time.Second,
@@ -2244,7 +2268,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	})
 
 	t.Run("Take returns false on closed limiter", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -2260,7 +2284,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	t.Run("Take with store error and FailOpen", func(t *testing.T) {
 		failingStore := &mockStore{err: errors.New("storage error")}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -2278,7 +2302,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 	t.Run("Take with store error and FailClosed", func(t *testing.T) {
 		failingStore := &mockStore{err: errors.New("storage error")}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -2297,7 +2321,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 		var logBuffer bytes.Buffer
 		logger := slog.New(slog.NewTextHandler(&logBuffer, nil))
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:                100,
 			Burst:               100,
 			Interval:            time.Second,
@@ -2324,7 +2348,7 @@ func TestStoreFailureRecovery(t *testing.T) {
 			failEvery: 3, // Fail every 3rd call
 		}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -2355,7 +2379,7 @@ func TestStoreFailureRecovery(t *testing.T) {
 			failEvery: 3, // Fail every 3rd call
 		}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -2386,7 +2410,7 @@ func TestStoreFailureRecovery(t *testing.T) {
 			failUntilCall: 5, // First 5 calls fail
 		}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     100,
 			Burst:    100,
 			Interval: time.Second,
@@ -2415,7 +2439,7 @@ func TestStoreFailureRecovery(t *testing.T) {
 			failEvery: 5,
 		}
 
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1000,
 			Burst:    1000,
 			Interval: time.Second,
@@ -2443,10 +2467,10 @@ func TestStoreFailureRecovery(t *testing.T) {
 
 // intermittentFailStore fails every N calls.
 type intermittentFailStore struct {
+	states    map[string]*BucketState
 	mu        sync.Mutex
 	callCount int
 	failEvery int
-	states    map[string]*BucketState
 }
 
 func (s *intermittentFailStore) AtomicUpdate(ctx context.Context, key string, updateFn func(*BucketState) *BucketState) (*BucketState, error) {
@@ -2514,10 +2538,10 @@ func (s *intermittentFailStore) Close() error {
 
 // recoverableStore fails until a certain call count, then recovers.
 type recoverableStore struct {
+	states        map[string]*BucketState
 	mu            sync.Mutex
 	callCount     int
 	failUntilCall int
-	states        map[string]*BucketState
 }
 
 func (s *recoverableStore) AtomicUpdate(ctx context.Context, key string, updateFn func(*BucketState) *BucketState) (*BucketState, error) {
@@ -2634,7 +2658,7 @@ func TestWrapStorageError(t *testing.T) {
 // TestRateLimiterExecute tests the Execute method.
 func TestRateLimiterExecute(t *testing.T) {
 	t.Run("executes operation when allowed", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2656,7 +2680,7 @@ func TestRateLimiterExecute(t *testing.T) {
 	})
 
 	t.Run("returns ErrLimitExceeded when rate limited", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     1,
 			Burst:    1,
 			Interval: time.Second,
@@ -2687,7 +2711,7 @@ func TestRateLimiterExecute(t *testing.T) {
 	})
 
 	t.Run("returns operation error", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2705,7 +2729,7 @@ func TestRateLimiterExecute(t *testing.T) {
 	})
 
 	t.Run("returns ErrRateLimiterClosed when closed", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2725,7 +2749,7 @@ func TestRateLimiterExecute(t *testing.T) {
 // TestRateLimiterExecuteN tests the ExecuteN method.
 func TestRateLimiterExecuteN(t *testing.T) {
 	t.Run("executes operation when enough tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2747,7 +2771,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 	})
 
 	t.Run("returns ErrLimitExceeded when not enough tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2775,7 +2799,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 	})
 
 	t.Run("returns ErrInvalidTokenCount for zero tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2792,7 +2816,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 	})
 
 	t.Run("returns ErrInvalidTokenCount for negative tokens", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2809,7 +2833,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 	})
 
 	t.Run("returns ErrExcessiveTokens when exceeding MaxTokensPerRequest", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:                10,
 			Burst:               10,
 			Interval:            time.Second,
@@ -2827,7 +2851,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 	})
 
 	t.Run("returns operation error", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2845,7 +2869,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 	})
 
 	t.Run("returns ErrRateLimiterClosed when closed", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2865,7 +2889,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 // TestRateLimiterReset tests the Reset method.
 func TestRateLimiterReset(t *testing.T) {
 	t.Run("clears all buckets", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2895,7 +2919,7 @@ func TestRateLimiterReset(t *testing.T) {
 	})
 
 	t.Run("returns ErrRateLimiterClosed when closed", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2909,7 +2933,7 @@ func TestRateLimiterReset(t *testing.T) {
 	})
 
 	t.Run("respects context cancellation", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -2930,7 +2954,7 @@ func TestRateLimiterReset(t *testing.T) {
 		logger := slog.New(slog.NewTextHandler(&logBuffer, nil))
 
 		store := &mockStore{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -3012,7 +3036,7 @@ func TestMemoryStoreReset(t *testing.T) {
 // TestRateLimiterBucketCount tests the BucketCount method.
 func TestRateLimiterBucketCount(t *testing.T) {
 	t.Run("returns correct bucket count", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -3040,7 +3064,7 @@ func TestRateLimiterBucketCount(t *testing.T) {
 	})
 
 	t.Run("returns -1 when closed", func(t *testing.T) {
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -3054,7 +3078,7 @@ func TestRateLimiterBucketCount(t *testing.T) {
 
 	t.Run("returns -1 when store does not support BucketCounter", func(t *testing.T) {
 		store := &mockStore{}
-		limiter := New(Config{
+		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
 			Interval: time.Second,
@@ -3082,6 +3106,7 @@ func TestMemoryStoreBucketCount(t *testing.T) {
 		// Add some buckets
 		for i := 0; i < 3; i++ {
 			key := fmt.Sprintf("key-%d", i)
+			//nolint:errcheck // test setup
 			_, _ = store.AtomicUpdate(context.Background(), key, func(state *BucketState) *BucketState {
 				return &BucketState{Tokens: 10, LastRefill: time.Now()}
 			})
@@ -3092,7 +3117,7 @@ func TestMemoryStoreBucketCount(t *testing.T) {
 		}
 
 		// Delete one
-		_ = store.Delete(context.Background(), "key-0")
+		_ = store.Delete(context.Background(), "key-0") //nolint:errcheck // test helper
 
 		if count := store.BucketCount(); count != 2 {
 			t.Errorf("expected 2 after delete, got: %d", count)
@@ -3103,6 +3128,7 @@ func TestMemoryStoreBucketCount(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithCleanupInterval(0))
 		defer store.Close()
 
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(context.Background(), "test", func(state *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})

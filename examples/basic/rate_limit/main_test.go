@@ -38,7 +38,7 @@ func TestRateLimitExample(t *testing.T) {
 }
 
 func TestRateLimitEnforcement(t *testing.T) {
-	rl := ratelimit.New(ratelimit.Config{
+	rl := ratelimit.New(&ratelimit.Config{
 		Rate:     2,
 		Burst:    2,
 		Interval: time.Second,

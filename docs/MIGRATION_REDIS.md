@@ -312,7 +312,7 @@ Choose your backend and implement the `Store` interface (see examples above).
 **Before (default in-memory):**
 
 ```go
-limiter := ratelimit.New(ratelimit.Config{
+limiter := ratelimit.New(&ratelimit.Config{
     Rate:     100,
     Burst:    200,
     Interval: time.Second,
@@ -325,7 +325,7 @@ limiter := ratelimit.New(ratelimit.Config{
 // Create your custom store
 redisStore := redisstore.New(redisClient, "ratelimit:", time.Hour)
 
-limiter := ratelimit.New(ratelimit.Config{
+limiter := ratelimit.New(&ratelimit.Config{
     Rate:     100,
     Burst:    200,
     Interval: time.Second,
@@ -376,7 +376,7 @@ func (m *mockStore) AtomicUpdate(ctx context.Context, key string,
 
 func TestWithMockStore(t *testing.T) {
     store := &mockStore{states: make(map[string]*ratelimit.BucketState)}
-    limiter := ratelimit.New(ratelimit.Config{
+    limiter := ratelimit.New(&ratelimit.Config{
         Rate:  10,
         Burst: 10,
         Store: store,
@@ -394,8 +394,8 @@ func TestDistributedRateLimiting(t *testing.T) {
     store := redisstore.New(redisClient, "test:", time.Hour)
 
     // Create multiple limiters (simulating multiple instances)
-    limiter1 := ratelimit.New(ratelimit.Config{Rate: 10, Burst: 10, Store: store})
-    limiter2 := ratelimit.New(ratelimit.Config{Rate: 10, Burst: 10, Store: store})
+    limiter1 := ratelimit.New(&ratelimit.Config{Rate: 10, Burst: 10, Store: store})
+    limiter2 := ratelimit.New(&ratelimit.Config{Rate: 10, Burst: 10, Store: store})
 
     ctx := context.Background()
 

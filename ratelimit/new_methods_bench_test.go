@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-// BenchmarkExecute measures the overhead of Execute vs direct Allow + operation
+// BenchmarkExecute measures the overhead of Execute vs direct Allow + operation.
 func BenchmarkExecute(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -26,9 +26,9 @@ func BenchmarkExecute(b *testing.B) {
 	}
 }
 
-// BenchmarkExecuteRateLimited measures Execute when rate limited
+// BenchmarkExecuteRateLimited measures Execute when rate limited.
 func BenchmarkExecuteRateLimited(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1,
 		Burst:    1,
 		Interval: time.Hour,
@@ -48,9 +48,9 @@ func BenchmarkExecuteRateLimited(b *testing.B) {
 	}
 }
 
-// BenchmarkExecuteWithError measures Execute when operation returns error
+// BenchmarkExecuteWithError measures Execute when operation returns error.
 func BenchmarkExecuteWithError(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -67,9 +67,9 @@ func BenchmarkExecuteWithError(b *testing.B) {
 	}
 }
 
-// BenchmarkExecuteVsAllowDirect compares Execute overhead vs direct Allow + call
+// BenchmarkExecuteVsAllowDirect compares Execute overhead vs direct Allow + call.
 func BenchmarkExecuteVsAllowDirect(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -95,9 +95,9 @@ func BenchmarkExecuteVsAllowDirect(b *testing.B) {
 	})
 }
 
-// BenchmarkExecuteN measures the overhead of ExecuteN
+// BenchmarkExecuteN measures the overhead of ExecuteN.
 func BenchmarkExecuteN(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -114,9 +114,9 @@ func BenchmarkExecuteN(b *testing.B) {
 	}
 }
 
-// BenchmarkExecuteNVsTakeDirect compares ExecuteN overhead vs direct Take + call
+// BenchmarkExecuteNVsTakeDirect compares ExecuteN overhead vs direct Take + call.
 func BenchmarkExecuteNVsTakeDirect(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -142,7 +142,7 @@ func BenchmarkExecuteNVsTakeDirect(b *testing.B) {
 	})
 }
 
-// BenchmarkBucketCount measures BucketCount performance with varying bucket counts
+// BenchmarkBucketCount measures BucketCount performance with varying bucket counts.
 func BenchmarkBucketCount(b *testing.B) {
 	ctx := context.Background()
 
@@ -159,7 +159,7 @@ func BenchmarkBucketCount(b *testing.B) {
 
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
-			limiter := New(Config{
+			limiter := New(&Config{
 				Rate:     1000000,
 				Burst:    1000000,
 				Interval: time.Second,
@@ -180,7 +180,7 @@ func BenchmarkBucketCount(b *testing.B) {
 	}
 }
 
-// BenchmarkReset measures Reset performance with varying bucket counts
+// BenchmarkReset measures Reset performance with varying bucket counts.
 func BenchmarkReset(b *testing.B) {
 	ctx := context.Background()
 
@@ -196,7 +196,7 @@ func BenchmarkReset(b *testing.B) {
 
 	for _, bm := range benchmarks {
 		b.Run(bm.name, func(b *testing.B) {
-			limiter := New(Config{
+			limiter := New(&Config{
 				Rate:     1000000,
 				Burst:    1000000,
 				Interval: time.Second,
@@ -220,9 +220,9 @@ func BenchmarkReset(b *testing.B) {
 	}
 }
 
-// BenchmarkResetConcurrent measures Reset with concurrent operations
+// BenchmarkResetConcurrent measures Reset with concurrent operations.
 func BenchmarkResetConcurrent(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -245,9 +245,9 @@ func BenchmarkResetConcurrent(b *testing.B) {
 	})
 }
 
-// BenchmarkConcurrentExecute measures concurrent Execute performance
+// BenchmarkConcurrentExecute measures concurrent Execute performance.
 func BenchmarkConcurrentExecute(b *testing.B) {
-	limiter := New(Config{
+	limiter := New(&Config{
 		Rate:     1000000,
 		Burst:    1000000,
 		Interval: time.Second,
@@ -266,7 +266,7 @@ func BenchmarkConcurrentExecute(b *testing.B) {
 	})
 }
 
-// Helper function to generate keys
+// keyForInt is a helper function to generate keys.
 func keyForInt(i int) string {
 	// Pre-allocate to avoid string concatenation overhead
 	const digits = "0123456789"

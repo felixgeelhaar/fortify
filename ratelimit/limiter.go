@@ -127,10 +127,13 @@ type rateLimiter struct {
 }
 
 // New creates a new RateLimiter with the given configuration.
-func New(config Config) RateLimiter {
+func New(config *Config) RateLimiter {
+	if config == nil {
+		config = &Config{}
+	}
 	config.setDefaults()
 	return &rateLimiter{
-		config: config,
+		config: *config,
 	}
 }
 
@@ -173,6 +176,8 @@ func (rl *rateLimiter) Allow(ctx context.Context, key string) bool {
 }
 
 // Wait implements the RateLimiter interface.
+//
+//nolint:gocyclo // complexity is inherent in wait logic with context/timing
 func (rl *rateLimiter) Wait(ctx context.Context, key string) error {
 	if rl.closed.Load() {
 		return ErrRateLimiterClosed
@@ -626,5 +631,5 @@ func (rl *rateLimiter) safeCallback(fn func()) {
 	fn()
 }
 
-// Compile-time interface check
+// Compile-time interface check.
 var _ RateLimiter = (*rateLimiter)(nil)
