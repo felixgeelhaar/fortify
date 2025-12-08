@@ -124,6 +124,11 @@ type rateLimiter struct {
 	config              Config
 	closed              atomic.Bool
 	healthCheckWarnOnce sync.Once
+
+	// Cached values for hot path optimization (calculated once at construction)
+	intervalNs int64   // config.Interval.Nanoseconds()
+	burstFloat float64 // float64(config.Burst)
+	rateFloat  float64 // float64(config.Rate)
 }
 
 // New creates a new RateLimiter with the given configuration.
@@ -132,8 +137,13 @@ func New(config *Config) RateLimiter {
 		config = &Config{}
 	}
 	config.setDefaults()
+
 	return &rateLimiter{
 		config: *config,
+		// Pre-calculate hot path values to avoid repeated conversions
+		intervalNs: config.Interval.Nanoseconds(),
+		burstFloat: float64(config.Burst),
+		rateFloat:  float64(config.Rate),
 	}
 }
 
@@ -143,17 +153,26 @@ func (rl *rateLimiter) Allow(ctx context.Context, key string) bool {
 		return false
 	}
 	resolvedKey := rl.resolveKey(ctx, key)
-	start := time.Now()
+
+	// Only measure time when metrics are enabled to avoid overhead
+	var start time.Time
+	if rl.config.Metrics != nil {
+		start = time.Now()
+	}
 
 	allowed, err := rl.tryConsume(ctx, resolvedKey, 1)
 
-	// Record metrics
+	// Record latency metrics (only if metrics enabled)
 	if rl.config.Metrics != nil {
 		rl.config.Metrics.OnStoreLatency(ctx, "allow", time.Since(start))
 	}
 
 	if err != nil {
-		return rl.handleError(ctx, resolvedKey, err)
+		failOpen := rl.handleError(ctx, resolvedKey, err)
+		if failOpen && rl.config.Metrics != nil {
+			rl.config.Metrics.OnAllow(ctx, resolvedKey)
+		}
+		return failOpen
 	}
 
 	if allowed {
@@ -221,6 +240,7 @@ func (rl *rateLimiter) Wait(ctx context.Context, key string) error {
 				// FailOpen: allow the request
 				if rl.config.Metrics != nil {
 					rl.config.Metrics.OnStoreLatency(ctx, "wait", time.Since(start))
+					rl.config.Metrics.OnAllow(ctx, resolvedKey)
 				}
 				return nil
 			}
@@ -280,17 +300,26 @@ func (rl *rateLimiter) Take(ctx context.Context, key string, tokens int) bool {
 	}
 
 	resolvedKey := rl.resolveKey(ctx, key)
-	start := time.Now()
+
+	// Only measure time when metrics are enabled to avoid overhead
+	var start time.Time
+	if rl.config.Metrics != nil {
+		start = time.Now()
+	}
 
 	taken, err := rl.tryConsume(ctx, resolvedKey, tokens)
 
-	// Record metrics
+	// Record latency metrics (only if metrics enabled)
 	if rl.config.Metrics != nil {
 		rl.config.Metrics.OnStoreLatency(ctx, "take", time.Since(start))
 	}
 
 	if err != nil {
-		return rl.handleError(ctx, resolvedKey, err)
+		failOpen := rl.handleError(ctx, resolvedKey, err)
+		if failOpen && rl.config.Metrics != nil {
+			rl.config.Metrics.OnAllow(ctx, resolvedKey)
+		}
+		return failOpen
 	}
 
 	if taken {
@@ -473,13 +502,14 @@ func (rl *rateLimiter) refill(state *BucketState, now time.Time) *BucketState {
 		elapsed = maxElapsed
 	}
 
-	// Calculate tokens to add: (elapsed / interval) * rate
-	intervalNs := rl.config.Interval.Nanoseconds()
+	// Use cached intervalNs (calculated once at construction)
+	intervalNs := rl.intervalNs
 	if intervalNs <= 0 {
 		intervalNs = time.Second.Nanoseconds() // Safety fallback
 	}
 
-	tokensToAdd := (float64(elapsed.Nanoseconds()) / float64(intervalNs)) * float64(rl.config.Rate)
+	// Calculate tokens to add using cached rateFloat
+	tokensToAdd := (float64(elapsed.Nanoseconds()) / float64(intervalNs)) * rl.rateFloat
 
 	// If no tokens to add, return original state (avoid allocation)
 	if tokensToAdd < floatEpsilon {
@@ -487,7 +517,9 @@ func (rl *rateLimiter) refill(state *BucketState, now time.Time) *BucketState {
 	}
 
 	newTokens := state.Tokens + tokensToAdd
-	burstFloat := float64(rl.config.Burst)
+
+	// Use cached burstFloat for comparisons
+	burstFloat := rl.burstFloat
 
 	// Cap at burst limit
 	if newTokens > burstFloat {

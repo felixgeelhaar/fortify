@@ -81,17 +81,22 @@ func WithMaxKeyLength(maxLen int) MemoryStoreOption {
 //   - Configurable maximum key length to prevent memory exhaustion from long keys
 //   - Health check support via HealthChecker interface
 //
-//nolint:govet // fieldalignment: sync.Map has internal pointer padding
+//nolint:govet // fieldalignment: optimized for cache efficiency, not minimal size
 type MemoryStore struct {
-	buckets         sync.Map // map[string]*bucketEntry
-	wg              sync.WaitGroup
-	done            chan struct{}
-	keyCount        atomic.Int64
-	maxKeys         int64
-	cleanupInterval time.Duration
-	entryTTL        time.Duration
-	maxKeyLength    int
-	closed          atomic.Bool
+	// Hot fields (cache line 1) - accessed on every operation
+	buckets  sync.Map     // map[string]*bucketEntry - 48 bytes
+	keyCount atomic.Int64 // 8 bytes
+	closed   atomic.Bool  // 1 byte + 7 padding
+
+	// Warm fields (cache line 2) - accessed occasionally
+	maxKeys      int64          // 8 bytes
+	maxKeyLength int            // 8 bytes
+	done         chan struct{}  // 8 bytes
+	wg           sync.WaitGroup // 12 bytes
+
+	// Cold fields - rarely accessed (only during cleanup)
+	cleanupInterval time.Duration // 8 bytes
+	entryTTL        time.Duration // 8 bytes
 }
 
 // bucketEntry holds the state and mutex for a single bucket.

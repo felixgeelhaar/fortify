@@ -19,15 +19,23 @@ package http
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
 	"github.com/felixgeelhaar/fortify/ferrors"
 	"github.com/felixgeelhaar/fortify/ratelimit"
 	"github.com/felixgeelhaar/fortify/timeout"
+)
+
+const (
+	// DefaultMaxKeyLength is the default maximum length for rate limiting keys.
+	// Keys longer than this are truncated to prevent memory exhaustion.
+	DefaultMaxKeyLength = 256
 )
 
 // KeyExtractor extracts a rate limiting key from an HTTP request.
@@ -116,20 +124,66 @@ func Timeout(tm timeout.Timeout[*http.Response], duration time.Duration) func(ht
 	}
 }
 
+// SanitizeKey sanitizes a rate limiting key by removing control characters
+// and truncating to the specified maximum length.
+// This helps prevent memory exhaustion and injection attacks.
+func SanitizeKey(key string, maxLen int) string {
+	if maxLen <= 0 {
+		maxLen = DefaultMaxKeyLength
+	}
+
+	// Remove control characters (keeps printable characters and spaces)
+	sanitized := strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) {
+			return -1 // Remove control characters
+		}
+		return r
+	}, key)
+
+	// Truncate to max length
+	if len(sanitized) > maxLen {
+		sanitized = sanitized[:maxLen]
+	}
+
+	return sanitized
+}
+
 // KeyFromIP extracts the client IP address as the rate limiting key.
+// It properly handles both IPv4 and IPv6 addresses, including IPv6 with zone identifiers.
 func KeyFromIP(r *http.Request) string {
 	ip := r.RemoteAddr
-	// Strip port if present
-	if idx := strings.LastIndex(ip, ":"); idx != -1 {
-		ip = ip[:idx]
+
+	// Use net.SplitHostPort for proper IPv4/IPv6 handling
+	host, _, err := net.SplitHostPort(ip)
+	if err != nil {
+		// RemoteAddr might not have a port (unusual but possible)
+		host = ip
 	}
-	return ip
+
+	// Validate it looks like an IP address
+	if parsedIP := net.ParseIP(host); parsedIP != nil {
+		return parsedIP.String() // Normalized IP string
+	}
+
+	// Fallback: sanitize whatever we got
+	return SanitizeKey(host, DefaultMaxKeyLength)
 }
 
 // KeyFromHeader returns a KeyExtractor that extracts the key from an HTTP header.
+// The extracted value is sanitized to prevent injection attacks and memory exhaustion.
 func KeyFromHeader(header string) KeyExtractor {
 	return func(r *http.Request) string {
-		return r.Header.Get(header)
+		value := r.Header.Get(header)
+		return SanitizeKey(value, DefaultMaxKeyLength)
+	}
+}
+
+// KeyFromHeaderWithMaxLen returns a KeyExtractor that extracts the key from an HTTP header
+// with a custom maximum key length.
+func KeyFromHeaderWithMaxLen(header string, maxLen int) KeyExtractor {
+	return func(r *http.Request) string {
+		value := r.Header.Get(header)
+		return SanitizeKey(value, maxLen)
 	}
 }
 

@@ -14,7 +14,9 @@ import (
 )
 
 func TestRateLimiterAllow(t *testing.T) {
+	t.Parallel()
 	t.Run("allows requests within rate limit", func(t *testing.T) {
+		t.Parallel()
 		limiter := New(&Config{
 			Rate:     5,
 			Burst:    5,
@@ -30,6 +32,7 @@ func TestRateLimiterAllow(t *testing.T) {
 	})
 
 	t.Run("blocks requests exceeding burst", func(t *testing.T) {
+		t.Parallel()
 		limiter := New(&Config{
 			Rate:     5,
 			Burst:    3,
@@ -51,6 +54,7 @@ func TestRateLimiterAllow(t *testing.T) {
 	})
 
 	t.Run("separate keys have independent limits", func(t *testing.T) {
+		t.Parallel()
 		limiter := New(&Config{
 			Rate:     2,
 			Burst:    2,
@@ -153,7 +157,9 @@ func TestRateLimiterWait(t *testing.T) {
 }
 
 func TestRateLimiterTake(t *testing.T) {
+	t.Parallel()
 	t.Run("takes multiple tokens at once", func(t *testing.T) {
+		t.Parallel()
 		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
@@ -309,7 +315,9 @@ func TestRateLimiterCallbacks(t *testing.T) {
 }
 
 func TestRateLimiterDefaults(t *testing.T) {
+	t.Parallel()
 	t.Run("applies default configuration", func(t *testing.T) {
+		t.Parallel()
 		limiter := New(&Config{})
 
 		ctx := context.Background()
@@ -1236,7 +1244,9 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 
 // TestConfigUpperBounds tests that config values are capped.
 func TestConfigUpperBounds(t *testing.T) {
+	t.Parallel()
 	t.Run("caps rate to MaxRate", func(t *testing.T) {
+		t.Parallel()
 		config := Config{
 			Rate: MaxRate + 1,
 		}
@@ -2607,7 +2617,9 @@ func (s *recoverableStore) Close() error {
 
 // TestWrapStorageError tests the WrapStorageError helper function.
 func TestWrapStorageError(t *testing.T) {
+	t.Parallel()
 	t.Run("returns ErrStorageUnavailable for nil cause", func(t *testing.T) {
+		t.Parallel()
 		err := WrapStorageError(nil)
 		if !errors.Is(err, ErrStorageUnavailable) {
 			t.Errorf("expected ErrStorageUnavailable, got %v", err)
@@ -2657,7 +2669,9 @@ func TestWrapStorageError(t *testing.T) {
 
 // TestRateLimiterExecute tests the Execute method.
 func TestRateLimiterExecute(t *testing.T) {
+	t.Parallel()
 	t.Run("executes operation when allowed", func(t *testing.T) {
+		t.Parallel()
 		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
@@ -2748,7 +2762,9 @@ func TestRateLimiterExecute(t *testing.T) {
 
 // TestRateLimiterExecuteN tests the ExecuteN method.
 func TestRateLimiterExecuteN(t *testing.T) {
+	t.Parallel()
 	t.Run("executes operation when enough tokens", func(t *testing.T) {
+		t.Parallel()
 		limiter := New(&Config{
 			Rate:     10,
 			Burst:    10,
