@@ -652,28 +652,41 @@ func (rl *rateLimiter) logRateLimit(ctx context.Context, key string) {
 // sanitizeLogKey removes control characters from a key for safe logging.
 // This prevents log injection attacks where attackers could inject fake log entries
 // via crafted rate limit keys containing newlines or other control characters.
+//
+// Performance: Uses byte-level operations for ASCII strings (common case).
 func sanitizeLogKey(key string) string {
-	// Fast path: check if sanitization is needed
-	needsSanitization := false
-	for _, r := range key {
-		if r < 32 || r == 127 { // Control characters
-			needsSanitization = true
-			break
+	// Fast path: check if key is clean (no control characters)
+	// Use byte-level iteration for speed - works correctly for UTF-8
+	// since control chars are all single-byte ASCII
+	for i := 0; i < len(key); i++ {
+		c := key[i]
+		if c < 32 || c == 127 {
+			// Found a control character, need to sanitize
+			return sanitizeLogKeySlow(key, i)
 		}
 	}
-	if !needsSanitization {
-		return key
+	return key
+}
+
+// sanitizeLogKeySlow handles the slow path when control characters are found.
+// startIdx is the index of the first control character found.
+func sanitizeLogKeySlow(key string, startIdx int) string {
+	// Pre-allocate with exact size since we're replacing, not removing
+	result := make([]byte, len(key))
+
+	// Copy the clean prefix
+	copy(result, key[:startIdx])
+
+	// Process from startIdx onwards
+	for i := startIdx; i < len(key); i++ {
+		c := key[i]
+		if c < 32 || c == 127 {
+			result[i] = '_'
+		} else {
+			result[i] = c
+		}
 	}
 
-	// Replace control characters with underscores
-	result := make([]rune, 0, len(key))
-	for _, r := range key {
-		if r < 32 || r == 127 {
-			result = append(result, '_')
-		} else {
-			result = append(result, r)
-		}
-	}
 	return string(result)
 }
 

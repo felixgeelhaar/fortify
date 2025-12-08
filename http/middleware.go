@@ -134,11 +134,88 @@ func Timeout(tm timeout.Timeout[*http.Response], duration time.Duration) func(ht
 //
 // This helps prevent memory exhaustion, injection attacks, and rate limit bypass
 // via Unicode equivalence exploitation.
+//
+// Performance: Uses fast path for ASCII-only strings (common case for IPs, API keys).
 func SanitizeKey(key string, maxLen int) string {
 	if maxLen <= 0 {
 		maxLen = DefaultMaxKeyLength
 	}
 
+	// Fast path: check if key is clean ASCII (printable, no control chars)
+	// This is the common case for IP addresses, API keys, user IDs, etc.
+	if isCleanASCII(key) && len(key) <= maxLen {
+		return key
+	}
+
+	// Fast path for ASCII-only strings that just need truncation
+	if isASCII(key) {
+		return sanitizeASCII(key, maxLen)
+	}
+
+	// Slow path: full Unicode handling for non-ASCII strings
+	return sanitizeUnicode(key, maxLen)
+}
+
+// isCleanASCII returns true if the string contains only printable ASCII characters (32-126).
+// This is an extremely fast check that handles the common case.
+func isCleanASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c < 32 || c > 126 {
+			return false
+		}
+	}
+	return true
+}
+
+// isASCII returns true if the string contains only ASCII characters (0-127).
+func isASCII(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] > 127 {
+			return false
+		}
+	}
+	return true
+}
+
+// sanitizeASCII handles ASCII-only strings efficiently without Unicode overhead.
+func sanitizeASCII(key string, maxLen int) string {
+	// Check if we need to remove any control characters
+	needsSanitization := false
+	for i := 0; i < len(key); i++ {
+		c := key[i]
+		if c < 32 || c == 127 {
+			needsSanitization = true
+			break
+		}
+	}
+
+	if !needsSanitization {
+		// Just truncate if needed
+		if len(key) > maxLen {
+			return key[:maxLen]
+		}
+		return key
+	}
+
+	// Remove control characters
+	result := make([]byte, 0, len(key))
+	for i := 0; i < len(key); i++ {
+		c := key[i]
+		if c >= 32 && c != 127 {
+			result = append(result, c)
+		}
+	}
+
+	if len(result) > maxLen {
+		result = result[:maxLen]
+	}
+
+	return string(result)
+}
+
+// sanitizeUnicode handles non-ASCII strings with full Unicode normalization.
+func sanitizeUnicode(key string, maxLen int) string {
 	// Normalize to NFC (Canonical Composition) to prevent Unicode bypass attacks
 	// e.g., "user123" vs "user\u0031\u0032\u0033" will now produce the same key
 	key = norm.NFC.String(key)
