@@ -560,17 +560,19 @@ func (rl *rateLimiter) calculateWaitTime(ctx context.Context, key string) time.D
 		elapsed = maxElapsed
 	}
 
-	intervalNs := rl.config.Interval.Nanoseconds()
+	// Use cached intervalNs (calculated once at construction)
+	intervalNs := rl.intervalNs
 	if intervalNs <= 0 {
 		intervalNs = time.Second.Nanoseconds()
 	}
 
-	tokensToAdd := (float64(elapsed.Nanoseconds()) / float64(intervalNs)) * float64(rl.config.Rate)
+	// Use cached rateFloat for efficiency
+	tokensToAdd := (float64(elapsed.Nanoseconds()) / float64(intervalNs)) * rl.rateFloat
 	currentTokens := state.Tokens + tokensToAdd
 
-	burstFloat := float64(rl.config.Burst)
-	if currentTokens > burstFloat {
-		currentTokens = burstFloat
+	// Use cached burstFloat
+	if currentTokens > rl.burstFloat {
+		currentTokens = rl.burstFloat
 	}
 
 	// If tokens available, no wait needed
@@ -589,8 +591,8 @@ func (rl *rateLimiter) calculateWaitTime(ctx context.Context, key string) time.D
 		return maxWaitTimeLimit
 	}
 
-	// Calculate time to generate those tokens
-	tokensPerNs := float64(rl.config.Rate) / float64(intervalNs)
+	// Calculate time to generate those tokens using cached rateFloat
+	tokensPerNs := rl.rateFloat / float64(intervalNs)
 	if tokensPerNs <= 0 {
 		return maxWaitTimeLimit
 	}
@@ -615,7 +617,7 @@ func (rl *rateLimiter) calculateWaitTime(ctx context.Context, key string) time.D
 func (rl *rateLimiter) handleError(ctx context.Context, key string, err error) bool {
 	if rl.config.Logger != nil {
 		rl.config.Logger.ErrorContext(ctx, "rate limiter storage error",
-			slog.String("key", key),
+			slog.String("key", sanitizeLogKey(key)),
 			slog.String("error", err.Error()),
 			slog.Bool("fail_open", rl.config.FailOpen),
 		)
@@ -640,11 +642,39 @@ func (rl *rateLimiter) resolveKey(ctx context.Context, key string) string {
 func (rl *rateLimiter) logRateLimit(ctx context.Context, key string) {
 	if rl.config.Logger != nil {
 		rl.config.Logger.WarnContext(ctx, "rate limit exceeded",
-			slog.String("key", key),
+			slog.String("key", sanitizeLogKey(key)),
 			slog.Int("rate", rl.config.Rate),
 			slog.Int("burst", rl.config.Burst),
 		)
 	}
+}
+
+// sanitizeLogKey removes control characters from a key for safe logging.
+// This prevents log injection attacks where attackers could inject fake log entries
+// via crafted rate limit keys containing newlines or other control characters.
+func sanitizeLogKey(key string) string {
+	// Fast path: check if sanitization is needed
+	needsSanitization := false
+	for _, r := range key {
+		if r < 32 || r == 127 { // Control characters
+			needsSanitization = true
+			break
+		}
+	}
+	if !needsSanitization {
+		return key
+	}
+
+	// Replace control characters with underscores
+	result := make([]rune, 0, len(key))
+	for _, r := range key {
+		if r < 32 || r == 127 {
+			result = append(result, '_')
+		} else {
+			result = append(result, r)
+		}
+	}
+	return string(result)
 }
 
 // safeCallback executes a callback with panic recovery.

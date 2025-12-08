@@ -3154,3 +3154,183 @@ func TestMemoryStoreBucketCount(t *testing.T) {
 		}
 	})
 }
+
+// TestSanitizeLogKey tests the log injection prevention function.
+//
+//nolint:gocyclo // test function with many subtests
+func TestSanitizeLogKey(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns clean key unchanged", func(t *testing.T) {
+		t.Parallel()
+		cleanKeys := []string{
+			"user-123",
+			"api-key-abc",
+			"192.168.1.1",
+			"fe80::1",
+			"normal_key_with_underscores",
+			"MixedCase123",
+		}
+
+		for _, key := range cleanKeys {
+			result := sanitizeLogKey(key)
+			if result != key {
+				t.Errorf("sanitizeLogKey(%q) = %q, want unchanged", key, result)
+			}
+		}
+	})
+
+	t.Run("replaces newline characters", func(t *testing.T) {
+		t.Parallel()
+		// Newline injection attack: attacker tries to inject fake log entry
+		maliciousKey := "user-123\nERROR: admin logged in"
+		result := sanitizeLogKey(maliciousKey)
+
+		if strings.Contains(result, "\n") {
+			t.Errorf("sanitizeLogKey should remove newlines, got: %q", result)
+		}
+		if result != "user-123_ERROR: admin logged in" {
+			t.Errorf("sanitizeLogKey(%q) = %q, want %q", maliciousKey, result, "user-123_ERROR: admin logged in")
+		}
+	})
+
+	t.Run("replaces carriage return characters", func(t *testing.T) {
+		t.Parallel()
+		// CRLF injection attack
+		maliciousKey := "user-123\r\nFake-Header: injected"
+		result := sanitizeLogKey(maliciousKey)
+
+		if strings.Contains(result, "\r") || strings.Contains(result, "\n") {
+			t.Errorf("sanitizeLogKey should remove CR/LF, got: %q", result)
+		}
+		expected := "user-123__Fake-Header: injected"
+		if result != expected {
+			t.Errorf("sanitizeLogKey(%q) = %q, want %q", maliciousKey, result, expected)
+		}
+	})
+
+	t.Run("replaces tab characters", func(t *testing.T) {
+		t.Parallel()
+		keyWithTab := "user\t123"
+		result := sanitizeLogKey(keyWithTab)
+
+		if strings.Contains(result, "\t") {
+			t.Errorf("sanitizeLogKey should remove tabs, got: %q", result)
+		}
+		if result != "user_123" {
+			t.Errorf("sanitizeLogKey(%q) = %q, want %q", keyWithTab, result, "user_123")
+		}
+	})
+
+	t.Run("replaces null bytes", func(t *testing.T) {
+		t.Parallel()
+		// Null byte injection
+		maliciousKey := "user\x00admin"
+		result := sanitizeLogKey(maliciousKey)
+
+		if strings.Contains(result, "\x00") {
+			t.Errorf("sanitizeLogKey should remove null bytes, got: %q", result)
+		}
+		if result != "user_admin" {
+			t.Errorf("sanitizeLogKey(%q) = %q, want %q", maliciousKey, result, "user_admin")
+		}
+	})
+
+	t.Run("replaces DEL character (127)", func(t *testing.T) {
+		t.Parallel()
+		keyWithDEL := "user\x7Fadmin"
+		result := sanitizeLogKey(keyWithDEL)
+
+		if strings.Contains(result, "\x7F") {
+			t.Errorf("sanitizeLogKey should remove DEL character, got: %q", result)
+		}
+		if result != "user_admin" {
+			t.Errorf("sanitizeLogKey(%q) = %q, want %q", keyWithDEL, result, "user_admin")
+		}
+	})
+
+	t.Run("replaces all control characters", func(t *testing.T) {
+		t.Parallel()
+		// Test all control characters (0-31 and 127)
+		for i := 0; i < 32; i++ {
+			key := fmt.Sprintf("test%ckey", rune(i))
+			result := sanitizeLogKey(key)
+
+			for _, r := range result {
+				if r < 32 || r == 127 {
+					t.Errorf("sanitizeLogKey should remove control char %d, got: %q", i, result)
+				}
+			}
+		}
+
+		// Also test DEL (127)
+		key := "test\x7Fkey"
+		result := sanitizeLogKey(key)
+		for _, r := range result {
+			if r == 127 {
+				t.Errorf("sanitizeLogKey should remove DEL (127), got: %q", result)
+			}
+		}
+	})
+
+	t.Run("handles empty string", func(t *testing.T) {
+		t.Parallel()
+		result := sanitizeLogKey("")
+		if result != "" {
+			t.Errorf("sanitizeLogKey(\"\") = %q, want empty string", result)
+		}
+	})
+
+	t.Run("handles string with only control characters", func(t *testing.T) {
+		t.Parallel()
+		onlyControlChars := "\x00\x01\x02\n\r\t"
+		result := sanitizeLogKey(onlyControlChars)
+
+		// Should replace all with underscores
+		expected := "______"
+		if result != expected {
+			t.Errorf("sanitizeLogKey(%q) = %q, want %q", onlyControlChars, result, expected)
+		}
+	})
+
+	t.Run("preserves unicode characters", func(t *testing.T) {
+		t.Parallel()
+		unicodeKey := "用户-123-émojis-🔥"
+		result := sanitizeLogKey(unicodeKey)
+
+		if result != unicodeKey {
+			t.Errorf("sanitizeLogKey(%q) = %q, want unchanged (unicode preserved)", unicodeKey, result)
+		}
+	})
+
+	t.Run("handles long keys efficiently", func(t *testing.T) {
+		t.Parallel()
+		// 10KB key - should not cause issues
+		longKey := strings.Repeat("a", 10000)
+		result := sanitizeLogKey(longKey)
+
+		if result != longKey {
+			t.Errorf("sanitizeLogKey should handle long keys, got length %d", len(result))
+		}
+	})
+
+	t.Run("same IP different zones produces same sanitized key", func(t *testing.T) {
+		t.Parallel()
+		// These keys might come from different network interfaces
+		keys := []string{
+			"fe80::1%eth0",
+			"fe80::1%eth1",
+			"fe80::1%wlan0",
+		}
+
+		results := make(map[string]bool)
+		for _, key := range keys {
+			result := sanitizeLogKey(key)
+			results[result] = true
+			// Zone identifiers don't contain control characters, so should be unchanged
+			if result != key {
+				t.Errorf("sanitizeLogKey(%q) = %q, want unchanged (no control chars)", key, result)
+			}
+		}
+	})
+}

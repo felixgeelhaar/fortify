@@ -19,17 +19,20 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
 	"github.com/felixgeelhaar/fortify/ferrors"
 	"github.com/felixgeelhaar/fortify/ratelimit"
 	"github.com/felixgeelhaar/fortify/timeout"
+	"golang.org/x/text/unicode/norm"
 )
 
 const (
@@ -124,32 +127,46 @@ func Timeout(tm timeout.Timeout[*http.Response], duration time.Duration) func(ht
 	}
 }
 
-// SanitizeKey sanitizes a rate limiting key by removing control characters
-// and truncating to the specified maximum length.
-// This helps prevent memory exhaustion and injection attacks.
+// SanitizeKey sanitizes a rate limiting key by:
+//   - Normalizing Unicode to NFC form (prevents equivalent-string bypass attacks)
+//   - Removing control characters and non-printable characters
+//   - Truncating to the specified maximum length (by rune count, not bytes)
+//
+// This helps prevent memory exhaustion, injection attacks, and rate limit bypass
+// via Unicode equivalence exploitation.
 func SanitizeKey(key string, maxLen int) string {
 	if maxLen <= 0 {
 		maxLen = DefaultMaxKeyLength
 	}
 
-	// Remove control characters (keeps printable characters and spaces)
+	// Normalize to NFC (Canonical Composition) to prevent Unicode bypass attacks
+	// e.g., "user123" vs "user\u0031\u0032\u0033" will now produce the same key
+	key = norm.NFC.String(key)
+
+	// Remove control characters and non-printable characters
 	sanitized := strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) {
-			return -1 // Remove control characters
+		if unicode.IsControl(r) || !unicode.IsPrint(r) {
+			return -1 // Remove control and non-printable characters
 		}
 		return r
 	}, key)
 
-	// Truncate to max length
-	if len(sanitized) > maxLen {
-		sanitized = sanitized[:maxLen]
+	// Truncate by rune count (not byte count) to avoid splitting multi-byte UTF-8 characters
+	if utf8.RuneCountInString(sanitized) > maxLen {
+		runes := []rune(sanitized)
+		sanitized = string(runes[:maxLen])
 	}
 
 	return sanitized
 }
 
 // KeyFromIP extracts the client IP address as the rate limiting key.
-// It properly handles both IPv4 and IPv6 addresses, including IPv6 with zone identifiers.
+// It properly handles both IPv4 and IPv6 addresses, stripping zone identifiers
+// from IPv6 addresses to prevent rate limit bypass attacks.
+//
+// Security: IPv6 zone identifiers (e.g., fe80::1%eth0) are stripped to prevent
+// attackers from bypassing rate limits by varying the zone identifier while
+// using the same IP address.
 func KeyFromIP(r *http.Request) string {
 	ip := r.RemoteAddr
 
@@ -158,6 +175,12 @@ func KeyFromIP(r *http.Request) string {
 	if err != nil {
 		// RemoteAddr might not have a port (unusual but possible)
 		host = ip
+	}
+
+	// Strip IPv6 zone identifier to prevent bypass attacks
+	// e.g., "fe80::1%eth0" and "fe80::1%eth1" should be treated as the same IP
+	if idx := strings.Index(host, "%"); idx != -1 {
+		host = host[:idx]
 	}
 
 	// Validate it looks like an IP address
@@ -171,7 +194,11 @@ func KeyFromIP(r *http.Request) string {
 
 // KeyFromHeader returns a KeyExtractor that extracts the key from an HTTP header.
 // The extracted value is sanitized to prevent injection attacks and memory exhaustion.
+//
+// Panics if header name is empty or contains invalid HTTP header characters.
+// This validation happens at construction time to fail fast on misconfiguration.
 func KeyFromHeader(header string) KeyExtractor {
+	validateHeaderName(header)
 	return func(r *http.Request) string {
 		value := r.Header.Get(header)
 		return SanitizeKey(value, DefaultMaxKeyLength)
@@ -180,10 +207,34 @@ func KeyFromHeader(header string) KeyExtractor {
 
 // KeyFromHeaderWithMaxLen returns a KeyExtractor that extracts the key from an HTTP header
 // with a custom maximum key length.
+//
+// Panics if header name is empty or contains invalid HTTP header characters.
+// This validation happens at construction time to fail fast on misconfiguration.
 func KeyFromHeaderWithMaxLen(header string, maxLen int) KeyExtractor {
+	validateHeaderName(header)
 	return func(r *http.Request) string {
 		value := r.Header.Get(header)
 		return SanitizeKey(value, maxLen)
+	}
+}
+
+// validateHeaderName validates that a header name contains only valid HTTP header characters.
+// Panics if the header name is invalid, as this indicates a programming error.
+//
+// Valid HTTP header characters are ASCII 33-126 (printable, non-whitespace) except colon.
+// See RFC 7230 Section 3.2.6: https://tools.ietf.org/html/rfc7230#section-3.2.6
+func validateHeaderName(header string) {
+	if header == "" {
+		panic("fortify/http: KeyFromHeader requires non-empty header name")
+	}
+
+	for i, ch := range header {
+		// Valid header token characters: ASCII 33-126 except delimiters
+		// Delimiters include: ( ) < > @ , ; : \ " / [ ] ? = { }
+		// For simplicity, we only reject the most dangerous: control chars, space, and colon
+		if ch < 33 || ch > 126 || ch == ':' {
+			panic(fmt.Sprintf("fortify/http: invalid header name %q at position %d", header, i))
+		}
 	}
 }
 
