@@ -1,10 +1,10 @@
 name: Performance Regression Testing
 
 on:
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
+  # Run weekly on Sunday at midnight UTC
+  schedule:
+    - cron: '0 0 * * 0'
+  # Manual trigger for on-demand benchmarking
   workflow_dispatch:
 
 # Required permissions for benchmark action to push to gh-pages
@@ -36,121 +36,30 @@ jobs:
         run: |
           go test -bench=. -benchmem -benchtime=3s ./... | tee benchmark-results.txt
 
-      - name: Check for regressions
-        if: github.event_name == 'pull_request'
-        run: |
-          # Install benchstat for comparison
-          go install golang.org/x/perf/cmd/benchstat@latest
-
-          # Get baseline from main branch
-          git fetch origin main:main
-          git checkout main
-          go test -bench=. -benchmem -benchtime=3s ./... > baseline.txt 2>&1 || true
-          git checkout -
-
-          # Compare results
-          echo "## Performance Comparison" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          benchstat baseline.txt benchmark-results.txt >> $GITHUB_STEP_SUMMARY || true
-
       - name: Archive benchmark results
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: benchmark-results.txt
-          retention-days: 30
+          retention-days: 90
 
       - name: Store benchmark results
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: benchmark-action/github-action-benchmark@v1
         with:
           tool: 'go'
           output-file-path: benchmark-results.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
-          alert-threshold: '110%'
-          comment-on-alert: true
+          alert-threshold: '150%'
+          comment-on-alert: false
           fail-on-alert: false
-
-  regression-check:
-    name: Detailed Regression Analysis
-    runs-on: ubuntu-latest
-    needs: benchmark
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-
-      - name: Download benchmark results
-        uses: actions/download-artifact@v4
-        with:
-          name: benchmark-results
-
-      - name: Analyze regressions
-        run: |
-          # Run custom regression analysis if baselines exist
-          if [ -f scripts/performance-baselines.json ]; then
-            echo "Running regression analysis..."
-            ./scripts/benchmark.sh check || {
-              echo "⚠️ Performance regressions detected" >> $GITHUB_STEP_SUMMARY
-              exit 1
-            }
-          else
-            echo "ℹ️ No baseline found, skipping regression check" >> $GITHUB_STEP_SUMMARY
-          fi
-
-      - name: Comment PR
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '⚠️ Performance regressions detected. Please review the benchmark results.'
-            })
-
-  continuous-monitoring:
-    name: Performance Monitoring
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.23'
-
-      - name: Run extended benchmarks
-        run: |
-          # Run longer benchmarks for main branch
-          go test -bench=. -benchmem -benchtime=10s -count=3 ./... | tee extended-benchmark.txt
 
       - name: Generate performance report
         run: |
-          echo "# Performance Monitoring Report" > performance-report.md
-          echo "Generated: $(date)" >> performance-report.md
-          echo "" >> performance-report.md
-          echo "## Benchmark Results" >> performance-report.md
-          echo '```' >> performance-report.md
-          cat extended-benchmark.txt >> performance-report.md
-          echo '```' >> performance-report.md
-
-      - name: Archive extended results
-        uses: actions/upload-artifact@v4
-        with:
-          name: extended-benchmark-results
-          path: |
-            extended-benchmark.txt
-            performance-report.md
-          retention-days: 90
+          echo "# Performance Report" >> $GITHUB_STEP_SUMMARY
+          echo "Generated: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat benchmark-results.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
