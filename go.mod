@@ -1,6 +1,6 @@
 module github.com/felixgeelhaar/fortify
 
-go 1.24.6
+go 1.23
 
 require (
 	github.com/prometheus/client_golang v1.23.2
