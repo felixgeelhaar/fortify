@@ -43,6 +43,10 @@ jobs:
           path: benchmark-results.txt
           retention-days: 90
 
+      - name: Clean working directory for benchmark action
+        run: |
+          git checkout -- go.mod go.sum || true
+
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
