@@ -41,3 +41,12 @@ temp/
 # Build artifacts
 bin/
 dist/
+
+# Profiling outputs
+*.prof
+
+# Relicta runtime state
+.relicta/
+
+# Generated reports
+SECURITY_AUDIT_REPORT.md
