@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/timeout"
+	"github.com/felixgeelhaar/fortify/v2/timeout"
 )
 
 // Example demonstrates basic timeout usage.

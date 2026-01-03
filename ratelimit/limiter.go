@@ -169,8 +169,15 @@ func (rl *rateLimiter) Allow(ctx context.Context, key string) bool {
 
 	if err != nil {
 		failOpen := rl.handleError(ctx, resolvedKey, err)
-		if failOpen && rl.config.Metrics != nil {
-			rl.config.Metrics.OnAllow(ctx, resolvedKey)
+		if failOpen {
+			if rl.config.Metrics != nil {
+				rl.config.Metrics.OnAllow(ctx, resolvedKey)
+			}
+			if rl.config.OnAllow != nil {
+				rl.safeCallback(func() {
+					rl.config.OnAllow(ctx, resolvedKey)
+				})
+			}
 		}
 		return failOpen
 	}
@@ -178,6 +185,11 @@ func (rl *rateLimiter) Allow(ctx context.Context, key string) bool {
 	if allowed {
 		if rl.config.Metrics != nil {
 			rl.config.Metrics.OnAllow(ctx, resolvedKey)
+		}
+		if rl.config.OnAllow != nil {
+			rl.safeCallback(func() {
+				rl.config.OnAllow(ctx, resolvedKey)
+			})
 		}
 	} else {
 		rl.logRateLimit(ctx, resolvedKey)
@@ -242,6 +254,11 @@ func (rl *rateLimiter) Wait(ctx context.Context, key string) error {
 					rl.config.Metrics.OnStoreLatency(ctx, "wait", time.Since(start))
 					rl.config.Metrics.OnAllow(ctx, resolvedKey)
 				}
+				if rl.config.OnAllow != nil {
+					rl.safeCallback(func() {
+						rl.config.OnAllow(ctx, resolvedKey)
+					})
+				}
 				return nil
 			}
 			// FailClosed: continue retrying with backoff
@@ -251,6 +268,11 @@ func (rl *rateLimiter) Wait(ctx context.Context, key string) error {
 			if rl.config.Metrics != nil {
 				rl.config.Metrics.OnStoreLatency(ctx, "wait", time.Since(start))
 				rl.config.Metrics.OnAllow(ctx, resolvedKey)
+			}
+			if rl.config.OnAllow != nil {
+				rl.safeCallback(func() {
+					rl.config.OnAllow(ctx, resolvedKey)
+				})
 			}
 			return nil
 		}
@@ -316,8 +338,15 @@ func (rl *rateLimiter) Take(ctx context.Context, key string, tokens int) bool {
 
 	if err != nil {
 		failOpen := rl.handleError(ctx, resolvedKey, err)
-		if failOpen && rl.config.Metrics != nil {
-			rl.config.Metrics.OnAllow(ctx, resolvedKey)
+		if failOpen {
+			if rl.config.Metrics != nil {
+				rl.config.Metrics.OnAllow(ctx, resolvedKey)
+			}
+			if rl.config.OnAllow != nil {
+				rl.safeCallback(func() {
+					rl.config.OnAllow(ctx, resolvedKey)
+				})
+			}
 		}
 		return failOpen
 	}
@@ -325,6 +354,11 @@ func (rl *rateLimiter) Take(ctx context.Context, key string, tokens int) bool {
 	if taken {
 		if rl.config.Metrics != nil {
 			rl.config.Metrics.OnAllow(ctx, resolvedKey)
+		}
+		if rl.config.OnAllow != nil {
+			rl.safeCallback(func() {
+				rl.config.OnAllow(ctx, resolvedKey)
+			})
 		}
 	} else {
 		rl.logRateLimit(ctx, resolvedKey)

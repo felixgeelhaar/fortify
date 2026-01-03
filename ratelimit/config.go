@@ -23,7 +23,22 @@ type Config struct {
 	// sized (e.g., user IDs, tenant names, IP addresses).
 	KeyFunc func(ctx context.Context) string
 
-	// OnLimit is called when a request is rate limited.
+	// OnAllow is called when a request is allowed (not rate limited).
+	// It receives the context and key that was allowed.
+	//
+	// This callback is useful for observability - tracking allowed requests,
+	// updating metrics, or logging successful rate limit checks.
+	//
+	// By default, the callback is executed synchronously, which may block the hot path.
+	// For non-blocking behavior, either:
+	//   1. Keep the callback lightweight (counter increment)
+	//   2. Dispatch to a goroutine or channel within your callback
+	//   3. Use a bounded worker pool for heavy operations
+	//
+	// The callback is wrapped with panic recovery - panics are logged but don't crash.
+	OnAllow func(ctx context.Context, key string)
+
+	// OnLimit is called when a request is rate limited (denied).
 	// It receives the context and key that was rate limited.
 	//
 	// By default, the callback is executed synchronously, which may block the hot path.

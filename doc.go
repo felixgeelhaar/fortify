@@ -18,7 +18,7 @@
 //
 // # Installation
 //
-//	go get github.com/felixgeelhaar/fortify
+//	go get github.com/felixgeelhaar/fortify/v2
 //
 // Requirements: Go 1.23 or higher
 //
@@ -28,8 +28,8 @@
 //	    "context"
 //	    "time"
 //
-//	    "github.com/felixgeelhaar/fortify/circuitbreaker"
-//	    "github.com/felixgeelhaar/fortify/retry"
+//	    "github.com/felixgeelhaar/fortify/v2/circuitbreaker"
+//	    "github.com/felixgeelhaar/fortify/v2/retry"
 //	)
 //
 //	func main() {
@@ -61,7 +61,7 @@
 //
 // Circuit Breaker: Prevents cascading failures by temporarily stopping requests to failing services
 //
-//	import "github.com/felixgeelhaar/fortify/circuitbreaker"
+//	import "github.com/felixgeelhaar/fortify/v2/circuitbreaker"
 //
 //	cb := circuitbreaker.New[Response](circuitbreaker.Config{
 //	    MaxRequests: 100,
@@ -71,7 +71,7 @@
 //
 // Retry: Handles transient failures with intelligent backoff strategies
 //
-//	import "github.com/felixgeelhaar/fortify/retry"
+//	import "github.com/felixgeelhaar/fortify/v2/retry"
 //
 //	r := retry.New[Response](retry.Config{
 //	    MaxAttempts:   3,
@@ -82,7 +82,7 @@
 //
 // Rate Limiter: Token bucket algorithm for controlling request rates
 //
-//	import "github.com/felixgeelhaar/fortify/ratelimit"
+//	import "github.com/felixgeelhaar/fortify/v2/ratelimit"
 //
 //	rl := ratelimit.New(&ratelimit.Config{
 //	    Rate:     100,
@@ -92,7 +92,7 @@
 //
 // Timeout: Context-based timeout enforcement
 //
-//	import "github.com/felixgeelhaar/fortify/timeout"
+//	import "github.com/felixgeelhaar/fortify/v2/timeout"
 //
 //	t := timeout.New[Response](timeout.Config{
 //	    DefaultTimeout: time.Second * 5,
@@ -100,7 +100,7 @@
 //
 // Bulkhead: Limits concurrent executions to prevent resource exhaustion
 //
-//	import "github.com/felixgeelhaar/fortify/bulkhead"
+//	import "github.com/felixgeelhaar/fortify/v2/bulkhead"
 //
 //	bh := bulkhead.New[Response](bulkhead.Config{
 //	    MaxConcurrent: 10,
@@ -109,7 +109,7 @@
 //
 // Fallback: Provides graceful degradation with fallback values
 //
-//	import "github.com/felixgeelhaar/fortify/fallback"
+//	import "github.com/felixgeelhaar/fortify/v2/fallback"
 //
 //	fb := fallback.New[Response](fallback.Config[Response]{
 //	    Fallback: func(ctx context.Context, err error) (Response, error) {
@@ -121,7 +121,7 @@
 //
 // Combine multiple patterns using the middleware chain:
 //
-//	import "github.com/felixgeelhaar/fortify/middleware"
+//	import "github.com/felixgeelhaar/fortify/v2/middleware"
 //
 //	chain := middleware.New[Response]().
 //	    WithCircuitBreaker(cb).
@@ -139,7 +139,7 @@
 //
 //	import (
 //	    "net/http"
-//	    "github.com/felixgeelhaar/fortify/http"
+//	    "github.com/felixgeelhaar/fortify/v2/http"
 //	)
 //
 //	mux := http.NewServeMux()
@@ -155,7 +155,7 @@
 // Add resilience to gRPC services:
 //
 //	import (
-//	    "github.com/felixgeelhaar/fortify/grpc"
+//	    "github.com/felixgeelhaar/fortify/v2/grpc"
 //	    "google.golang.org/grpc"
 //	)
 //
@@ -170,9 +170,9 @@
 // Built-in support for logging, tracing, and metrics:
 //
 //	import (
-//	    "github.com/felixgeelhaar/fortify/otel"
-//	    "github.com/felixgeelhaar/fortify/slog"
-//	    "github.com/felixgeelhaar/fortify/metrics"
+//	    "github.com/felixgeelhaar/fortify/v2/otel"
+//	    "github.com/felixgeelhaar/fortify/v2/slog"
+//	    "github.com/felixgeelhaar/fortify/v2/metrics"
 //	)
 //
 //	// OpenTelemetry tracing
@@ -220,7 +220,7 @@
 //
 // Fortify provides standard error types for pattern-specific failures:
 //
-//	import "github.com/felixgeelhaar/fortify/ferrors"
+//	import "github.com/felixgeelhaar/fortify/v2/ferrors"
 //
 //	result, err := cb.Execute(ctx, operation)
 //	if errors.Is(err, ferrors.ErrCircuitOpen) {
@@ -237,7 +237,7 @@
 //
 // Fortify includes utilities for chaos engineering and resilience testing:
 //
-//	import "github.com/felixgeelhaar/fortify/testing"
+//	import "github.com/felixgeelhaar/fortify/v2/testing"
 //
 //	// Error injection for testing
 //	injector := testing.NewErrorInjector(0.3) // 30% failure rate
@@ -270,7 +270,7 @@
 // # Documentation
 //
 // For detailed documentation, examples, and API reference:
-//   - Package Documentation: https://pkg.go.dev/github.com/felixgeelhaar/fortify
+//   - Package Documentation: https://pkg.go.dev/github.com/felixgeelhaar/fortify/v2
 //   - GitHub Repository: https://github.com/felixgeelhaar/fortify
 //   - Production Guide: https://github.com/felixgeelhaar/fortify/blob/main/docs/PRODUCTION.md
 //   - Error Handling: https://github.com/felixgeelhaar/fortify/blob/main/docs/ERROR_HANDLING.md

@@ -33,7 +33,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"github.com/felixgeelhaar/fortify/v2/ferrors"
 )
 
 // CircuitBreaker is a generic interface for circuit breaker pattern implementation.

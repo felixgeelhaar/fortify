@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/retry"
+	"github.com/felixgeelhaar/fortify/v2/retry"
 )
 
 func TestRetryExample(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"github.com/felixgeelhaar/fortify/v2/ferrors"
 )
 
 //nolint:gocyclo // test function with many subtests

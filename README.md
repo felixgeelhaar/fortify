@@ -3,8 +3,8 @@
   <h1>Fortify</h1>
 </div>
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/felixgeelhaar/fortify.svg)](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
-[![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/fortify)](https://goreportcard.com/report/github.com/felixgeelhaar/fortify)
+[![Go Reference](https://pkg.go.dev/badge/github.com/felixgeelhaar/fortify/v2.svg)](https://pkg.go.dev/github.com/felixgeelhaar/fortify/v2)
+[![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/fortify/v2)](https://goreportcard.com/report/github.com/felixgeelhaar/fortify/v2)
 [![CI Status](https://github.com/felixgeelhaar/fortify/workflows/CI/badge.svg)](https://github.com/felixgeelhaar/fortify/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/felixgeelhaar/fortify/branch/main/graph/badge.svg)](https://codecov.io/gh/felixgeelhaar/fortify)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -30,7 +30,7 @@ Fortify is a production-grade resilience and fault-tolerance library for Go 1.23
 ## Installation
 
 ```bash
-go get github.com/felixgeelhaar/fortify
+go get github.com/felixgeelhaar/fortify/v2
 ```
 
 **Requirements:** Go 1.23 or higher
@@ -44,8 +44,8 @@ import (
     "context"
     "time"
 
-    "github.com/felixgeelhaar/fortify/circuitbreaker"
-    "github.com/felixgeelhaar/fortify/retry"
+    "github.com/felixgeelhaar/fortify/v2/circuitbreaker"
+    "github.com/felixgeelhaar/fortify/v2/retry"
 )
 
 func main() {
@@ -81,7 +81,7 @@ func main() {
 Prevents cascading failures by temporarily stopping requests to failing services.
 
 ```go
-import "github.com/felixgeelhaar/fortify/circuitbreaker"
+import "github.com/felixgeelhaar/fortify/v2/circuitbreaker"
 
 cb := circuitbreaker.New[Response](circuitbreaker.Config{
     MaxRequests: 100,
@@ -113,7 +113,7 @@ result, err := cb.Execute(ctx, func(ctx context.Context) (Response, error) {
 Automatically retries failed operations with configurable backoff strategies.
 
 ```go
-import "github.com/felixgeelhaar/fortify/retry"
+import "github.com/felixgeelhaar/fortify/v2/retry"
 
 r := retry.New[Response](retry.Config{
     MaxAttempts:   5,
@@ -147,7 +147,7 @@ result, err := r.Do(ctx, func(ctx context.Context) (Response, error) {
 Controls the rate of operations using a token bucket algorithm with a pluggable storage backend.
 
 ```go
-import "github.com/felixgeelhaar/fortify/ratelimit"
+import "github.com/felixgeelhaar/fortify/v2/ratelimit"
 
 rl := ratelimit.New(&ratelimit.Config{
     Rate:     100,               // 100 requests
@@ -171,12 +171,125 @@ if err := rl.Wait(ctx, "user-123"); err == nil {
 - Ensuring fair resource usage
 - Implementing user quotas
 
+#### Per-Key Rate Limiting Patterns
+
+The rate limiter supports flexible per-key limiting out of the box. Use different keys to implement various rate limiting strategies:
+
+```go
+import "github.com/felixgeelhaar/fortify/v2/ratelimit"
+
+rl := ratelimit.New(&ratelimit.Config{
+    Rate:     100,
+    Burst:    200,
+    Interval: time.Second,
+})
+
+// Global rate limiting - all requests share one bucket
+func handleGlobalLimit(ctx context.Context) bool {
+    return rl.Allow(ctx, "global")
+}
+
+// Per-method rate limiting - separate limits per API endpoint
+func handleMethodLimit(ctx context.Context, method string) bool {
+    return rl.Allow(ctx, method) // e.g., "GET:/api/users", "POST:/api/orders"
+}
+
+// Per-client rate limiting - separate limits per user/client
+func handleClientLimit(ctx context.Context, clientID string) bool {
+    return rl.Allow(ctx, clientID) // e.g., "user-123", "api-key-abc"
+}
+
+// Combined: per-client-per-method limiting
+func handleCombinedLimit(ctx context.Context, clientID, method string) bool {
+    key := clientID + ":" + method // e.g., "user-123:POST:/api/orders"
+    return rl.Allow(ctx, key)
+}
+```
+
+**Dynamic Key Extraction with KeyFunc:**
+
+Use `KeyFunc` to extract rate limit keys from context automatically:
+
+```go
+rl := ratelimit.New(&ratelimit.Config{
+    Rate:     10,
+    Burst:    20,
+    Interval: time.Second,
+    KeyFunc: func(ctx context.Context) string {
+        // Extract user ID from context (set by auth middleware)
+        if userID, ok := ctx.Value("userID").(string); ok {
+            return userID
+        }
+        // Fallback to IP address for unauthenticated requests
+        if ip, ok := ctx.Value("clientIP").(string); ok {
+            return "ip:" + ip
+        }
+        return "anonymous"
+    },
+})
+
+// Key is extracted automatically from context
+if rl.Allow(ctx, "") { // key parameter ignored when KeyFunc is set
+    handleRequest()
+}
+```
+
+#### Event Callbacks for Observability
+
+Monitor rate limiting events using the `OnAllow` and `OnLimit` callbacks:
+
+```go
+rl := ratelimit.New(&ratelimit.Config{
+    Rate:     100,
+    Burst:    200,
+    Interval: time.Second,
+    OnAllow: func(ctx context.Context, key string) {
+        // Called when a request is allowed
+        metrics.IncrementCounter("rate_limit_allowed", key)
+    },
+    OnLimit: func(ctx context.Context, key string) {
+        // Called when a request is rate limited
+        log.Printf("Rate limited: %s", key)
+        metrics.IncrementCounter("rate_limit_exceeded", key)
+    },
+    Logger: slog.Default(), // Structured logging for all events
+})
+```
+
+For comprehensive observability, implement the `Metrics` interface:
+
+```go
+type MyMetrics struct{}
+
+func (m *MyMetrics) OnAllow(ctx context.Context, key string) {
+    // Request was allowed
+}
+
+func (m *MyMetrics) OnDeny(ctx context.Context, key string) {
+    // Request was rate limited
+}
+
+func (m *MyMetrics) OnError(ctx context.Context, key string, err error) {
+    // Storage error occurred
+}
+
+func (m *MyMetrics) OnStoreLatency(ctx context.Context, op string, d time.Duration) {
+    // Track storage operation latency
+}
+
+rl := ratelimit.New(&ratelimit.Config{
+    Rate:    100,
+    Burst:   200,
+    Metrics: &MyMetrics{},
+})
+```
+
 #### Custom Storage Backends
 
 For distributed systems, implement the `Store` interface to share rate limits across multiple application instances:
 
 ```go
-import "github.com/felixgeelhaar/fortify/ratelimit"
+import "github.com/felixgeelhaar/fortify/v2/ratelimit"
 
 // Implement the Store interface for your backend (Redis, DynamoDB, etc.)
 type RedisStore struct {
@@ -218,7 +331,7 @@ rl := ratelimit.New(&ratelimit.Config{
 Enforces time limits on operations with context propagation.
 
 ```go
-import "github.com/felixgeelhaar/fortify/timeout"
+import "github.com/felixgeelhaar/fortify/v2/timeout"
 
 tm := timeout.New[Response](timeout.Config{
     DefaultTimeout: time.Second * 30,
@@ -248,7 +361,7 @@ result, err := tm.ExecuteWithDefault(ctx, func(ctx context.Context) (Response, e
 Limits concurrent operations to prevent resource exhaustion.
 
 ```go
-import "github.com/felixgeelhaar/fortify/bulkhead"
+import "github.com/felixgeelhaar/fortify/v2/bulkhead"
 
 bh := bulkhead.New[Response](bulkhead.Config{
     MaxConcurrent: 10,                  // Max concurrent operations
@@ -279,7 +392,7 @@ log.Printf("Active: %d, Queued: %d, Rejected: %d",
 Provides graceful degradation with automatic fallback on errors.
 
 ```go
-import "github.com/felixgeelhaar/fortify/fallback"
+import "github.com/felixgeelhaar/fortify/v2/fallback"
 
 fb := fallback.New[Response](fallback.Config{
     Primary: func(ctx context.Context) (Response, error) {
@@ -310,7 +423,7 @@ result, err := fb.Execute(ctx)
 Combine multiple patterns into a single execution chain:
 
 ```go
-import "github.com/felixgeelhaar/fortify/middleware"
+import "github.com/felixgeelhaar/fortify/v2/middleware"
 
 chain := middleware.New[Response]().
     WithBulkhead(bh).
@@ -338,7 +451,7 @@ Integrate resilience patterns with standard `http.Handler`:
 ```go
 import (
     "net/http"
-    fortifyhttp "github.com/felixgeelhaar/fortify/http"
+    fortifyhttp "github.com/felixgeelhaar/fortify/v2/http"
 )
 
 // Create patterns
@@ -373,7 +486,7 @@ Integrate with gRPC services:
 
 ```go
 import (
-    fortifygrpc "github.com/felixgeelhaar/fortify/grpc"
+    fortifygrpc "github.com/felixgeelhaar/fortify/v2/grpc"
     "google.golang.org/grpc"
 )
 
@@ -404,7 +517,7 @@ server := grpc.NewServer(
 ```go
 import (
     "log/slog"
-    fortifyslog "github.com/felixgeelhaar/fortify/slog"
+    fortifyslog "github.com/felixgeelhaar/fortify/v2/slog"
 )
 
 logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -419,7 +532,7 @@ fortifyslog.LogPatternEvent(logger, fortifyslog.PatternCircuitBreaker, "state_ch
 
 ```go
 import (
-    fortifyotel "github.com/felixgeelhaar/fortify/otel"
+    fortifyotel "github.com/felixgeelhaar/fortify/v2/otel"
     "go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -441,7 +554,7 @@ Export detailed metrics for all resilience patterns:
 
 ```go
 import (
-    "github.com/felixgeelhaar/fortify/metrics"
+    "github.com/felixgeelhaar/fortify/v2/metrics"
     "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -569,7 +682,7 @@ go tool cover -html=coverage.out
 Test resilience with built-in chaos utilities:
 
 ```go
-import fortifytesting "github.com/felixgeelhaar/fortify/testing"
+import fortifytesting "github.com/felixgeelhaar/fortify/v2/testing"
 
 // Inject errors with configurable probability
 injector := fortifytesting.NewErrorInjector(0.3, errors.New("service unavailable"))
@@ -649,7 +762,7 @@ Fortify is inspired by resilience libraries from other ecosystems:
 
 ## Support
 
-- 📖 [Documentation](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
+- 📖 [Documentation](https://pkg.go.dev/github.com/felixgeelhaar/fortify/v2)
 - 🐛 [Issue Tracker](https://github.com/felixgeelhaar/fortify/issues)
 - 💬 [Discussions](https://github.com/felixgeelhaar/fortify/discussions)
 
