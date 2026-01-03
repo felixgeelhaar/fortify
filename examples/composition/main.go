@@ -38,6 +38,7 @@ func (c *ExternalAPIClient) Call(ctx context.Context, requestID string) (*APIRes
 	}
 
 	// Simulate random failures
+	//nolint:gosec // G404: using math/rand intentionally for non-security simulation
 	if rand.Float64() < c.failureRate {
 		return nil, errors.New("external API error")
 	}
@@ -54,7 +55,8 @@ func main() {
 	// 30% failure rate, 100-500ms latency
 	apiClient := &ExternalAPIClient{
 		failureRate: 0.3,
-		latency:     time.Millisecond * time.Duration(100+rand.Intn(400)),
+		//nolint:gosec // G404: using math/rand intentionally for simulation latency
+		latency: time.Millisecond * time.Duration(100+rand.Intn(400)),
 	}
 
 	// Build a comprehensive resilience chain
@@ -165,6 +167,7 @@ func buildResilientChain() *middleware.Chain[*APIResponse] {
 }
 
 // Alternative composition for different scenarios
+// nolint:unused // example showing alternative pattern
 func buildFastFailChain() *middleware.Chain[*APIResponse] {
 	// For scenarios where fast failure is preferred over retries
 	cb := circuitbreaker.New[*APIResponse](circuitbreaker.Config{
@@ -192,6 +195,7 @@ func buildFastFailChain() *middleware.Chain[*APIResponse] {
 }
 
 // Background job composition
+// nolint:unused // example showing alternative pattern
 func buildBackgroundJobChain() *middleware.Chain[*APIResponse] {
 	// For background jobs that can tolerate longer delays and more retries
 	r := retry.New[*APIResponse](retry.Config{

@@ -22,7 +22,7 @@ func TestBulkheadExample(t *testing.T) {
 	main()
 
 	// Restore stdout and read output
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
@@ -42,7 +42,7 @@ func TestBulkheadConcurrencyLimit(t *testing.T) {
 	bh := bulkhead.New[string](bulkhead.Config{
 		MaxConcurrent: 2,
 	})
-	defer bh.Close()
+	defer func() { _ = bh.Close() }()
 
 	var concurrent int32
 	var mu sync.Mutex

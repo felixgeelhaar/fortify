@@ -431,8 +431,8 @@ func TestMemoryStore(t *testing.T) {
 		ctx := context.Background()
 
 		// Create state
-		//nolint:errcheck // test setup
-		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
 
@@ -621,7 +621,7 @@ func (m *mockStore) Close() error {
 func TestMemoryStoreGet(t *testing.T) {
 	t.Run("returns nil for non-existent key", func(t *testing.T) {
 		store := NewMemoryStore()
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		state, err := store.Get(ctx, "non-existent")
@@ -635,13 +635,13 @@ func TestMemoryStoreGet(t *testing.T) {
 
 	t.Run("returns copy of existing state", func(t *testing.T) {
 		store := NewMemoryStore()
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create state
 		now := time.Now()
-		//nolint:errcheck // test setup
-		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: now}
 		})
 
@@ -676,8 +676,8 @@ func TestMemoryStoreClose(t *testing.T) {
 		ctx := context.Background()
 
 		// Create some state
-		//nolint:errcheck // test setup
-		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
 
@@ -715,7 +715,7 @@ func TestMemoryStoreKeyLimit(t *testing.T) {
 			WithMaxKeys(5),
 			WithCleanupInterval(0), // Disable cleanup for this test
 		)
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create 5 keys (at limit)
@@ -746,7 +746,7 @@ func TestMemoryStoreKeyLimit(t *testing.T) {
 			WithMaxKeys(3),
 			WithCleanupInterval(0),
 		)
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create 3 keys
@@ -781,12 +781,12 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 			WithCleanupInterval(50*time.Millisecond),
 			WithEntryTTL(100*time.Millisecond),
 		)
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create a key
-		//nolint:errcheck // test setup
-		store.AtomicUpdate(ctx, "stale-key", func(s *BucketState) *BucketState {
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "stale-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
 
@@ -808,20 +808,20 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 			WithCleanupInterval(50*time.Millisecond),
 			WithEntryTTL(150*time.Millisecond),
 		)
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create a key
-		//nolint:errcheck // test setup
-		store.AtomicUpdate(ctx, "active-key", func(s *BucketState) *BucketState {
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "active-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
 
 		// Keep accessing the key to prevent expiry
 		for i := 0; i < 5; i++ {
 			time.Sleep(40 * time.Millisecond)
-			//nolint:errcheck // test setup
-			store.AtomicUpdate(ctx, "active-key", func(s *BucketState) *BucketState {
+			//nolint:errcheck,gosec // test setup
+			_, _ = store.AtomicUpdate(ctx, "active-key", func(s *BucketState) *BucketState {
 				return s
 			})
 		}
@@ -837,7 +837,7 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 func TestMemoryStoreHealthCheck(t *testing.T) {
 	t.Run("returns nil when healthy", func(t *testing.T) {
 		store := NewMemoryStore()
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 
 		err := store.HealthCheck(context.Background())
 		if err != nil {
@@ -847,7 +847,7 @@ func TestMemoryStoreHealthCheck(t *testing.T) {
 
 	t.Run("returns error when closed", func(t *testing.T) {
 		store := NewMemoryStore()
-		store.Close()
+		_ = store.Close()
 
 		err := store.HealthCheck(context.Background())
 		if !errors.Is(err, ErrStoreClosed) {
@@ -857,7 +857,7 @@ func TestMemoryStoreHealthCheck(t *testing.T) {
 
 	t.Run("respects context cancellation", func(t *testing.T) {
 		store := NewMemoryStore()
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
@@ -901,7 +901,7 @@ func TestRateLimiterTakeValidation(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		if limiter.Take(context.Background(), "test-key", 0) {
 			t.Error("should reject zero tokens")
@@ -914,7 +914,7 @@ func TestRateLimiterTakeValidation(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		if limiter.Take(context.Background(), "test-key", -5) {
 			t.Error("should reject negative tokens")
@@ -928,7 +928,7 @@ func TestRateLimiterTakeValidation(t *testing.T) {
 			Interval:            time.Second,
 			MaxTokensPerRequest: 50,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		if limiter.Take(context.Background(), "test-key", 51) {
 			t.Error("should reject tokens exceeding MaxTokensPerRequest")
@@ -942,7 +942,7 @@ func TestRateLimiterTakeValidation(t *testing.T) {
 			Interval:            time.Second,
 			MaxTokensPerRequest: 50,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		if !limiter.Take(context.Background(), "test-key", 50) {
 			t.Error("should allow tokens within MaxTokensPerRequest")
@@ -995,7 +995,7 @@ func TestRateLimiterMetrics(t *testing.T) {
 			Interval: time.Second,
 			Metrics:  metrics,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 		for i := 0; i < 3; i++ {
@@ -1020,7 +1020,7 @@ func TestRateLimiterMetrics(t *testing.T) {
 			Interval: time.Second,
 			Metrics:  metrics,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 		// Exhaust burst
@@ -1052,7 +1052,7 @@ func TestRateLimiterMetrics(t *testing.T) {
 			Metrics:  metrics,
 			FailOpen: true,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		limiter.Allow(context.Background(), "test-key")
 
@@ -1071,7 +1071,7 @@ func TestRateLimiterMetrics(t *testing.T) {
 			Interval: time.Second,
 			Metrics:  metrics,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		limiter.Take(context.Background(), "test-key", 5)
 
@@ -1087,13 +1087,13 @@ func TestRateLimiterMetrics(t *testing.T) {
 func TestMemoryStoreClear(t *testing.T) {
 	t.Run("removes all buckets", func(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithCleanupInterval(0))
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create multiple keys
 		for i := 0; i < 10; i++ {
-			//nolint:errcheck // test setup
-			store.AtomicUpdate(ctx, fmt.Sprintf("key-%d", i), func(s *BucketState) *BucketState {
+			//nolint:errcheck,gosec // test setup
+			_, _ = store.AtomicUpdate(ctx, fmt.Sprintf("key-%d", i), func(s *BucketState) *BucketState {
 				return &BucketState{Tokens: 10, LastRefill: time.Now()}
 			})
 		}
@@ -1115,7 +1115,7 @@ func TestMemoryStoreClear(t *testing.T) {
 func TestMemoryStoreKeyLengthLimit(t *testing.T) {
 	t.Run("rejects keys exceeding max length", func(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithMaxKeyLength(10), WithCleanupInterval(0))
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Key that's too long
@@ -1131,7 +1131,7 @@ func TestMemoryStoreKeyLengthLimit(t *testing.T) {
 
 	t.Run("allows keys within max length", func(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithMaxKeyLength(10), WithCleanupInterval(0))
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Key that fits
@@ -1147,7 +1147,7 @@ func TestMemoryStoreKeyLengthLimit(t *testing.T) {
 
 	t.Run("Get rejects keys exceeding max length", func(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithMaxKeyLength(10), WithCleanupInterval(0))
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		longKey := "12345678901" // 11 chars
@@ -1167,7 +1167,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		err := limiter.HealthCheck(context.Background())
 		if err != nil {
@@ -1182,7 +1182,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 			Interval: time.Second,
 		})
 
-		limiter.Close()
+		_ = limiter.Close()
 
 		err := limiter.HealthCheck(context.Background())
 		if !errors.Is(err, ErrRateLimiterClosed) {
@@ -1199,7 +1199,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 			Interval: time.Second,
 			Store:    store,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		err := limiter.HealthCheck(context.Background())
 		if err != nil {
@@ -1220,7 +1220,7 @@ func TestRateLimiterHealthCheck(t *testing.T) {
 			Store:    store,
 			Logger:   logger,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// First call should log warning
 		_ = limiter.HealthCheck(context.Background()) //nolint:errcheck // testing log behavior
@@ -1292,7 +1292,7 @@ func TestWaitLatencyMetrics(t *testing.T) {
 			Interval: time.Second,
 			Metrics:  metrics,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		err := limiter.Wait(context.Background(), "test-key")
 		if err != nil {
@@ -1322,7 +1322,7 @@ func TestOnLimitCallbackWithContext(t *testing.T) {
 				receivedCtxValue = ctx.Value(testKey)
 			},
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.WithValue(context.Background(), testKey, "expected-value")
 
@@ -1353,7 +1353,7 @@ func TestCallbackPanicRecovery(t *testing.T) {
 				panic("test panic")
 			},
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -1385,7 +1385,7 @@ func TestRateLimiterClosedBehavior(t *testing.T) {
 			Interval: time.Second,
 		})
 
-		limiter.Close()
+		_ = limiter.Close()
 
 		if limiter.Allow(context.Background(), "test") {
 			t.Error("expected Allow to return false after Close")
@@ -1399,7 +1399,7 @@ func TestRateLimiterClosedBehavior(t *testing.T) {
 			Interval: time.Second,
 		})
 
-		limiter.Close()
+		_ = limiter.Close()
 
 		err := limiter.Wait(context.Background(), "test")
 		if !errors.Is(err, ErrRateLimiterClosed) {
@@ -1414,7 +1414,7 @@ func TestRateLimiterClosedBehavior(t *testing.T) {
 			Interval: time.Second,
 		})
 
-		limiter.Close()
+		_ = limiter.Close()
 
 		if limiter.Take(context.Background(), "test", 1) {
 			t.Error("expected Take to return false after Close")
@@ -1443,7 +1443,7 @@ func TestRateLimiterClosedBehavior(t *testing.T) {
 func TestDeleteKeyLengthLimit(t *testing.T) {
 	t.Run("Delete rejects keys exceeding max length", func(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithMaxKeyLength(10), WithCleanupInterval(0))
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		longKey := "12345678901" // 11 chars
@@ -1480,7 +1480,7 @@ func TestConcurrentWaitOnSameKey(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 		key := "concurrent-test"
@@ -1557,7 +1557,7 @@ func TestWaitTimeoutLimits(t *testing.T) {
 			Interval: time.Second,
 			Store:    store,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 		defer cancel()
@@ -1593,7 +1593,7 @@ func TestWaitTimeoutLimits(t *testing.T) {
 			Burst:    1,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -1624,7 +1624,7 @@ func TestWaitTimeoutLimits(t *testing.T) {
 			Burst:    100,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		start := time.Now()
 		err := limiter.Wait(context.Background(), "test")
@@ -1647,7 +1647,7 @@ func TestWaitTimeoutLimits(t *testing.T) {
 			Interval: time.Second,
 		})
 
-		limiter.Close()
+		_ = limiter.Close()
 
 		err := limiter.HealthCheck(context.Background())
 		if !errors.Is(err, ErrRateLimiterClosed) {
@@ -1668,7 +1668,7 @@ func TestWaitEdgeCases(t *testing.T) {
 			Interval: time.Second,
 			Store:    store,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Create a context with long timeout so we hit iteration limit first
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
@@ -1688,7 +1688,7 @@ func TestWaitEdgeCases(t *testing.T) {
 			Burst:    1,
 			Interval: time.Minute,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -1720,7 +1720,7 @@ func TestWaitEdgeCases(t *testing.T) {
 			Store:    failingStore,
 			FailOpen: true,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		err := limiter.Wait(context.Background(), "test")
 		if err != nil {
@@ -1738,7 +1738,7 @@ func TestWaitEdgeCases(t *testing.T) {
 			Store:    failingStore,
 			FailOpen: false,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 		defer cancel()
@@ -1800,7 +1800,7 @@ func TestMultiKeyConcurrency(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 		numKeys := 100
@@ -1854,7 +1854,7 @@ func TestMultiKeyConcurrency(t *testing.T) {
 			WithMaxKeys(1000),
 			WithCleanupInterval(0), // Disable cleanup during test
 		)
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 
 		limiter := New(&Config{
 			Rate:     10,
@@ -1862,7 +1862,7 @@ func TestMultiKeyConcurrency(t *testing.T) {
 			Interval: time.Second,
 			Store:    store,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 		numGoroutines := 50
@@ -1906,7 +1906,7 @@ func TestMultiKeyConcurrency(t *testing.T) {
 			Burst:    5,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 		key := "mixed-ops"
@@ -1956,13 +1956,13 @@ func TestMultiKeyConcurrency(t *testing.T) {
 func TestRefillEdgeCases(t *testing.T) {
 	t.Run("handles clock backwards gracefully", func(t *testing.T) {
 		store := NewMemoryStore()
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create initial state with a future timestamp
 		futureTime := time.Now().Add(time.Hour)
-		//nolint:errcheck // test setup
-		store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     5,
 				LastRefill: futureTime,
@@ -1975,7 +1975,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			Interval: time.Second,
 			Store:    store,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Should still work - tokens shouldn't go negative
 		// Even with clock backwards, existing tokens should be usable
@@ -1990,7 +1990,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			Burst:    100,
 			Interval: time.Millisecond, // Very small interval
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -2017,13 +2017,13 @@ func TestRefillEdgeCases(t *testing.T) {
 
 	t.Run("handles very large elapsed time capped to maxElapsed", func(t *testing.T) {
 		store := NewMemoryStore()
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create state with very old timestamp (simulating system sleep/wake)
 		oldTime := time.Now().Add(-24 * time.Hour)
-		//nolint:errcheck // test setup
-		store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     0,
 				LastRefill: oldTime,
@@ -2036,7 +2036,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			Interval: time.Second,
 			Store:    store,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Request should succeed (tokens refilled up to burst)
 		if !limiter.Allow(ctx, "test") {
@@ -2063,7 +2063,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			Burst:    10, // Can hold up to 10
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -2088,12 +2088,12 @@ func TestRefillEdgeCases(t *testing.T) {
 
 	t.Run("burst cap prevents token overflow", func(t *testing.T) {
 		store := NewMemoryStore()
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 		ctx := context.Background()
 
 		// Create state at burst limit
-		//nolint:errcheck // test setup
-		store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     10, // At burst limit
 				LastRefill: time.Now().Add(-time.Hour),
@@ -2106,7 +2106,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			Interval: time.Second,
 			Store:    store,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Try to refill beyond burst - should be capped
 		limiter.Allow(ctx, "test") // Triggers refill calculation
@@ -2123,7 +2123,7 @@ func TestRefillEdgeCases(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -2154,7 +2154,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Burst:    100,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		if limiter.Take(context.Background(), "test", 0) {
 			t.Error("should reject zero tokens")
@@ -2167,7 +2167,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Burst:    100,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		if limiter.Take(context.Background(), "test", -1) {
 			t.Error("should reject negative tokens")
@@ -2183,7 +2183,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Should allow taking exactly burst amount
 		if !limiter.Take(context.Background(), "test", 10) {
@@ -2197,7 +2197,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Cannot take more than burst on first request
 		if limiter.Take(context.Background(), "test", 11) {
@@ -2212,7 +2212,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Interval:            time.Second,
 			MaxTokensPerRequest: 100,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Exactly at limit should work
 		if !limiter.Take(context.Background(), "test", 100) {
@@ -2231,7 +2231,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -2262,7 +2262,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Burst:    5,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -2284,7 +2284,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Interval: time.Second,
 		})
 
-		limiter.Close()
+		_ = limiter.Close()
 
 		if limiter.Take(context.Background(), "test", 1) {
 			t.Error("Take should return false on closed limiter")
@@ -2301,7 +2301,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Store:    failingStore,
 			FailOpen: true,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Should allow due to FailOpen
 		if !limiter.Take(context.Background(), "test", 5) {
@@ -2319,7 +2319,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			Store:    failingStore,
 			FailOpen: false,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Should deny due to FailClosed
 		if limiter.Take(context.Background(), "test", 5) {
@@ -2338,7 +2338,7 @@ func TestTakeBoundaryConditions(t *testing.T) {
 			MaxTokensPerRequest: 50,
 			Logger:              logger,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Request exceeding MaxTokensPerRequest
 		limiter.Take(context.Background(), "test", 100)
@@ -2365,7 +2365,7 @@ func TestStoreFailureRecovery(t *testing.T) {
 			Store:    store,
 			FailOpen: true,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -2396,7 +2396,7 @@ func TestStoreFailureRecovery(t *testing.T) {
 			Store:    store,
 			FailOpen: false,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -2427,7 +2427,7 @@ func TestStoreFailureRecovery(t *testing.T) {
 			Store:    store,
 			FailOpen: false,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 
@@ -2456,7 +2456,7 @@ func TestStoreFailureRecovery(t *testing.T) {
 			Store:    store,
 			FailOpen: true,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx := context.Background()
 		var wg sync.WaitGroup
@@ -2677,7 +2677,7 @@ func TestRateLimiterExecute(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		executed := false
 		err := limiter.Execute(context.Background(), "test-key", func() error {
@@ -2699,7 +2699,7 @@ func TestRateLimiterExecute(t *testing.T) {
 			Burst:    1,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// First call should succeed
 		err := limiter.Execute(context.Background(), "test-key", func() error {
@@ -2730,7 +2730,7 @@ func TestRateLimiterExecute(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		opErr := errors.New("operation failed")
 		err := limiter.Execute(context.Background(), "test-key", func() error {
@@ -2748,7 +2748,7 @@ func TestRateLimiterExecute(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		limiter.Close()
+		_ = limiter.Close()
 
 		err := limiter.Execute(context.Background(), "test-key", func() error {
 			return nil
@@ -2770,7 +2770,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		executed := false
 		err := limiter.ExecuteN(context.Background(), "test-key", 5, func() error {
@@ -2792,7 +2792,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Take all tokens
 		if !limiter.Take(context.Background(), "test-key", 10) {
@@ -2820,7 +2820,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		err := limiter.ExecuteN(context.Background(), "test-key", 0, func() error {
 			return nil
@@ -2837,7 +2837,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		err := limiter.ExecuteN(context.Background(), "test-key", -1, func() error {
 			return nil
@@ -2855,7 +2855,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 			Interval:            time.Second,
 			MaxTokensPerRequest: 5,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		err := limiter.ExecuteN(context.Background(), "test-key", 10, func() error {
 			return nil
@@ -2872,7 +2872,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		opErr := errors.New("operation failed")
 		err := limiter.ExecuteN(context.Background(), "test-key", 1, func() error {
@@ -2890,7 +2890,7 @@ func TestRateLimiterExecuteN(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		limiter.Close()
+		_ = limiter.Close()
 
 		err := limiter.ExecuteN(context.Background(), "test-key", 1, func() error {
 			return nil
@@ -2910,7 +2910,7 @@ func TestRateLimiterReset(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Create some buckets
 		limiter.Allow(context.Background(), "key1")
@@ -2940,7 +2940,7 @@ func TestRateLimiterReset(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		limiter.Close()
+		_ = limiter.Close()
 
 		err := limiter.Reset(context.Background())
 		if !errors.Is(err, ErrRateLimiterClosed) {
@@ -2954,7 +2954,7 @@ func TestRateLimiterReset(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
@@ -2977,7 +2977,7 @@ func TestRateLimiterReset(t *testing.T) {
 			Store:    store,
 			Logger:   logger,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		err := limiter.Reset(context.Background())
 		if err != nil {
@@ -2995,7 +2995,7 @@ func TestRateLimiterReset(t *testing.T) {
 func TestMemoryStoreReset(t *testing.T) {
 	t.Run("clears all buckets", func(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithCleanupInterval(0))
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 
 		// Create some buckets
 		for i := 0; i < 5; i++ {
@@ -3027,7 +3027,7 @@ func TestMemoryStoreReset(t *testing.T) {
 
 	t.Run("returns ErrStoreClosed when closed", func(t *testing.T) {
 		store := NewMemoryStore()
-		store.Close()
+		_ = store.Close()
 
 		err := store.Reset(context.Background())
 		if !errors.Is(err, ErrStoreClosed) {
@@ -3037,7 +3037,7 @@ func TestMemoryStoreReset(t *testing.T) {
 
 	t.Run("respects context cancellation", func(t *testing.T) {
 		store := NewMemoryStore()
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel()
@@ -3057,7 +3057,7 @@ func TestRateLimiterBucketCount(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		// Initially no buckets
 		if count := limiter.BucketCount(); count != 0 {
@@ -3085,7 +3085,7 @@ func TestRateLimiterBucketCount(t *testing.T) {
 			Burst:    10,
 			Interval: time.Second,
 		})
-		limiter.Close()
+		_ = limiter.Close()
 
 		if count := limiter.BucketCount(); count != -1 {
 			t.Errorf("expected -1 when closed, got: %d", count)
@@ -3100,7 +3100,7 @@ func TestRateLimiterBucketCount(t *testing.T) {
 			Interval: time.Second,
 			Store:    store,
 		})
-		defer limiter.Close()
+		defer func() { _ = limiter.Close() }()
 
 		if count := limiter.BucketCount(); count != -1 {
 			t.Errorf("expected -1 for store without BucketCounter, got: %d", count)
@@ -3112,7 +3112,7 @@ func TestRateLimiterBucketCount(t *testing.T) {
 func TestMemoryStoreBucketCount(t *testing.T) {
 	t.Run("returns correct count", func(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithCleanupInterval(0))
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 
 		// Initially 0
 		if count := store.BucketCount(); count != 0 {
@@ -3142,7 +3142,7 @@ func TestMemoryStoreBucketCount(t *testing.T) {
 
 	t.Run("KeyCount is alias for BucketCount", func(t *testing.T) {
 		store := NewMemoryStoreWithOptions(WithCleanupInterval(0))
-		defer store.Close()
+		defer func() { _ = store.Close() }()
 
 		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(context.Background(), "test", func(state *BucketState) *BucketState {

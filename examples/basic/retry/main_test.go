@@ -22,7 +22,7 @@ func TestRetryExample(t *testing.T) {
 	main()
 
 	// Restore stdout and read output
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer

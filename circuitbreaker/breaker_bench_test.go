@@ -57,7 +57,7 @@ func BenchmarkCircuitBreakerOpen(b *testing.B) {
 
 	// Open the circuit
 	ctx := context.Background()
-	cb.Execute(ctx, func(ctx context.Context) (int, error) {
+	_, _ = cb.Execute(ctx, func(ctx context.Context) (int, error) {
 		return 0, errors.New("failure")
 	})
 

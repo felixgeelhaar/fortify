@@ -134,9 +134,10 @@ func Example_testingCircuitBreaker() {
 		})
 
 		state := cb.State()
-		if state == circuitbreaker.StateClosed {
+		switch state {
+		case circuitbreaker.StateClosed:
 			closedCount++
-		} else if state == circuitbreaker.StateOpen {
+		case circuitbreaker.StateOpen:
 			openCount++
 		}
 

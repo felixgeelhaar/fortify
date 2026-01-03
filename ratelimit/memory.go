@@ -385,8 +385,9 @@ func (m *MemoryStore) Reset(ctx context.Context) error {
 }
 
 // Clear removes all buckets from the store.
-// Deprecated: Use Reset(ctx) instead for context support.
 // This method is kept for backwards compatibility.
+//
+// Deprecated: Use Reset(ctx) instead for context support.
 func (m *MemoryStore) Clear() {
 	_ = m.Reset(context.Background()) //nolint:errcheck // backwards compatibility method
 }
@@ -398,6 +399,7 @@ func (m *MemoryStore) BucketCount() int64 {
 }
 
 // KeyCount returns the current number of keys in the store.
+//
 // Deprecated: Use BucketCount() instead.
 func (m *MemoryStore) KeyCount() int64 {
 	return m.BucketCount()
