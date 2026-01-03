@@ -321,7 +321,7 @@ func Example_execute() {
 		Burst:    10,
 		Interval: time.Second,
 	})
-	defer rl.Close()
+	defer func() { _ = rl.Close() }()
 
 	ctx := context.Background()
 
@@ -345,7 +345,7 @@ func Example_executeN() {
 		Burst:    100,
 		Interval: time.Second,
 	})
-	defer rl.Close()
+	defer func() { _ = rl.Close() }()
 
 	ctx := context.Background()
 
@@ -370,7 +370,7 @@ func Example_reset() {
 		Burst:    1,
 		Interval: time.Second,
 	})
-	defer rl.Close()
+	defer func() { _ = rl.Close() }()
 
 	ctx := context.Background()
 
@@ -399,7 +399,7 @@ func Example_bucketCount() {
 		Burst:    10,
 		Interval: time.Second,
 	})
-	defer rl.Close()
+	defer func() { _ = rl.Close() }()
 
 	ctx := context.Background()
 

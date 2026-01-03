@@ -47,16 +47,19 @@ func main() {
 	// Protected endpoint with all patterns
 	protectedHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Simulate occasional failures and slow responses
+		//nolint:gosec // G404: using math/rand intentionally for simulation
 		if rand.Intn(10) < 2 {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
 		// Simulate variable response time
+		//nolint:gosec // G404: using math/rand intentionally for simulation
 		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "Protected resource accessed at %s\n", time.Now().Format(time.RFC3339))
+		//nolint:errcheck // HTTP response writer errors handled by framework
+		_, _ = fmt.Fprintf(w, "Protected resource accessed at %s\n", time.Now().Format(time.RFC3339))
 	})
 
 	// Apply middleware: rate limit -> timeout -> circuit breaker -> handler
@@ -72,7 +75,8 @@ func main() {
 	apiHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		apiKey := r.Header.Get("X-API-Key")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "API accessed with key: %s at %s\n", apiKey, time.Now().Format(time.RFC3339))
+		//nolint:errcheck // HTTP response writer errors handled by framework
+		_, _ = fmt.Fprintf(w, "API accessed with key: %s at %s\n", apiKey, time.Now().Format(time.RFC3339))
 	})
 
 	apiWithRateLimit := fortifyhttp.RateLimit(rl, fortifyhttp.KeyFromHeader("X-API-Key"))(apiHandler)
@@ -81,7 +85,8 @@ func main() {
 	// Health check endpoint (no middleware)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintln(w, "OK")
+		//nolint:errcheck // HTTP response writer errors handled by framework
+		_, _ = fmt.Fprintln(w, "OK")
 	})
 
 	// Slow endpoint with timeout
@@ -92,7 +97,8 @@ func main() {
 			return
 		case <-time.After(5 * time.Second):
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintln(w, "Slow operation completed")
+			//nolint:errcheck // HTTP response writer errors handled by framework
+			_, _ = fmt.Fprintln(w, "Slow operation completed")
 		}
 	})
 
@@ -126,6 +132,8 @@ func main() {
 }
 
 // Graceful shutdown example
+//
+//nolint:unused // example showing graceful shutdown pattern
 func gracefulShutdown(server *http.Server) {
 	// Wait for interrupt signal
 	// (in a real application, you'd use signal.Notify)

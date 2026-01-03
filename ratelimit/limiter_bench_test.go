@@ -97,7 +97,8 @@ func BenchmarkMemoryStoreAtomicUpdate(b *testing.B) {
 	ctx := context.Background()
 
 	// Initialize bucket
-	store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+	//nolint:errcheck // benchmark setup
+	_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 		return &BucketState{Tokens: 100, LastRefill: time.Now()}
 	})
 
@@ -105,7 +106,8 @@ func BenchmarkMemoryStoreAtomicUpdate(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+		//nolint:errcheck // benchmark
+		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			if s == nil {
 				return &BucketState{Tokens: 100, LastRefill: time.Now()}
 			}
@@ -119,7 +121,8 @@ func BenchmarkMemoryStoreConcurrentUpdate(b *testing.B) {
 	ctx := context.Background()
 
 	// Initialize bucket
-	store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+	//nolint:errcheck // benchmark setup
+	_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 		return &BucketState{Tokens: 1000000, LastRefill: time.Now()}
 	})
 
@@ -128,7 +131,8 @@ func BenchmarkMemoryStoreConcurrentUpdate(b *testing.B) {
 
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
+			//nolint:errcheck // benchmark
+			_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 				if s == nil {
 					return &BucketState{Tokens: 1000000, LastRefill: time.Now()}
 				}

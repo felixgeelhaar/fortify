@@ -58,7 +58,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		})
 
 		// Trigger failure to open circuit
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		_, _ = cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -90,7 +90,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		})
 
 		// Open the circuit
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		_, _ = cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -104,7 +104,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 
 		// Next request should attempt execution (half-open)
 		executed := false
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			executed = true
 			return 42, nil
@@ -126,7 +126,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		})
 
 		// Open the circuit
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -136,7 +136,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 
 		// Successful requests in half-open
 		for i := 0; i < 2; i++ {
-			//nolint:errcheck // intentionally ignoring error in test
+			//nolint:errcheck,gosec // intentionally ignoring error in test
 			cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 				return 42, nil
 			})
@@ -158,7 +158,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		})
 
 		// Open the circuit
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -167,7 +167,7 @@ func TestCircuitBreakerStates(t *testing.T) {
 		time.Sleep(60 * time.Millisecond)
 
 		// Fail in half-open state
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -243,7 +243,7 @@ func TestCircuitBreakerReset(t *testing.T) {
 	})
 
 	// Open the circuit
-	//nolint:errcheck // intentionally ignoring error in test
+	//nolint:errcheck,gosec // intentionally ignoring error in test
 	cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		return 0, errors.New("failure")
 	})
@@ -295,7 +295,7 @@ func TestCircuitBreakerCallbacks(t *testing.T) {
 		})
 
 		// Trigger state change from Closed to Open
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -320,7 +320,7 @@ func TestCircuitBreakerCounts(t *testing.T) {
 
 	// Successful requests
 	for i := 0; i < 3; i++ {
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 42, nil
 		})
@@ -328,7 +328,7 @@ func TestCircuitBreakerCounts(t *testing.T) {
 
 	// Failed requests
 	for i := 0; i < 2; i++ {
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		cb.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
@@ -348,13 +348,13 @@ func TestCircuitBreakerCounts(t *testing.T) {
 	})
 
 	for i := 0; i < 3; i++ {
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		_, _ = testCB.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 42, nil
 		})
 	}
 	for i := 0; i < 2; i++ {
-		//nolint:errcheck // intentionally ignoring error in test
+		//nolint:errcheck,gosec // intentionally ignoring error in test
 		_, _ = testCB.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})

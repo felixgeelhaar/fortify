@@ -139,6 +139,7 @@ func (pt *PerformanceTracker) AddBaseline(baseline PerformanceBaseline) {
 
 // LoadBaselines loads baselines from a JSON file.
 func (pt *PerformanceTracker) LoadBaselines(path string) error {
+	//nolint:gosec // G304: path is controlled by library caller, not user input
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read baselines: %w", err)
@@ -225,6 +226,7 @@ func (pt *PerformanceTracker) LoadLatestReport() (*BenchmarkReport, error) {
 		return nil, fmt.Errorf("no benchmark reports found")
 	}
 
+	//nolint:gosec // G304: latestFile is constructed from trusted directory listing
 	data, err := os.ReadFile(latestFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read report: %w", err)

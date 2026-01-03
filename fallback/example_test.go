@@ -287,7 +287,7 @@ func Example_externalService() {
 	}
 
 	// Mock weather service that sometimes fails
-	var serviceUnavailable bool = true
+	serviceUnavailable := true
 
 	fb := fallback.New[WeatherData](fallback.Config[WeatherData]{
 		Fallback: func(ctx context.Context, err error) (WeatherData, error) {
@@ -309,7 +309,7 @@ func Example_externalService() {
 		if err != nil {
 			return WeatherData{}, err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		// Parse response...
 		return WeatherData{Temperature: 22.5, Condition: "Sunny"}, nil

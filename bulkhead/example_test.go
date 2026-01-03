@@ -124,7 +124,7 @@ func Example_queueTimeout() {
 
 	// First request will execute
 	go func() {
-		//nolint:errcheck // intentionally ignoring error in example
+		//nolint:errcheck,gosec // intentionally ignoring error in example
 		bh.Execute(context.Background(), func(ctx context.Context) (string, error) {
 			time.Sleep(time.Millisecond * 500)
 			return "long operation", nil
@@ -159,7 +159,7 @@ func Example_rejectionCallback() {
 
 	// First request will execute
 	go func() {
-		//nolint:errcheck // intentionally ignoring error in example goroutine
+		//nolint:errcheck,gosec // intentionally ignoring error in example goroutine
 		bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			time.Sleep(time.Millisecond * 100)
 			return 1, nil
@@ -169,7 +169,7 @@ func Example_rejectionCallback() {
 	time.Sleep(time.Millisecond * 10) // Let first request start
 
 	// Second request will be rejected
-	//nolint:errcheck // intentionally ignoring error in example
+	//nolint:errcheck,gosec // intentionally ignoring error in example
 	bh.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		return 2, nil
 	})
@@ -229,7 +229,7 @@ func Example_resourceIsolation() {
 	})
 
 	// Database operation
-	//nolint:errcheck // intentionally ignoring error in test
+	//nolint:errcheck,gosec // intentionally ignoring error in test
 	dbResult, _ := dbBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		// Simulate DB query
 		return "db result", nil
@@ -335,12 +335,12 @@ func Example_microserviceIsolation() {
 	})
 
 	// If order service is slow/failing, it won't affect user service calls
-	//nolint:errcheck // intentionally ignoring error in test
+	//nolint:errcheck,gosec // intentionally ignoring error in test
 	userResult, _ := userServiceBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "user data", nil
 	})
 
-	//nolint:errcheck // intentionally ignoring error in test
+	//nolint:errcheck,gosec // intentionally ignoring error in test
 	orderResult, _ := orderServiceBulkhead.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		return "order data", nil
 	})
