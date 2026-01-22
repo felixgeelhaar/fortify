@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/ratelimit"
+	"github.com/felixgeelhaar/fortify/ratelimit"
 )
 
 func TestRateLimitExample(t *testing.T) {

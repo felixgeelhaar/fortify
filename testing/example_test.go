@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/v2/retry"
-	fortifyTesting "github.com/felixgeelhaar/fortify/v2/testing"
+	"github.com/felixgeelhaar/fortify/circuitbreaker"
+	"github.com/felixgeelhaar/fortify/retry"
+	fortifyTesting "github.com/felixgeelhaar/fortify/testing"
 )
 
 // Example demonstrates basic error injection for testing.

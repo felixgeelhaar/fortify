@@ -3,10 +3,10 @@
   <h1>Fortify</h1>
 </div>
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/felixgeelhaar/fortify/v2.svg)](https://pkg.go.dev/github.com/felixgeelhaar/fortify/v2)
-[![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/fortify/v2)](https://goreportcard.com/report/github.com/felixgeelhaar/fortify/v2)
+[![Go Reference](https://pkg.go.dev/badge/github.com/felixgeelhaar/fortify.svg)](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
+[![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/fortify)](https://goreportcard.com/report/github.com/felixgeelhaar/fortify)
 [![CI Status](https://github.com/felixgeelhaar/fortify/workflows/CI/badge.svg)](https://github.com/felixgeelhaar/fortify/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/felixgeelhaar/fortify/branch/main/graph/badge.svg)](https://codecov.io/gh/felixgeelhaar/fortify)
+[![Coverage](./assets/coverage-badge.svg)](./assets/coverage-badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/felixgeelhaar/fortify)](https://github.com/felixgeelhaar/fortify)
 [![Release](https://img.shields.io/github/v/release/felixgeelhaar/fortify)](https://github.com/felixgeelhaar/fortify/releases)
@@ -30,7 +30,7 @@ Fortify is a production-grade resilience and fault-tolerance library for Go 1.23
 ## Installation
 
 ```bash
-go get github.com/felixgeelhaar/fortify/v2
+go get github.com/felixgeelhaar/fortify
 ```
 
 **Requirements:** Go 1.23 or higher
@@ -44,8 +44,8 @@ import (
     "context"
     "time"
 
-    "github.com/felixgeelhaar/fortify/v2/circuitbreaker"
-    "github.com/felixgeelhaar/fortify/v2/retry"
+    "github.com/felixgeelhaar/fortify/circuitbreaker"
+    "github.com/felixgeelhaar/fortify/retry"
 )
 
 func main() {
@@ -81,7 +81,7 @@ func main() {
 Prevents cascading failures by temporarily stopping requests to failing services.
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/circuitbreaker"
+import "github.com/felixgeelhaar/fortify/circuitbreaker"
 
 cb := circuitbreaker.New[Response](circuitbreaker.Config{
     MaxRequests: 100,
@@ -113,7 +113,7 @@ result, err := cb.Execute(ctx, func(ctx context.Context) (Response, error) {
 Automatically retries failed operations with configurable backoff strategies.
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/retry"
+import "github.com/felixgeelhaar/fortify/retry"
 
 r := retry.New[Response](retry.Config{
     MaxAttempts:   5,
@@ -147,7 +147,7 @@ result, err := r.Do(ctx, func(ctx context.Context) (Response, error) {
 Controls the rate of operations using a token bucket algorithm with a pluggable storage backend.
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/ratelimit"
+import "github.com/felixgeelhaar/fortify/ratelimit"
 
 rl := ratelimit.New(&ratelimit.Config{
     Rate:     100,               // 100 requests
@@ -176,7 +176,7 @@ if err := rl.Wait(ctx, "user-123"); err == nil {
 The rate limiter supports flexible per-key limiting out of the box. Use different keys to implement various rate limiting strategies:
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/ratelimit"
+import "github.com/felixgeelhaar/fortify/ratelimit"
 
 rl := ratelimit.New(&ratelimit.Config{
     Rate:     100,
@@ -289,7 +289,7 @@ rl := ratelimit.New(&ratelimit.Config{
 For distributed systems, implement the `Store` interface to share rate limits across multiple application instances:
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/ratelimit"
+import "github.com/felixgeelhaar/fortify/ratelimit"
 
 // Implement the Store interface for your backend (Redis, DynamoDB, etc.)
 type RedisStore struct {
@@ -331,7 +331,7 @@ rl := ratelimit.New(&ratelimit.Config{
 Enforces time limits on operations with context propagation.
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/timeout"
+import "github.com/felixgeelhaar/fortify/timeout"
 
 tm := timeout.New[Response](timeout.Config{
     DefaultTimeout: time.Second * 30,
@@ -361,7 +361,7 @@ result, err := tm.ExecuteWithDefault(ctx, func(ctx context.Context) (Response, e
 Limits concurrent operations to prevent resource exhaustion.
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/bulkhead"
+import "github.com/felixgeelhaar/fortify/bulkhead"
 
 bh := bulkhead.New[Response](bulkhead.Config{
     MaxConcurrent: 10,                  // Max concurrent operations
@@ -392,7 +392,7 @@ log.Printf("Active: %d, Queued: %d, Rejected: %d",
 Provides graceful degradation with automatic fallback on errors.
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/fallback"
+import "github.com/felixgeelhaar/fortify/fallback"
 
 fb := fallback.New[Response](fallback.Config{
     Primary: func(ctx context.Context) (Response, error) {
@@ -423,7 +423,7 @@ result, err := fb.Execute(ctx)
 Combine multiple patterns into a single execution chain:
 
 ```go
-import "github.com/felixgeelhaar/fortify/v2/middleware"
+import "github.com/felixgeelhaar/fortify/middleware"
 
 chain := middleware.New[Response]().
     WithBulkhead(bh).
@@ -451,7 +451,7 @@ Integrate resilience patterns with standard `http.Handler`:
 ```go
 import (
     "net/http"
-    fortifyhttp "github.com/felixgeelhaar/fortify/v2/http"
+    fortifyhttp "github.com/felixgeelhaar/fortify/http"
 )
 
 // Create patterns
@@ -486,7 +486,7 @@ Integrate with gRPC services:
 
 ```go
 import (
-    fortifygrpc "github.com/felixgeelhaar/fortify/v2/grpc"
+    fortifygrpc "github.com/felixgeelhaar/fortify/grpc"
     "google.golang.org/grpc"
 )
 
@@ -517,7 +517,7 @@ server := grpc.NewServer(
 ```go
 import (
     "log/slog"
-    fortifyslog "github.com/felixgeelhaar/fortify/v2/slog"
+    fortifyslog "github.com/felixgeelhaar/fortify/slog"
 )
 
 logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -532,7 +532,7 @@ fortifyslog.LogPatternEvent(logger, fortifyslog.PatternCircuitBreaker, "state_ch
 
 ```go
 import (
-    fortifyotel "github.com/felixgeelhaar/fortify/v2/otel"
+    fortifyotel "github.com/felixgeelhaar/fortify/otel"
     "go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -554,7 +554,7 @@ Export detailed metrics for all resilience patterns:
 
 ```go
 import (
-    "github.com/felixgeelhaar/fortify/v2/metrics"
+    "github.com/felixgeelhaar/fortify/metrics"
     "github.com/prometheus/client_golang/prometheus"
 )
 
@@ -682,7 +682,7 @@ go tool cover -html=coverage.out
 Test resilience with built-in chaos utilities:
 
 ```go
-import fortifytesting "github.com/felixgeelhaar/fortify/v2/testing"
+import fortifytesting "github.com/felixgeelhaar/fortify/testing"
 
 // Inject errors with configurable probability
 injector := fortifytesting.NewErrorInjector(0.3, errors.New("service unavailable"))
@@ -762,7 +762,7 @@ Fortify is inspired by resilience libraries from other ecosystems:
 
 ## Support
 
-- 📖 [Documentation](https://pkg.go.dev/github.com/felixgeelhaar/fortify/v2)
+- 📖 [Documentation](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
 - 🐛 [Issue Tracker](https://github.com/felixgeelhaar/fortify/issues)
 - 💬 [Discussions](https://github.com/felixgeelhaar/fortify/discussions)
 

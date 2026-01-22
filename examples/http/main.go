@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/circuitbreaker"
-	fortifyhttp "github.com/felixgeelhaar/fortify/v2/http"
-	"github.com/felixgeelhaar/fortify/v2/ratelimit"
-	"github.com/felixgeelhaar/fortify/v2/timeout"
+	"github.com/felixgeelhaar/fortify/circuitbreaker"
+	fortifyhttp "github.com/felixgeelhaar/fortify/http"
+	"github.com/felixgeelhaar/fortify/ratelimit"
+	"github.com/felixgeelhaar/fortify/timeout"
 )
 
 func main() {

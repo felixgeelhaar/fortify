@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/circuitbreaker"
+	"github.com/felixgeelhaar/fortify/circuitbreaker"
 )
 
 func TestCircuitBreakerExample(t *testing.T) {

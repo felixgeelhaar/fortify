@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/retry"
+	"github.com/felixgeelhaar/fortify/retry"
 )
 
 func main() {

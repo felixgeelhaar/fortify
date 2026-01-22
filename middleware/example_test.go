@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/bulkhead"
-	"github.com/felixgeelhaar/fortify/v2/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/v2/middleware"
-	"github.com/felixgeelhaar/fortify/v2/ratelimit"
-	"github.com/felixgeelhaar/fortify/v2/retry"
-	"github.com/felixgeelhaar/fortify/v2/timeout"
+	"github.com/felixgeelhaar/fortify/bulkhead"
+	"github.com/felixgeelhaar/fortify/circuitbreaker"
+	"github.com/felixgeelhaar/fortify/middleware"
+	"github.com/felixgeelhaar/fortify/ratelimit"
+	"github.com/felixgeelhaar/fortify/retry"
+	"github.com/felixgeelhaar/fortify/timeout"
 )
 
 // Example demonstrates basic middleware chain composition.

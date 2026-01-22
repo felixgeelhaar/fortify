@@ -1,4 +1,4 @@
-module github.com/felixgeelhaar/fortify/v2
+module github.com/felixgeelhaar/fortify
 
 go 1.24.0
 

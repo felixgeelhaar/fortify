@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/ratelimit"
+	"github.com/felixgeelhaar/fortify/ratelimit"
 )
 
 // Example demonstrates basic rate limiting usage.

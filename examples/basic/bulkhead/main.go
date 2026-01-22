@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/bulkhead"
+	"github.com/felixgeelhaar/fortify/bulkhead"
 )
 
 func main() {

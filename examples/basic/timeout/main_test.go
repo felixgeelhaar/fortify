@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/timeout"
+	"github.com/felixgeelhaar/fortify/timeout"
 )
 
 func TestTimeoutExample(t *testing.T) {

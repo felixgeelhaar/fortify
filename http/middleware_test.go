@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/v2/ratelimit"
-	"github.com/felixgeelhaar/fortify/v2/timeout"
+	"github.com/felixgeelhaar/fortify/circuitbreaker"
+	"github.com/felixgeelhaar/fortify/ratelimit"
+	"github.com/felixgeelhaar/fortify/timeout"
 )
 
 func TestCircuitBreakerMiddleware(t *testing.T) {

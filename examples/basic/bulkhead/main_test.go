@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/bulkhead"
+	"github.com/felixgeelhaar/fortify/bulkhead"
 )
 
 func TestBulkheadExample(t *testing.T) {

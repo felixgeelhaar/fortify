@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/v2/bulkhead"
+	"github.com/felixgeelhaar/fortify/bulkhead"
 )
 
 // Example demonstrates basic bulkhead usage to limit concurrent operations.
