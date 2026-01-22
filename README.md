@@ -6,7 +6,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/felixgeelhaar/fortify.svg)](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
 [![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/fortify)](https://goreportcard.com/report/github.com/felixgeelhaar/fortify)
 [![CI Status](https://github.com/felixgeelhaar/fortify/workflows/CI/badge.svg)](https://github.com/felixgeelhaar/fortify/actions/workflows/ci.yml)
-[![Coverage](https://img.shields.io/badge/coverage-84.9%25-brightgreen)](https://github.com/felixgeelhaar/fortify)
+[![Coverage](./assets/coverage-badge.svg)](./assets/coverage-badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/felixgeelhaar/fortify)](https://github.com/felixgeelhaar/fortify)
 [![Release](https://img.shields.io/github/v/release/felixgeelhaar/fortify)](https://github.com/felixgeelhaar/fortify/releases)
