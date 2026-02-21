@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1280,6 +1281,45 @@ func TestConfigUpperBounds(t *testing.T) {
 			t.Errorf("expected interval to be capped at %v, got %v", MaxInterval, config.Interval)
 		}
 	})
+
+	t.Run("floors interval to MinInterval", func(t *testing.T) {
+		t.Parallel()
+		config := Config{
+			Rate:     100,
+			Interval: time.Nanosecond, // Below MinInterval
+		}
+		config.setDefaults()
+
+		if config.Interval != MinInterval {
+			t.Errorf("expected interval to be floored at %v, got %v", MinInterval, config.Interval)
+		}
+	})
+
+	t.Run("floors sub-microsecond interval to MinInterval", func(t *testing.T) {
+		t.Parallel()
+		config := Config{
+			Rate:     100,
+			Interval: 500 * time.Microsecond, // Below MinInterval
+		}
+		config.setDefaults()
+
+		if config.Interval != MinInterval {
+			t.Errorf("expected interval to be floored at %v, got %v", MinInterval, config.Interval)
+		}
+	})
+
+	t.Run("preserves interval at MinInterval", func(t *testing.T) {
+		t.Parallel()
+		config := Config{
+			Rate:     100,
+			Interval: MinInterval,
+		}
+		config.setDefaults()
+
+		if config.Interval != MinInterval {
+			t.Errorf("expected interval to remain %v, got %v", MinInterval, config.Interval)
+		}
+	})
 }
 
 // TestWaitLatencyMetrics tests that Wait() records latency metrics.
@@ -2140,6 +2180,95 @@ func TestRefillEdgeCases(t *testing.T) {
 		// Both should complete very quickly (no refill delay)
 		if elapsed > 10*time.Millisecond {
 			t.Errorf("requests took too long: %v", elapsed)
+		}
+	})
+
+	t.Run("extreme rate and interval combo capped at burst", func(t *testing.T) {
+		// HIGH-01: MaxRate with MinInterval after long sleep should not produce
+		// NaN, Inf, or tokens exceeding burst.
+		store := NewMemoryStore()
+		defer func() { _ = store.Close() }()
+		ctx := context.Background()
+
+		// Create state with old timestamp to simulate long system sleep
+		oldTime := time.Now().Add(-24 * time.Hour)
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
+			return &BucketState{
+				Tokens:     0,
+				LastRefill: oldTime,
+			}
+		})
+
+		limiter := New(&Config{
+			Rate:     MaxRate,
+			Burst:    100, // Small burst relative to rate
+			Interval: MinInterval,
+			Store:    store,
+		})
+		defer func() { _ = limiter.Close() }()
+
+		// Should not panic and tokens should be capped at burst
+		if !limiter.Allow(ctx, "test") {
+			t.Error("should allow request after refill")
+		}
+
+		state, err := store.Get(ctx, "test")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		// Tokens must never exceed burst (100)
+		if state.Tokens > 100 {
+			t.Errorf("tokens exceeded burst limit: got %v, want <= 100", state.Tokens)
+		}
+
+		// Tokens must not be NaN or Inf
+		if math.IsNaN(state.Tokens) || math.IsInf(state.Tokens, 0) {
+			t.Errorf("tokens is NaN or Inf: %v", state.Tokens)
+		}
+	})
+
+	t.Run("refill with NaN-producing edge case stays safe", func(t *testing.T) {
+		// Verify the NaN/Inf safety net in refill by testing with a
+		// deliberately constructed limiter at boundary conditions.
+		store := NewMemoryStore()
+		defer func() { _ = store.Close() }()
+		ctx := context.Background()
+
+		// Set up state just below burst
+		//nolint:errcheck,gosec // test setup
+		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
+			return &BucketState{
+				Tokens:     9,
+				LastRefill: time.Now().Add(-time.Minute),
+			}
+		})
+
+		limiter := New(&Config{
+			Rate:     MaxRate,
+			Burst:    10,
+			Interval: MinInterval,
+			Store:    store,
+		})
+		defer func() { _ = limiter.Close() }()
+
+		// Should not panic
+		if !limiter.Allow(ctx, "test") {
+			t.Error("should allow request")
+		}
+
+		state, err := store.Get(ctx, "test")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if math.IsNaN(state.Tokens) || math.IsInf(state.Tokens, 0) {
+			t.Errorf("tokens is NaN or Inf after refill: %v", state.Tokens)
+		}
+
+		if state.Tokens < 0 || state.Tokens > 10 {
+			t.Errorf("tokens out of bounds: got %v, want [0, 10]", state.Tokens)
 		}
 	})
 }

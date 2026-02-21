@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
@@ -545,6 +546,17 @@ func (rl *rateLimiter) refill(state *BucketState, now time.Time) *BucketState {
 	// Calculate tokens to add using cached rateFloat
 	tokensToAdd := (float64(elapsed.Nanoseconds()) / float64(intervalNs)) * rl.rateFloat
 
+	// Cap intermediate result to prevent float64 precision loss at extreme values (HIGH-01).
+	// We can never usefully add more than burst tokens since the bucket is bounded.
+	if tokensToAdd > rl.burstFloat {
+		tokensToAdd = rl.burstFloat
+	}
+
+	// Safety net for pathological float results
+	if math.IsNaN(tokensToAdd) || math.IsInf(tokensToAdd, 0) {
+		tokensToAdd = rl.burstFloat
+	}
+
 	// If no tokens to add, return original state (avoid allocation)
 	if tokensToAdd < floatEpsilon {
 		return state
@@ -602,6 +614,17 @@ func (rl *rateLimiter) calculateWaitTime(ctx context.Context, key string) time.D
 
 	// Use cached rateFloat for efficiency
 	tokensToAdd := (float64(elapsed.Nanoseconds()) / float64(intervalNs)) * rl.rateFloat
+
+	// Cap intermediate result to prevent float64 precision loss at extreme values (HIGH-01)
+	if tokensToAdd > rl.burstFloat {
+		tokensToAdd = rl.burstFloat
+	}
+
+	// Safety net for pathological float results
+	if math.IsNaN(tokensToAdd) || math.IsInf(tokensToAdd, 0) {
+		tokensToAdd = rl.burstFloat
+	}
+
 	currentTokens := state.Tokens + tokensToAdd
 
 	// Use cached burstFloat

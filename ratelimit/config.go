@@ -106,6 +106,11 @@ const (
 	// MaxBurst is the maximum allowed burst size.
 	MaxBurst = 1000000
 
+	// MinInterval is the minimum allowed interval.
+	// Intervals below 1ms are operationally meaningless for rate limiting
+	// and maximize the overflow risk surface in token calculations (HIGH-01).
+	MinInterval = time.Millisecond
+
 	// MaxInterval is the maximum allowed interval.
 	MaxInterval = 24 * time.Hour
 
@@ -137,6 +142,10 @@ func (c *Config) setDefaults() {
 
 	if c.Interval <= 0 {
 		c.Interval = time.Second
+	}
+	// Floor interval to prevent overflow in token calculations (HIGH-01)
+	if c.Interval < MinInterval {
+		c.Interval = MinInterval
 	}
 	// Cap interval to reasonable maximum
 	if c.Interval > MaxInterval {
