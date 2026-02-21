@@ -74,8 +74,9 @@ func main() {
 	// Rate limited endpoint by API key
 	apiHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		apiKey := r.Header.Get("X-API-Key")
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusOK)
-		//nolint:errcheck // HTTP response writer errors handled by framework
+		//nolint:errcheck,gosec // G705: text/plain response, XSS not applicable
 		_, _ = fmt.Fprintf(w, "API accessed with key: %s at %s\n", apiKey, time.Now().Format(time.RFC3339))
 	})
 
