@@ -62,17 +62,22 @@ type Config struct {
 	Jitter bool
 }
 
-// setDefaults applies default values to unset configuration fields.
+// setDefaults applies default values to unset configuration fields
+// and clamps invalid values to safe defaults.
 func (c *Config) setDefaults() {
 	if c.MaxAttempts <= 0 {
 		c.MaxAttempts = 3
 	}
 
-	if c.InitialDelay == 0 {
+	if c.InitialDelay <= 0 {
 		c.InitialDelay = 100 * time.Millisecond
 	}
 
-	if c.Multiplier == 0 {
+	if c.MaxDelay < 0 {
+		c.MaxDelay = 0
+	}
+
+	if c.Multiplier <= 0 {
 		c.Multiplier = 2.0
 	}
 }

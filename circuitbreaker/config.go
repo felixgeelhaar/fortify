@@ -41,14 +41,19 @@ type Config struct {
 	MaxRequests uint32
 }
 
-// setDefaults applies default values to unset configuration fields.
+// setDefaults applies default values to unset configuration fields
+// and clamps invalid values to safe defaults.
 func (c *Config) setDefaults() {
 	if c.MaxRequests == 0 {
 		c.MaxRequests = 1
 	}
 
-	if c.Timeout == 0 {
+	if c.Timeout <= 0 {
 		c.Timeout = 60 * time.Second
+	}
+
+	if c.Interval < 0 {
+		c.Interval = 0
 	}
 
 	if c.ReadyToTrip == nil {

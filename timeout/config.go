@@ -19,9 +19,10 @@ type Config struct {
 	DefaultTimeout time.Duration
 }
 
-// setDefaults applies default values to unset configuration fields.
+// setDefaults applies default values to unset configuration fields
+// and clamps invalid values to safe defaults.
 func (c *Config) setDefaults() {
-	if c.DefaultTimeout == 0 {
+	if c.DefaultTimeout <= 0 {
 		c.DefaultTimeout = 30 * time.Second
 	}
 }

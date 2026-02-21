@@ -27,9 +27,18 @@ type Config struct {
 	MaxQueue int
 }
 
-// setDefaults applies default values to unset configuration fields.
+// setDefaults applies default values to unset configuration fields
+// and clamps invalid values to safe defaults.
 func (c *Config) setDefaults() {
-	if c.MaxConcurrent == 0 {
+	if c.MaxConcurrent <= 0 {
 		c.MaxConcurrent = 10
+	}
+
+	if c.MaxQueue < 0 {
+		c.MaxQueue = 0
+	}
+
+	if c.QueueTimeout < 0 {
+		c.QueueTimeout = 0
 	}
 }
