@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775953288027,
+  "lastUpdate": 1776558140776,
   "repoUrl": "https://github.com/felixgeelhaar/fortify",
   "entries": {
     "Benchmark": [
@@ -34912,6 +34912,1276 @@ window.BENCHMARK_DATA = {
             "value": 4,
             "unit": "allocs/op",
             "extra": "18712495 times\n4 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "github-actions[bot]",
+            "username": "github-actions[bot]",
+            "email": "github-actions[bot]@users.noreply.github.com"
+          },
+          "committer": {
+            "name": "github-actions[bot]",
+            "username": "github-actions[bot]",
+            "email": "github-actions[bot]@users.noreply.github.com"
+          },
+          "id": "74cf71ac4f5d902913c9f3cd9c59ac3e6366f5e4",
+          "message": "chore: update coverage badge [skip ci]",
+          "timestamp": "2026-02-21T07:09:56Z",
+          "url": "https://github.com/felixgeelhaar/fortify/commit/74cf71ac4f5d902913c9f3cd9c59ac3e6366f5e4"
+        },
+        "date": 1776558140541,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkBulkheadSuccess (github.com/felixgeelhaar/fortify/bulkhead)",
+            "value": 96.37,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "37634478 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadSuccess (github.com/felixgeelhaar/fortify/bulkhead) - ns/op",
+            "value": 96.37,
+            "unit": "ns/op",
+            "extra": "37634478 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadSuccess (github.com/felixgeelhaar/fortify/bulkhead) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "37634478 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadSuccess (github.com/felixgeelhaar/fortify/bulkhead) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "37634478 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadWithQueue (github.com/felixgeelhaar/fortify/bulkhead)",
+            "value": 113.4,
+            "unit": "ns/op\t      16 B/op\t       1 allocs/op",
+            "extra": "31646672 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadWithQueue (github.com/felixgeelhaar/fortify/bulkhead) - ns/op",
+            "value": 113.4,
+            "unit": "ns/op",
+            "extra": "31646672 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadWithQueue (github.com/felixgeelhaar/fortify/bulkhead) - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "31646672 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadWithQueue (github.com/felixgeelhaar/fortify/bulkhead) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "31646672 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadConcurrent (github.com/felixgeelhaar/fortify/bulkhead)",
+            "value": 174.8,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "21103881 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadConcurrent (github.com/felixgeelhaar/fortify/bulkhead) - ns/op",
+            "value": 174.8,
+            "unit": "ns/op",
+            "extra": "21103881 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadConcurrent (github.com/felixgeelhaar/fortify/bulkhead) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "21103881 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBulkheadConcurrent (github.com/felixgeelhaar/fortify/bulkhead) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "21103881 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerSuccess (github.com/felixgeelhaar/fortify/circuitbreaker)",
+            "value": 150.8,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "23836482 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerSuccess (github.com/felixgeelhaar/fortify/circuitbreaker) - ns/op",
+            "value": 150.8,
+            "unit": "ns/op",
+            "extra": "23836482 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerSuccess (github.com/felixgeelhaar/fortify/circuitbreaker) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "23836482 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerSuccess (github.com/felixgeelhaar/fortify/circuitbreaker) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "23836482 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerFailure (github.com/felixgeelhaar/fortify/circuitbreaker)",
+            "value": 183.1,
+            "unit": "ns/op\t      24 B/op\t       1 allocs/op",
+            "extra": "19836900 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerFailure (github.com/felixgeelhaar/fortify/circuitbreaker) - ns/op",
+            "value": 183.1,
+            "unit": "ns/op",
+            "extra": "19836900 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerFailure (github.com/felixgeelhaar/fortify/circuitbreaker) - B/op",
+            "value": 24,
+            "unit": "B/op",
+            "extra": "19836900 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerFailure (github.com/felixgeelhaar/fortify/circuitbreaker) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "19836900 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerOpen (github.com/felixgeelhaar/fortify/circuitbreaker)",
+            "value": 73.17,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "49283898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerOpen (github.com/felixgeelhaar/fortify/circuitbreaker) - ns/op",
+            "value": 73.17,
+            "unit": "ns/op",
+            "extra": "49283898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerOpen (github.com/felixgeelhaar/fortify/circuitbreaker) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "49283898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerOpen (github.com/felixgeelhaar/fortify/circuitbreaker) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "49283898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerConcurrent (github.com/felixgeelhaar/fortify/circuitbreaker)",
+            "value": 211.1,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "17255152 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerConcurrent (github.com/felixgeelhaar/fortify/circuitbreaker) - ns/op",
+            "value": 211.1,
+            "unit": "ns/op",
+            "extra": "17255152 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerConcurrent (github.com/felixgeelhaar/fortify/circuitbreaker) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "17255152 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkCircuitBreakerConcurrent (github.com/felixgeelhaar/fortify/circuitbreaker) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "17255152 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_PrimarySuccess (github.com/felixgeelhaar/fortify/fallback)",
+            "value": 24.37,
+            "unit": "ns/op\t      16 B/op\t       1 allocs/op",
+            "extra": "149121697 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_PrimarySuccess (github.com/felixgeelhaar/fortify/fallback) - ns/op",
+            "value": 24.37,
+            "unit": "ns/op",
+            "extra": "149121697 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_PrimarySuccess (github.com/felixgeelhaar/fortify/fallback) - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "149121697 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_PrimarySuccess (github.com/felixgeelhaar/fortify/fallback) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "149121697 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_FallbackTriggered (github.com/felixgeelhaar/fortify/fallback)",
+            "value": 36.75,
+            "unit": "ns/op\t      24 B/op\t       1 allocs/op",
+            "extra": "93658987 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_FallbackTriggered (github.com/felixgeelhaar/fortify/fallback) - ns/op",
+            "value": 36.75,
+            "unit": "ns/op",
+            "extra": "93658987 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_FallbackTriggered (github.com/felixgeelhaar/fortify/fallback) - B/op",
+            "value": 24,
+            "unit": "B/op",
+            "extra": "93658987 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_FallbackTriggered (github.com/felixgeelhaar/fortify/fallback) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "93658987 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_WithCallbacks (github.com/felixgeelhaar/fortify/fallback)",
+            "value": 38.35,
+            "unit": "ns/op\t      20 B/op\t       1 allocs/op",
+            "extra": "89935612 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_WithCallbacks (github.com/felixgeelhaar/fortify/fallback) - ns/op",
+            "value": 38.35,
+            "unit": "ns/op",
+            "extra": "89935612 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_WithCallbacks (github.com/felixgeelhaar/fortify/fallback) - B/op",
+            "value": 20,
+            "unit": "B/op",
+            "extra": "89935612 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFallback_WithCallbacks (github.com/felixgeelhaar/fortify/fallback) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "89935612 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordCircuitBreakerRequest (github.com/felixgeelhaar/fortify/metrics)",
+            "value": 53,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "67226894 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordCircuitBreakerRequest (github.com/felixgeelhaar/fortify/metrics) - ns/op",
+            "value": 53,
+            "unit": "ns/op",
+            "extra": "67226894 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordCircuitBreakerRequest (github.com/felixgeelhaar/fortify/metrics) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "67226894 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordCircuitBreakerRequest (github.com/felixgeelhaar/fortify/metrics) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "67226894 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRetryAttempts (github.com/felixgeelhaar/fortify/metrics)",
+            "value": 51.16,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "70634520 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRetryAttempts (github.com/felixgeelhaar/fortify/metrics) - ns/op",
+            "value": 51.16,
+            "unit": "ns/op",
+            "extra": "70634520 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRetryAttempts (github.com/felixgeelhaar/fortify/metrics) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "70634520 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRetryAttempts (github.com/felixgeelhaar/fortify/metrics) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "70634520 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRateLimitAllowed (github.com/felixgeelhaar/fortify/metrics)",
+            "value": 50.74,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "71507863 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRateLimitAllowed (github.com/felixgeelhaar/fortify/metrics) - ns/op",
+            "value": 50.74,
+            "unit": "ns/op",
+            "extra": "71507863 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRateLimitAllowed (github.com/felixgeelhaar/fortify/metrics) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "71507863 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRecordRateLimitAllowed (github.com/felixgeelhaar/fortify/metrics) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "71507863 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllow (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 237.2,
+            "unit": "ns/op\t      74 B/op\t       3 allocs/op",
+            "extra": "14324708 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllow (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 237.2,
+            "unit": "ns/op",
+            "extra": "14324708 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllow (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 74,
+            "unit": "B/op",
+            "extra": "14324708 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllow (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "14324708 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllowRateLimited (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 204.1,
+            "unit": "ns/op\t      33 B/op\t       2 allocs/op",
+            "extra": "17436027 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllowRateLimited (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 204.1,
+            "unit": "ns/op",
+            "extra": "17436027 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllowRateLimited (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 33,
+            "unit": "B/op",
+            "extra": "17436027 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterAllowRateLimited (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "17436027 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterTake (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 232.2,
+            "unit": "ns/op\t      65 B/op\t       3 allocs/op",
+            "extra": "15381847 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterTake (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 232.2,
+            "unit": "ns/op",
+            "extra": "15381847 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterTake (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 65,
+            "unit": "B/op",
+            "extra": "15381847 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterTake (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "15381847 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterMultipleKeys (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 250.4,
+            "unit": "ns/op\t      97 B/op\t       4 allocs/op",
+            "extra": "14181520 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterMultipleKeys (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 250.4,
+            "unit": "ns/op",
+            "extra": "14181520 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterMultipleKeys (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 97,
+            "unit": "B/op",
+            "extra": "14181520 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterMultipleKeys (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "14181520 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterConcurrent (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 303.8,
+            "unit": "ns/op\t      77 B/op\t       3 allocs/op",
+            "extra": "11356725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterConcurrent (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 303.8,
+            "unit": "ns/op",
+            "extra": "11356725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterConcurrent (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 77,
+            "unit": "B/op",
+            "extra": "11356725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRateLimiterConcurrent (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "11356725 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreAtomicUpdate (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 178.1,
+            "unit": "ns/op\t      32 B/op\t       1 allocs/op",
+            "extra": "20080392 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreAtomicUpdate (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 178.1,
+            "unit": "ns/op",
+            "extra": "20080392 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreAtomicUpdate (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 32,
+            "unit": "B/op",
+            "extra": "20080392 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreAtomicUpdate (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "20080392 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreConcurrentUpdate (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 221.3,
+            "unit": "ns/op\t      32 B/op\t       1 allocs/op",
+            "extra": "16160252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreConcurrentUpdate (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 221.3,
+            "unit": "ns/op",
+            "extra": "16160252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreConcurrentUpdate (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 32,
+            "unit": "B/op",
+            "extra": "16160252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkMemoryStoreConcurrentUpdate (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 1,
+            "unit": "allocs/op",
+            "extra": "16160252 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecute (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 239.2,
+            "unit": "ns/op\t      74 B/op\t       3 allocs/op",
+            "extra": "14103058 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecute (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 239.2,
+            "unit": "ns/op",
+            "extra": "14103058 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecute (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 74,
+            "unit": "B/op",
+            "extra": "14103058 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecute (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "14103058 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteRateLimited (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 206.8,
+            "unit": "ns/op\t      33 B/op\t       2 allocs/op",
+            "extra": "17264199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteRateLimited (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 206.8,
+            "unit": "ns/op",
+            "extra": "17264199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteRateLimited (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 33,
+            "unit": "B/op",
+            "extra": "17264199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteRateLimited (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "17264199 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteWithError (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 246.3,
+            "unit": "ns/op\t      80 B/op\t       3 allocs/op",
+            "extra": "12841158 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteWithError (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 246.3,
+            "unit": "ns/op",
+            "extra": "12841158 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteWithError (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 80,
+            "unit": "B/op",
+            "extra": "12841158 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteWithError (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "12841158 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/Execute (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 240,
+            "unit": "ns/op\t      73 B/op\t       3 allocs/op",
+            "extra": "14081010 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/Execute (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 240,
+            "unit": "ns/op",
+            "extra": "14081010 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/Execute (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 73,
+            "unit": "B/op",
+            "extra": "14081010 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/Execute (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "14081010 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/AllowDirect (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 237.3,
+            "unit": "ns/op\t      72 B/op\t       3 allocs/op",
+            "extra": "15184700 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/AllowDirect (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 237.3,
+            "unit": "ns/op",
+            "extra": "15184700 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/AllowDirect (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 72,
+            "unit": "B/op",
+            "extra": "15184700 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteVsAllowDirect/AllowDirect (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "15184700 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteN (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 231.2,
+            "unit": "ns/op\t      65 B/op\t       3 allocs/op",
+            "extra": "15329546 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteN (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 231.2,
+            "unit": "ns/op",
+            "extra": "15329546 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteN (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 65,
+            "unit": "B/op",
+            "extra": "15329546 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteN (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "15329546 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/ExecuteN (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 230.4,
+            "unit": "ns/op\t      65 B/op\t       3 allocs/op",
+            "extra": "15402649 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/ExecuteN (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 230.4,
+            "unit": "ns/op",
+            "extra": "15402649 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/ExecuteN (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 65,
+            "unit": "B/op",
+            "extra": "15402649 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/ExecuteN (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "15402649 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/TakeDirect (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 228.4,
+            "unit": "ns/op\t      65 B/op\t       3 allocs/op",
+            "extra": "15707496 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/TakeDirect (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 228.4,
+            "unit": "ns/op",
+            "extra": "15707496 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/TakeDirect (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 65,
+            "unit": "B/op",
+            "extra": "15707496 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkExecuteNVsTakeDirect/TakeDirect (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "15707496 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/Empty (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 4.227,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "852326307 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/Empty (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 4.227,
+            "unit": "ns/op",
+            "extra": "852326307 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/Empty (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "852326307 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/Empty (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "852326307 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10Buckets (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 4.223,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "852564309 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10Buckets (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 4.223,
+            "unit": "ns/op",
+            "extra": "852564309 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10Buckets (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "852564309 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10Buckets (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "852564309 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/100Buckets (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 4.223,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "851845009 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/100Buckets (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 4.223,
+            "unit": "ns/op",
+            "extra": "851845009 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/100Buckets (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "851845009 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/100Buckets (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "851845009 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/1000Buckets (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 4.226,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "851341358 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/1000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 4.226,
+            "unit": "ns/op",
+            "extra": "851341358 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/1000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "851341358 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/1000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "851341358 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10000Buckets (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 4.256,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "851498671 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 4.256,
+            "unit": "ns/op",
+            "extra": "851498671 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "851498671 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBucketCount/10000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "851498671 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10Buckets (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 2153,
+            "unit": "ns/op\t     496 B/op\t       5 allocs/op",
+            "extra": "1547770 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10Buckets (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 2153,
+            "unit": "ns/op",
+            "extra": "1547770 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10Buckets (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 496,
+            "unit": "B/op",
+            "extra": "1547770 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10Buckets (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "1547770 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/100Buckets (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 15950,
+            "unit": "ns/op\t    4464 B/op\t       8 allocs/op",
+            "extra": "216783 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/100Buckets (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 15950,
+            "unit": "ns/op",
+            "extra": "216783 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/100Buckets (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 4464,
+            "unit": "B/op",
+            "extra": "216783 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/100Buckets (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 8,
+            "unit": "allocs/op",
+            "extra": "216783 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/1000Buckets (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 142842,
+            "unit": "ns/op\t   35184 B/op\t      11 allocs/op",
+            "extra": "24482 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/1000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 142842,
+            "unit": "ns/op",
+            "extra": "24482 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/1000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 35184,
+            "unit": "B/op",
+            "extra": "24482 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/1000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 11,
+            "unit": "allocs/op",
+            "extra": "24482 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10000Buckets (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 2037437,
+            "unit": "ns/op\t  665969 B/op\t      18 allocs/op",
+            "extra": "1744 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 2037437,
+            "unit": "ns/op",
+            "extra": "1744 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 665969,
+            "unit": "B/op",
+            "extra": "1744 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkReset/10000Buckets (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 18,
+            "unit": "allocs/op",
+            "extra": "1744 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResetConcurrent (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 9.589,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "374988898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResetConcurrent (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 9.589,
+            "unit": "ns/op",
+            "extra": "374988898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResetConcurrent (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "374988898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkResetConcurrent (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "374988898 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentExecute (github.com/felixgeelhaar/fortify/ratelimit)",
+            "value": 326.1,
+            "unit": "ns/op\t      78 B/op\t       3 allocs/op",
+            "extra": "10570376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentExecute (github.com/felixgeelhaar/fortify/ratelimit) - ns/op",
+            "value": 326.1,
+            "unit": "ns/op",
+            "extra": "10570376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentExecute (github.com/felixgeelhaar/fortify/ratelimit) - B/op",
+            "value": 78,
+            "unit": "B/op",
+            "extra": "10570376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkConcurrentExecute (github.com/felixgeelhaar/fortify/ratelimit) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "10570376 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetrySuccess (github.com/felixgeelhaar/fortify/retry)",
+            "value": 7.409,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "486471410 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetrySuccess (github.com/felixgeelhaar/fortify/retry) - ns/op",
+            "value": 7.409,
+            "unit": "ns/op",
+            "extra": "486471410 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetrySuccess (github.com/felixgeelhaar/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "486471410 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetrySuccess (github.com/felixgeelhaar/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "486471410 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryFailure (github.com/felixgeelhaar/fortify/retry)",
+            "value": 3204521,
+            "unit": "ns/op\t     568 B/op\t      10 allocs/op",
+            "extra": "1124 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryFailure (github.com/felixgeelhaar/fortify/retry) - ns/op",
+            "value": 3204521,
+            "unit": "ns/op",
+            "extra": "1124 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryFailure (github.com/felixgeelhaar/fortify/retry) - B/op",
+            "value": 568,
+            "unit": "B/op",
+            "extra": "1124 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryFailure (github.com/felixgeelhaar/fortify/retry) - allocs/op",
+            "value": 10,
+            "unit": "allocs/op",
+            "extra": "1124 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryWithJitter (github.com/felixgeelhaar/fortify/retry)",
+            "value": 4226890,
+            "unit": "ns/op\t     568 B/op\t      10 allocs/op",
+            "extra": "862 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryWithJitter (github.com/felixgeelhaar/fortify/retry) - ns/op",
+            "value": 4226890,
+            "unit": "ns/op",
+            "extra": "862 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryWithJitter (github.com/felixgeelhaar/fortify/retry) - B/op",
+            "value": 568,
+            "unit": "B/op",
+            "extra": "862 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkRetryWithJitter (github.com/felixgeelhaar/fortify/retry) - allocs/op",
+            "value": 10,
+            "unit": "allocs/op",
+            "extra": "862 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/exponential (github.com/felixgeelhaar/fortify/retry)",
+            "value": 21.63,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "166659175 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/exponential (github.com/felixgeelhaar/fortify/retry) - ns/op",
+            "value": 21.63,
+            "unit": "ns/op",
+            "extra": "166659175 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/exponential (github.com/felixgeelhaar/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "166659175 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/exponential (github.com/felixgeelhaar/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "166659175 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/linear (github.com/felixgeelhaar/fortify/retry)",
+            "value": 3.205,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/linear (github.com/felixgeelhaar/fortify/retry) - ns/op",
+            "value": 3.205,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/linear (github.com/felixgeelhaar/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/linear (github.com/felixgeelhaar/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/constant (github.com/felixgeelhaar/fortify/retry)",
+            "value": 2.47,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/constant (github.com/felixgeelhaar/fortify/retry) - ns/op",
+            "value": 2.47,
+            "unit": "ns/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/constant (github.com/felixgeelhaar/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/constant (github.com/felixgeelhaar/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "1000000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/with_jitter (github.com/felixgeelhaar/fortify/retry)",
+            "value": 31.45,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/with_jitter (github.com/felixgeelhaar/fortify/retry) - ns/op",
+            "value": 31.45,
+            "unit": "ns/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/with_jitter (github.com/felixgeelhaar/fortify/retry) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkBackoffCalculation/with_jitter (github.com/felixgeelhaar/fortify/retry) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "100000000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkErrorInjector_ShouldFail (github.com/felixgeelhaar/fortify/testing)",
+            "value": 22.58,
+            "unit": "ns/op\t       0 B/op\t       0 allocs/op",
+            "extra": "159720399 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkErrorInjector_ShouldFail (github.com/felixgeelhaar/fortify/testing) - ns/op",
+            "value": 22.58,
+            "unit": "ns/op",
+            "extra": "159720399 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkErrorInjector_ShouldFail (github.com/felixgeelhaar/fortify/testing) - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "159720399 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkErrorInjector_ShouldFail (github.com/felixgeelhaar/fortify/testing) - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "159720399 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLatencyInjector_Delay (github.com/felixgeelhaar/fortify/testing)",
+            "value": 273187,
+            "unit": "ns/op\t     248 B/op\t       3 allocs/op",
+            "extra": "13003 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLatencyInjector_Delay (github.com/felixgeelhaar/fortify/testing) - ns/op",
+            "value": 273187,
+            "unit": "ns/op",
+            "extra": "13003 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLatencyInjector_Delay (github.com/felixgeelhaar/fortify/testing) - B/op",
+            "value": 248,
+            "unit": "B/op",
+            "extra": "13003 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkLatencyInjector_Delay (github.com/felixgeelhaar/fortify/testing) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "13003 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFlakeyService_Call (github.com/felixgeelhaar/fortify/testing)",
+            "value": 315211,
+            "unit": "ns/op\t     248 B/op\t       3 allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFlakeyService_Call (github.com/felixgeelhaar/fortify/testing) - ns/op",
+            "value": 315211,
+            "unit": "ns/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFlakeyService_Call (github.com/felixgeelhaar/fortify/testing) - B/op",
+            "value": 248,
+            "unit": "B/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkFlakeyService_Call (github.com/felixgeelhaar/fortify/testing) - allocs/op",
+            "value": 3,
+            "unit": "allocs/op",
+            "extra": "10000 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutSuccess (github.com/felixgeelhaar/fortify/timeout)",
+            "value": 399.3,
+            "unit": "ns/op\t     272 B/op\t       4 allocs/op",
+            "extra": "9060210 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutSuccess (github.com/felixgeelhaar/fortify/timeout) - ns/op",
+            "value": 399.3,
+            "unit": "ns/op",
+            "extra": "9060210 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutSuccess (github.com/felixgeelhaar/fortify/timeout) - B/op",
+            "value": 272,
+            "unit": "B/op",
+            "extra": "9060210 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutSuccess (github.com/felixgeelhaar/fortify/timeout) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "9060210 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutWithShortOperation (github.com/felixgeelhaar/fortify/timeout)",
+            "value": 417.6,
+            "unit": "ns/op\t     288 B/op\t       5 allocs/op",
+            "extra": "8571133 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutWithShortOperation (github.com/felixgeelhaar/fortify/timeout) - ns/op",
+            "value": 417.6,
+            "unit": "ns/op",
+            "extra": "8571133 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutWithShortOperation (github.com/felixgeelhaar/fortify/timeout) - B/op",
+            "value": 288,
+            "unit": "B/op",
+            "extra": "8571133 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutWithShortOperation (github.com/felixgeelhaar/fortify/timeout) - allocs/op",
+            "value": 5,
+            "unit": "allocs/op",
+            "extra": "8571133 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutConcurrent (github.com/felixgeelhaar/fortify/timeout)",
+            "value": 183.9,
+            "unit": "ns/op\t     272 B/op\t       4 allocs/op",
+            "extra": "19516962 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutConcurrent (github.com/felixgeelhaar/fortify/timeout) - ns/op",
+            "value": 183.9,
+            "unit": "ns/op",
+            "extra": "19516962 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutConcurrent (github.com/felixgeelhaar/fortify/timeout) - B/op",
+            "value": 272,
+            "unit": "B/op",
+            "extra": "19516962 times\n4 procs"
+          },
+          {
+            "name": "BenchmarkTimeoutConcurrent (github.com/felixgeelhaar/fortify/timeout) - allocs/op",
+            "value": 4,
+            "unit": "allocs/op",
+            "extra": "19516962 times\n4 procs"
           }
         ]
       }
