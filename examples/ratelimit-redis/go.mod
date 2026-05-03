@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/felixgeelhaar/fortify v0.0.0
-	github.com/redis/go-redis/v9 v9.7.0
+	github.com/redis/go-redis/v9 v9.7.3
 )
 
 require (
