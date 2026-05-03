@@ -20,7 +20,7 @@ func TestUnaryClientCircuitBreakerInterceptor_OpenReturnsUnavailable(t *testing.
 		ReadyToTrip: func(c circuitbreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 		Timeout:     1 * time.Hour,
 	})
-	defer cb.Close()
+	defer func() { _ = cb.Close() }()
 	interceptor := UnaryClientCircuitBreakerInterceptor(cb)
 
 	failingInvoker := func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
@@ -46,7 +46,7 @@ func TestUnaryClientCircuitBreakerInterceptor_OpenReturnsUnavailable(t *testing.
 
 func TestUnaryClientCircuitBreakerInterceptor_PassesThroughOnSuccess(t *testing.T) {
 	cb := circuitbreaker.New[interface{}](circuitbreaker.Config{})
-	defer cb.Close()
+	defer func() { _ = cb.Close() }()
 	interceptor := UnaryClientCircuitBreakerInterceptor(cb)
 
 	called := false
@@ -65,7 +65,7 @@ func TestUnaryClientCircuitBreakerInterceptor_PassesThroughOnSuccess(t *testing.
 
 func TestUnaryClientRateLimitInterceptor_DeniesOverLimit(t *testing.T) {
 	rl := ratelimit.New(ratelimit.Config{Rate: 1, Burst: 1, Interval: time.Hour})
-	defer rl.Close()
+	defer func() { _ = rl.Close() }()
 	interceptor := UnaryClientRateLimitInterceptor(rl, KeyFromMethod())
 
 	invoker := func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, opts ...grpc.CallOption) error {
@@ -117,7 +117,7 @@ func TestStreamClientCircuitBreakerInterceptor_OpenReturnsUnavailable(t *testing
 		ReadyToTrip: func(c circuitbreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 		Timeout:     1 * time.Hour,
 	})
-	defer cb.Close()
+	defer func() { _ = cb.Close() }()
 	interceptor := StreamClientCircuitBreakerInterceptor(cb)
 
 	failingStreamer := func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, opts ...grpc.CallOption) (grpc.ClientStream, error) {

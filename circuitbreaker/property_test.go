@@ -21,7 +21,7 @@ func TestProperty_StateAlwaysValid(t *testing.T) {
 				return c.ConsecutiveFailures >= uint32(rapid.IntRange(1, 5).Draw(t, "trip"))
 			},
 		})
-		defer cb.Close()
+		defer func() { _ = cb.Close() }()
 
 		ctx := context.Background()
 		ops := rapid.SliceOfN(rapid.Bool(), 0, 50).Draw(t, "ops")
@@ -57,7 +57,7 @@ func TestProperty_CountsCoherent(t *testing.T) {
 				return c.ConsecutiveFailures >= 100000
 			},
 		}).(*circuitBreaker[int])
-		defer cb.Close()
+		defer func() { _ = cb.Close() }()
 
 		ctx := context.Background()
 		ops := rapid.SliceOfN(rapid.Bool(), 0, 30).Draw(t, "ops")
@@ -104,7 +104,7 @@ func TestProperty_GenerationMonotonic(t *testing.T) {
 			Timeout:     50 * time.Millisecond,
 			ReadyToTrip: func(c Counts) bool { return c.ConsecutiveFailures >= 2 },
 		}).(*circuitBreaker[int])
-		defer cb.Close()
+		defer func() { _ = cb.Close() }()
 
 		ctx := context.Background()
 		actions := rapid.SliceOfN(rapid.IntRange(0, 3), 0, 40).Draw(t, "actions")
@@ -145,7 +145,7 @@ func TestProperty_OpenStateRejectsUntilTimeout(t *testing.T) {
 			Timeout:     time.Duration(timeoutMs) * time.Millisecond,
 			ReadyToTrip: func(c Counts) bool { return c.ConsecutiveFailures >= 1 },
 		})
-		defer cb.Close()
+		defer func() { _ = cb.Close() }()
 
 		ctx := context.Background()
 		boomErr := errors.New("boom")
