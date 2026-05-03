@@ -33,9 +33,15 @@ jobs:
         mv "$(go env GOPATH)/bin/cli" "$(go env GOPATH)/bin/nox"
 
     - name: Generate release SBOM
+      # nox scan exits non-zero when findings exist (even baselined ones in
+      # source-built binaries). Release SBOM generation should not gate on
+      # findings — the security CI job already enforces that. Tolerate the
+      # exit code; verify artifacts in the next step.
       run: |
         mkdir -p release-artifacts
-        nox -format cdx,spdx -output release-artifacts scan .
+        nox -format cdx,spdx -output release-artifacts scan . || true
+        test -s release-artifacts/sbom.cdx.json
+        test -s release-artifacts/sbom.spdx.json
 
     - name: Generate changelog
       id: changelog
