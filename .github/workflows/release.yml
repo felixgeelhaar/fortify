@@ -28,7 +28,9 @@ jobs:
       run: go test -v -race ./...
 
     - name: Install nox
-      run: go install github.com/nox-hq/nox@v0.8.1
+      run: |
+        go install github.com/nox-hq/nox/cli@v0.8.1
+        mv "$(go env GOPATH)/bin/cli" "$(go env GOPATH)/bin/nox"
 
     - name: Generate release SBOM
       run: |

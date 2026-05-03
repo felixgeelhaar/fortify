@@ -136,7 +136,10 @@ jobs:
 
     - name: Install nox
       # Pinned to v0.8.1; bump explicitly to track upstream releases.
-      run: go install github.com/nox-hq/nox@v0.8.1
+      # Binary lives at github.com/nox-hq/nox/cli; rename after install.
+      run: |
+        go install github.com/nox-hq/nox/cli@v0.8.1
+        mv "$(go env GOPATH)/bin/cli" "$(go env GOPATH)/bin/nox"
 
     - name: Run nox security scan
       # nox emits SARIF + CycloneDX SBOM. Failures here surface real issues;
