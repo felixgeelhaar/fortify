@@ -47,7 +47,7 @@ func TestRetryAttempts(t *testing.T) {
 		BackoffPolicy: retry.BackoffConstant,
 	})
 
-	_, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+	_, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		attempts++
 		if attempts < 3 {
 			return 0, errors.New("temporary failure")

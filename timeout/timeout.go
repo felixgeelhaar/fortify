@@ -23,6 +23,8 @@ import (
 	"context"
 	"log/slog"
 	"time"
+
+	"github.com/felixgeelhaar/fortify/ferrors"
 )
 
 // Timeout is a generic interface for enforcing operation time limits.
@@ -60,17 +62,24 @@ func (t *timeout[T]) Execute(ctx context.Context, timeout time.Duration, fn func
 		timeout = t.config.DefaultTimeout
 	}
 
-	// Create context with timeout
-	ctx, cancel := context.WithTimeout(ctx, timeout)
+	// Create context with timeout, keeping a reference to the parent so we
+	// can distinguish "our deadline fired" from "parent context cancelled".
+	parentCtx := ctx
+	tCtx, cancel := context.WithTimeout(parentCtx, timeout)
 	defer cancel()
 
 	// Execute function directly - context handles cancellation
-	result, err := fn(ctx)
+	result, err := fn(tCtx)
 
 	// Check context errors after execution
-	ctxErr := ctx.Err()
+	ctxErr := tCtx.Err()
 	if ctxErr != nil {
-		// Timeout occurred
+		// If the parent context already had an error, it cancelled first;
+		// propagate the parent's error verbatim.
+		if pErr := parentCtx.Err(); pErr != nil {
+			return zero, pErr
+		}
+		// Our own deadline fired.
 		if ctxErr == context.DeadlineExceeded {
 			t.logTimeout(timeout)
 			if t.config.OnTimeout != nil {
@@ -79,8 +88,10 @@ func (t *timeout[T]) Execute(ctx context.Context, timeout time.Duration, fn func
 				// callbacks complete before timeout error is returned
 				t.safeCallback(t.config.OnTimeout)
 			}
+			// Return structured TimeoutError. errors.Is(err, ferrors.ErrTimeout)
+			// AND errors.Is(err, context.DeadlineExceeded) both match.
+			return zero, &ferrors.TimeoutError{Timeout: timeout}
 		}
-		// Return context error (DeadlineExceeded or Canceled from parent)
 		return zero, ctxErr
 	}
 

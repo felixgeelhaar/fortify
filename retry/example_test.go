@@ -18,7 +18,7 @@ func Example() {
 	})
 
 	attempt := 0
-	result, err := r.Do(context.Background(), func(ctx context.Context) (string, error) {
+	result, err := r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		if attempt < 3 {
 			return "", errors.New("temporary failure")
@@ -47,7 +47,7 @@ func Example_exponentialBackoff() {
 	})
 
 	attempt := 0
-	_, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+	_, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		attempt++
 		fmt.Printf("Attempt %d\n", attempt)
 		return 0, errors.New("still failing")
@@ -75,7 +75,7 @@ func Example_linearBackoff() {
 
 	attempt := 0
 	//nolint:errcheck,gosec // intentionally ignoring error in example
-	r.Do(context.Background(), func(ctx context.Context) (string, error) {
+	r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		return "", fmt.Errorf("error %d", attempt)
 	})
@@ -93,7 +93,7 @@ func Example_constantBackoff() {
 	})
 
 	attempt := 0
-	_, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+	_, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		attempt++
 		if attempt < 4 {
 			return 0, errors.New("not yet")
@@ -123,7 +123,7 @@ func Example_selectiveRetry() {
 
 	// This will be retried
 	attempt := 0
-	_, err := r.Do(context.Background(), func(ctx context.Context) (string, error) {
+	_, err := r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		if attempt < 3 {
 			return "", ErrTemporary
@@ -135,7 +135,7 @@ func Example_selectiveRetry() {
 
 	// This will NOT be retried
 	attempt = 0
-	_, err = r.Do(context.Background(), func(ctx context.Context) (string, error) {
+	_, err = r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		return "", ErrPermanent
 	})
@@ -163,7 +163,7 @@ func Example_retryableErrors() {
 
 	// Network timeout - will be retried
 	attempt := 0
-	_, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+	_, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		attempt++
 		if attempt < 2 {
 			return 0, ErrNetworkTimeout
@@ -175,7 +175,7 @@ func Example_retryableErrors() {
 
 	// Unauthorized error - will NOT be retried
 	attempt = 0
-	_, err = r.Do(context.Background(), func(ctx context.Context) (int, error) {
+	_, err = r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		attempt++
 		return 0, ErrUnauthorized
 	})
@@ -201,7 +201,7 @@ func Example_nonRetryableErrors() {
 
 	// Bad request - will NOT be retried (client error)
 	attempt := 0
-	_, err := r.Do(context.Background(), func(ctx context.Context) (string, error) {
+	_, err := r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		return "", ErrBadRequest
 	})
@@ -210,7 +210,7 @@ func Example_nonRetryableErrors() {
 
 	// Internal error - will be retried (server error)
 	attempt = 0
-	_, err = r.Do(context.Background(), func(ctx context.Context) (string, error) {
+	_, err = r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		if attempt < 3 {
 			return "", ErrInternalError
@@ -235,7 +235,7 @@ func Example_contextCancellation() {
 	defer cancel()
 
 	attempt := 0
-	_, err := r.Do(ctx, func(ctx context.Context) (int, error) {
+	_, err := r.Execute(ctx, func(ctx context.Context) (int, error) {
 		attempt++
 		return 0, errors.New("persistent failure")
 	})
@@ -257,7 +257,7 @@ func Example_jitter() {
 
 	attempt := 0
 	//nolint:errcheck,gosec // intentionally ignoring error in example
-	r.Do(context.Background(), func(ctx context.Context) (string, error) {
+	r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		if attempt < 3 {
 			return "", errors.New("retry me")
@@ -285,7 +285,7 @@ func Example_httpClient() {
 		},
 	})
 
-	statusCode, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+	statusCode, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		// Simulate HTTP call
 		// resp, err := httpClient.Get("https://api.example.com")
 		// if err != nil {

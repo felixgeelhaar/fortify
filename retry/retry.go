@@ -14,7 +14,7 @@
 //	    Jitter:        true,
 //	})
 //
-//	user, err := r.Do(ctx, func(ctx context.Context) (*User, error) {
+//	user, err := r.Execute(ctx, func(ctx context.Context) (*User, error) {
 //	    return fetchUser(ctx, userID)
 //	})
 package retry
@@ -31,10 +31,10 @@ import (
 // Retry is a generic interface for retry pattern implementation.
 // It automatically retries failed operations with configurable backoff strategies.
 type Retry[T any] interface {
-	// Do executes the given function with automatic retries on failure.
+	// Execute runs the given function with automatic retries on failure.
 	// It respects context cancellation and stops retrying if the context is cancelled.
 	// Returns the result and error from the last attempt.
-	Do(ctx context.Context, fn func(context.Context) (T, error)) (T, error)
+	Execute(ctx context.Context, fn func(context.Context) (T, error)) (T, error)
 }
 
 // retry is the concrete implementation of Retry.
@@ -52,14 +52,22 @@ func New[T any](config Config) Retry[T] {
 	}
 }
 
-// Do implements the Retry interface.
-func (r *retry[T]) Do(ctx context.Context, fn func(context.Context) (T, error)) (T, error) {
+// Execute implements the Retry interface.
+func (r *retry[T]) Execute(ctx context.Context, fn func(context.Context) (T, error)) (T, error) {
 	var result T
 	var err error
+
+	// Reusable timer across iterations. Replacing time.After avoids leaking a
+	// timer per attempt when the context is cancelled mid-backoff. Start
+	// stopped; we Reset before each wait.
+	var timer *time.Timer
 
 	for attempt := 1; attempt <= r.config.MaxAttempts; attempt++ {
 		// Check context before attempting
 		if err := ctx.Err(); err != nil {
+			if timer != nil {
+				timer.Stop()
+			}
 			return result, err
 		}
 
@@ -68,18 +76,27 @@ func (r *retry[T]) Do(ctx context.Context, fn func(context.Context) (T, error)) 
 
 		// Success - return immediately
 		if err == nil {
+			if timer != nil {
+				timer.Stop()
+			}
 			return result, nil
 		}
 
 		// Check if error is retryable
 		if !r.isRetryable(err) {
 			r.logAttempt(ctx, attempt, err, false)
+			if timer != nil {
+				timer.Stop()
+			}
 			return result, err
 		}
 
 		// Last attempt - don't wait
 		if attempt == r.config.MaxAttempts {
 			r.logAttempt(ctx, attempt, err, false)
+			if timer != nil {
+				timer.Stop()
+			}
 			return result, err
 		}
 
@@ -103,15 +120,31 @@ func (r *retry[T]) Do(ctx context.Context, fn func(context.Context) (T, error)) 
 			r.config.Jitter,
 		)
 
-		// Wait before retry with context cancellation support
+		if timer == nil {
+			timer = time.NewTimer(delay)
+		} else {
+			timer.Reset(delay)
+		}
+
+		// Wait before retry with context cancellation support.
 		select {
-		case <-time.After(delay):
-			// Continue to next attempt
+		case <-timer.C:
+			// Continue to next attempt.
 		case <-ctx.Done():
+			// Drain the timer to avoid leaking.
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
 			return result, ctx.Err()
 		}
 	}
 
+	if timer != nil {
+		timer.Stop()
+	}
 	return result, err
 }
 

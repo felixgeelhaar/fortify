@@ -17,6 +17,8 @@ package grpc
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"time"
 
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
@@ -28,6 +30,41 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
+
+// metadataKeyMaxLen caps the rate-limit key length extracted from gRPC
+// metadata. Client-controlled metadata can be arbitrarily long; without a
+// cap, the underlying Store rejects with ErrKeyTooLong on every request and
+// pathological values can also explode metric label cardinality.
+const metadataKeyMaxLen = 256
+
+// sanitizeMetadataKey strips control characters and truncates client-supplied
+// metadata to a safe length for use as a rate-limit key. This mirrors the
+// hardening applied in the http package's KeyFromHeader path.
+func sanitizeMetadataKey(s string) string {
+	if len(s) > metadataKeyMaxLen {
+		s = s[:metadataKeyMaxLen]
+	}
+	clean := true
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c < 32 || c == 127 {
+			clean = false
+			break
+		}
+	}
+	if clean {
+		return s
+	}
+	var b strings.Builder
+	b.Grow(len(s))
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c >= 32 && c != 127 {
+			b.WriteByte(c)
+		}
+	}
+	return b.String()
+}
 
 // UnaryKeyExtractor extracts a rate limiting key from a unary RPC context.
 type UnaryKeyExtractor func(ctx context.Context, req interface{}) string
@@ -45,8 +82,8 @@ func UnaryCircuitBreakerInterceptor(cb circuitbreaker.CircuitBreaker[interface{}
 
 		if err != nil {
 			// Convert circuit breaker errors to gRPC status codes
-			if err == ferrors.ErrCircuitOpen {
-				return nil, status.Error(codes.Unavailable, "circuit breaker is open")
+			if errors.Is(err, ferrors.ErrCircuitOpen) {
+				return nil, status.Error(codes.Unavailable, err.Error())
 			}
 			return nil, status.Error(codes.Unavailable, err.Error())
 		}
@@ -79,8 +116,8 @@ func UnaryTimeoutInterceptor(tm timeout.Timeout[interface{}], duration time.Dura
 
 		if err != nil {
 			// Convert timeout errors to gRPC status codes
-			if err == context.DeadlineExceeded {
-				return nil, status.Error(codes.DeadlineExceeded, "request timeout")
+			if errors.Is(err, context.DeadlineExceeded) {
+				return nil, status.Error(codes.DeadlineExceeded, err.Error())
 			}
 			return nil, err
 		}
@@ -99,8 +136,8 @@ func StreamCircuitBreakerInterceptor(cb circuitbreaker.CircuitBreaker[interface{
 
 		if err != nil {
 			// Convert circuit breaker errors to gRPC status codes
-			if err == ferrors.ErrCircuitOpen {
-				return status.Error(codes.Unavailable, "circuit breaker is open")
+			if errors.Is(err, ferrors.ErrCircuitOpen) {
+				return status.Error(codes.Unavailable, err.Error())
 			}
 			return status.Error(codes.Unavailable, err.Error())
 		}
@@ -133,8 +170,8 @@ func StreamTimeoutInterceptor(tm timeout.Timeout[interface{}], duration time.Dur
 
 		if err != nil {
 			// Convert timeout errors to gRPC status codes
-			if err == context.DeadlineExceeded {
-				return status.Error(codes.DeadlineExceeded, "stream timeout")
+			if errors.Is(err, context.DeadlineExceeded) {
+				return status.Error(codes.DeadlineExceeded, err.Error())
 			}
 			return err
 		}
@@ -144,6 +181,8 @@ func StreamTimeoutInterceptor(tm timeout.Timeout[interface{}], duration time.Dur
 }
 
 // KeyFromMetadata returns a UnaryKeyExtractor that extracts the key from gRPC metadata.
+// The extracted value is sanitized (control characters stripped, length capped) before
+// being used as a rate-limit key.
 func KeyFromMetadata(header string) UnaryKeyExtractor {
 	return func(ctx context.Context, req interface{}) string {
 		md, ok := metadata.FromIncomingContext(ctx)
@@ -154,11 +193,13 @@ func KeyFromMetadata(header string) UnaryKeyExtractor {
 		if len(values) == 0 {
 			return ""
 		}
-		return values[0]
+		return sanitizeMetadataKey(values[0])
 	}
 }
 
 // StreamKeyFromMetadata returns a StreamKeyExtractor that extracts the key from gRPC metadata.
+// The extracted value is sanitized (control characters stripped, length capped) before
+// being used as a rate-limit key.
 func StreamKeyFromMetadata(header string) StreamKeyExtractor {
 	return func(srv interface{}, stream grpc.ServerStream) string {
 		md, ok := metadata.FromIncomingContext(stream.Context())
@@ -169,7 +210,7 @@ func StreamKeyFromMetadata(header string) StreamKeyExtractor {
 		if len(values) == 0 {
 			return ""
 		}
-		return values[0]
+		return sanitizeMetadataKey(values[0])
 	}
 }
 

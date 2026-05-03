@@ -22,8 +22,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/felixgeelhaar/fortify/adaptive"
 	"github.com/felixgeelhaar/fortify/bulkhead"
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
+	"github.com/felixgeelhaar/fortify/hedge"
 	"github.com/felixgeelhaar/fortify/ratelimit"
 	"github.com/felixgeelhaar/fortify/retry"
 	"github.com/felixgeelhaar/fortify/timeout"
@@ -59,7 +61,7 @@ func (c *Chain[T]) WithCircuitBreaker(cb circuitbreaker.CircuitBreaker[T]) *Chai
 func (c *Chain[T]) WithRetry(r retry.Retry[T]) *Chain[T] {
 	middleware := func(next func(context.Context) (T, error)) func(context.Context) (T, error) {
 		return func(ctx context.Context) (T, error) {
-			return r.Do(ctx, next)
+			return r.Execute(ctx, next)
 		}
 	}
 	c.middlewares = append(c.middlewares, middleware)
@@ -98,6 +100,35 @@ func (c *Chain[T]) WithBulkhead(bh bulkhead.Bulkhead[T]) *Chain[T] {
 	middleware := func(next func(context.Context) (T, error)) func(context.Context) (T, error) {
 		return func(ctx context.Context) (T, error) {
 			return bh.Execute(ctx, next)
+		}
+	}
+	c.middlewares = append(c.middlewares, middleware)
+	return c
+}
+
+// WithAdaptive adds an adaptive concurrency limiter to the middleware chain.
+// Place outermost in the chain (before bulkhead) to shed load before any
+// pattern-specific work occurs.
+func (c *Chain[T]) WithAdaptive(a adaptive.Limiter[T]) *Chain[T] {
+	middleware := func(next func(context.Context) (T, error)) func(context.Context) (T, error) {
+		return func(ctx context.Context) (T, error) {
+			return a.Execute(ctx, next)
+		}
+	}
+	c.middlewares = append(c.middlewares, middleware)
+	return c
+}
+
+// WithHedge adds hedged-request execution to the middleware chain. Place
+// innermost (closest to the operation) so hedging multiplies only the
+// operation itself, not the surrounding patterns.
+//
+// Use only with idempotent operations — hedge attempts may run to completion
+// in parallel before cancellation propagates.
+func (c *Chain[T]) WithHedge(h hedge.Hedge[T]) *Chain[T] {
+	middleware := func(next func(context.Context) (T, error)) func(context.Context) (T, error) {
+		return func(ctx context.Context) (T, error) {
+			return h.Execute(ctx, next)
 		}
 	}
 	c.middlewares = append(c.middlewares, middleware)

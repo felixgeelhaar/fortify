@@ -46,7 +46,7 @@ func Example_timeoutExceeded() {
 	if err != nil {
 		fmt.Printf("Operation timed out: %v\n", err)
 	}
-	// Output: Operation timed out: context deadline exceeded
+	// Output: Operation timed out: operation timeout after 100ms
 }
 
 // Example_defaultTimeout demonstrates using the default timeout.
@@ -104,7 +104,7 @@ func Example_contextAwareness() {
 	fmt.Printf("Error: %v\n", err)
 	// Output:
 	// Operation cancelled
-	// Error: context deadline exceeded
+	// Error: operation timeout after 100ms
 }
 
 // Example_callback demonstrates timeout event callbacks.

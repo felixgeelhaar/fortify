@@ -109,7 +109,7 @@ avast/retry-go provides functional retry logic. Fortify offers similar patterns 
 ```go
 import "github.com/avast/retry-go"
 
-err := retry.Do(
+err := retry.Execute(
     func() error {
         return apiCall()
     },
@@ -139,7 +139,7 @@ r := retry.New[any](&retry.Config{
     },
 })
 
-_, err := r.Do(ctx, func(ctx context.Context) (any, error) {
+_, err := r.Execute(ctx, func(ctx context.Context) (any, error) {
     return nil, apiCall(ctx)
 })
 ```
@@ -163,7 +163,7 @@ _, err := r.Do(ctx, func(ctx context.Context) (any, error) {
 
 **Before (avast/retry-go):**
 ```go
-err := retry.Do(
+err := retry.Execute(
     func() error {
         return apiCall()
     },
@@ -181,7 +181,7 @@ r := retry.New[any](&retry.Config{
     },
 })
 
-_, err := r.Do(ctx, func(ctx context.Context) (any, error) {
+_, err := r.Execute(ctx, func(ctx context.Context) (any, error) {
     return nil, apiCall(ctx)
 })
 ```
@@ -217,7 +217,7 @@ if err := limiter.Wait(ctx); err != nil {
 ```go
 import "github.com/felixgeelhaar/fortify/ratelimit"
 
-limiter := ratelimit.New(&ratelimit.Config{
+limiter := ratelimit.New(ratelimit.Config{
     Rate:     100,
     Burst:    150,
     Interval: time.Second,
@@ -267,7 +267,7 @@ func getLimiter(key string) *rate.Limiter {
 
 **Fortify** (built-in):
 ```go
-limiter := ratelimit.New(&ratelimit.Config{
+limiter := ratelimit.New(ratelimit.Config{
     Rate:     100,
     Burst:    150,
     Interval: time.Second,
@@ -373,7 +373,7 @@ r := retry.New[any](&retry.Config{
     BackoffPolicy: retry.BackoffConstant,
 })
 
-_, err := r.Do(ctx, func(ctx context.Context) (any, error) {
+_, err := r.Execute(ctx, func(ctx context.Context) (any, error) {
     return nil, apiCall(ctx)
 })
 ```

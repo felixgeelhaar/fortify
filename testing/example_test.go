@@ -167,7 +167,7 @@ func Example_testingRetryPolicy() {
 		Multiplier:   2.0,
 	})
 
-	result, err := r.Do(context.Background(), func(ctx context.Context) (string, error) {
+	result, err := r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attemptCount++
 		if attemptCount <= failureThreshold {
 			return "", errors.New("temporary failure")

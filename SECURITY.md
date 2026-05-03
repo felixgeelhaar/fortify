@@ -59,14 +59,14 @@ Fortify implements several security measures to protect against common attack ve
 
 ```go
 // Fail-closed (default, recommended for security-critical applications)
-limiter := ratelimit.New(&ratelimit.Config{
+limiter := ratelimit.New(ratelimit.Config{
     Rate:     100,
     Burst:    200,
     FailOpen: false, // Deny requests on storage errors
 })
 
 // Fail-open (for high-availability scenarios)
-limiter := ratelimit.New(&ratelimit.Config{
+limiter := ratelimit.New(ratelimit.Config{
     Rate:     100,
     Burst:    200,
     FailOpen: true, // Allow requests on storage errors

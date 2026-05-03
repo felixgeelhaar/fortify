@@ -45,34 +45,43 @@ const (
 type KeyExtractor func(*http.Request) string
 
 // CircuitBreaker wraps an HTTP handler with circuit breaker protection.
-// Returns 503 Service Unavailable when the circuit is open.
+// Returns 503 Service Unavailable when the circuit is open and the downstream
+// handler has not already written a response.
 func CircuitBreaker(cb circuitbreaker.CircuitBreaker[*http.Response]) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			resp, err := cb.Execute(r.Context(), func(ctx context.Context) (*http.Response, error) {
-				// Create a response recorder to capture the handler's response
-				rec := &responseRecorder{
-					ResponseWriter: w,
-					statusCode:     http.StatusOK,
-				}
+			rec := &responseRecorder{
+				ResponseWriter: w,
+				statusCode:     http.StatusOK,
+			}
+
+			_, err := cb.Execute(r.Context(), func(ctx context.Context) (*http.Response, error) {
 				next.ServeHTTP(rec, r.WithContext(ctx))
 
-				// Return error if status code indicates failure
-				if rec.statusCode >= 500 {
-					return &http.Response{StatusCode: rec.statusCode}, ferrors.ErrCircuitOpen
-				}
+				// Read status under the recorder's mutex to avoid a race with
+				// any handler-spawned goroutines that outlive ServeHTTP.
+				rec.mu.Lock()
+				sc := rec.statusCode
+				rec.mu.Unlock()
 
-				return &http.Response{StatusCode: rec.statusCode}, nil
+				if sc >= 500 {
+					return &http.Response{StatusCode: sc}, ferrors.ErrCircuitOpen
+				}
+				return &http.Response{StatusCode: sc}, nil
 			})
 
-			if err != nil {
-				// Circuit is open or other error occurred
-				http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+			if err == nil {
 				return
 			}
 
-			// Response already written by handler
-			_ = resp
+			// Only write 503 if the downstream handler hasn't already written
+			// a response (which happens when the CB itself short-circuited).
+			rec.mu.Lock()
+			already := rec.written
+			rec.mu.Unlock()
+			if !already {
+				http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+			}
 		})
 	}
 }

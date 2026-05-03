@@ -8,20 +8,35 @@ import (
 
 // Config holds the configuration for a RateLimiter.
 type Config struct {
-	// KeyFunc extracts the rate limiting key from the context.
-	// If nil, the key parameter passed to Allow/Wait/Take is used.
-	// This is useful for extracting keys from request context (user ID, IP, tenant, etc.)
+	// KeyFunc transforms or replaces the rate-limit key for each call.
+	// Receives the request context AND the caller-supplied key (passed to
+	// Allow/Wait/Take). KeyFunc may use the supplied key, ignore it, or
+	// derive a new key from context (user ID, IP, tenant, etc.).
 	//
-	// IMPORTANT: When KeyFunc is set, the key parameter in Allow/Wait/Take is IGNORED.
-	// KeyFunc takes precedence and the returned value is used as the rate limiting key.
-	// If you need to use the key parameter, either don't set KeyFunc or incorporate
-	// the key into your context before calling the rate limiter methods.
+	// If nil, the caller-supplied key is used verbatim.
 	//
-	// Key length constraints: The returned key must respect the Store's maximum key
-	// length (e.g., DefaultMaxKeyLength=1024 for MemoryStore). Keys exceeding the
-	// limit will cause ErrKeyTooLong errors from the Store. Keep keys reasonably
-	// sized (e.g., user IDs, tenant names, IP addresses).
-	KeyFunc func(ctx context.Context) string
+	// Common patterns:
+	//
+	//	// Always derive from context, ignore caller key:
+	//	KeyFunc: func(ctx context.Context, _ string) string {
+	//	    return userIDFromContext(ctx)
+	//	}
+	//
+	//	// Prefer ctx-derived, fall back to caller key:
+	//	KeyFunc: func(ctx context.Context, key string) string {
+	//	    if u := userIDFromContext(ctx); u != "" { return u }
+	//	    return key
+	//	}
+	//
+	//	// Namespace the caller key by tenant from context:
+	//	KeyFunc: func(ctx context.Context, key string) string {
+	//	    return tenantFromContext(ctx) + ":" + key
+	//	}
+	//
+	// Key length constraints: the returned key must respect the Store's
+	// maximum key length (e.g., DefaultMaxKeyLength=1024 for MemoryStore).
+	// Keys exceeding the limit cause ErrKeyTooLong errors from the Store.
+	KeyFunc func(ctx context.Context, key string) string
 
 	// OnAllow is called when a request is allowed (not rate limited).
 	// It receives the context and key that was allowed.

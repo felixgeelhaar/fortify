@@ -51,7 +51,7 @@
 //
 //	    // Use them together
 //	    result, err := cb.Execute(context.Background(), func(ctx context.Context) (string, error) {
-//	        return r.Do(ctx, func(ctx context.Context) (string, error) {
+//	        return r.Execute(ctx, func(ctx context.Context) (string, error) {
 //	            return callExternalService(ctx)
 //	        })
 //	    })
@@ -84,7 +84,7 @@
 //
 //	import "github.com/felixgeelhaar/fortify/ratelimit"
 //
-//	rl := ratelimit.New(&ratelimit.Config{
+//	rl := ratelimit.New(ratelimit.Config{
 //	    Rate:     100,
 //	    Burst:    10,
 //	    Interval: time.Second,

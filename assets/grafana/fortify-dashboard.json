@@ -1,0 +1,300 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {"type": "grafana", "uid": "-- Grafana --"},
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Fortify resilience patterns observability. Imports against any Prometheus datasource scraping fortify_* metrics.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+      "id": 100,
+      "panels": [],
+      "title": "Circuit Breaker",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"options": {"0": {"color": "green", "index": 0, "text": "Closed"}}, "type": "value"},
+            {"options": {"1": {"color": "red", "index": 1, "text": "Open"}}, "type": "value"},
+            {"options": {"2": {"color": "yellow", "index": 2, "text": "Half-Open"}}, "type": "value"}
+          ],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}
+        }
+      },
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 1},
+      "id": 1,
+      "options": {"colorMode": "value", "graphMode": "none", "textMode": "auto"},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "fortify_circuit_breaker_state",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CB state by instance",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 1},
+      "id": 2,
+      "options": {"legend": {"showLegend": true}},
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "rate(fortify_circuit_breaker_failures_total[1m]) / rate(fortify_circuit_breaker_requests_total[1m])",
+          "legendFormat": "{{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CB failure ratio (1m)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 1},
+      "id": 3,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "increase(fortify_circuit_breaker_state_changes_total[5m])",
+          "legendFormat": "{{name}} {{from}}->{{to}}",
+          "refId": "A"
+        }
+      ],
+      "title": "CB state changes (5m)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 7},
+      "id": 200,
+      "panels": [],
+      "title": "Retry",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 8},
+      "id": 11,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "histogram_quantile(0.99, sum by (le, name) (rate(fortify_retry_attempts_bucket[5m])))",
+          "legendFormat": "p99 {{name}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "histogram_quantile(0.50, sum by (le, name) (rate(fortify_retry_attempts_bucket[5m])))",
+          "legendFormat": "p50 {{name}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Retry attempts per call",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 8},
+      "id": 12,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "rate(fortify_retry_successes_total[1m])",
+          "legendFormat": "ok {{name}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "rate(fortify_retry_failures_total[1m])",
+          "legendFormat": "fail {{name}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Retry outcomes /sec",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 14},
+      "id": 300,
+      "panels": [],
+      "title": "Rate Limit",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 15},
+      "id": 21,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "rate(fortify_rate_limit_allowed_total[1m])",
+          "legendFormat": "allowed {{name}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "rate(fortify_rate_limit_denied_total[1m])",
+          "legendFormat": "denied {{name}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Rate limit /sec",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 15},
+      "id": 22,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "histogram_quantile(0.99, sum by (le, name) (rate(fortify_rate_limit_wait_seconds_bucket[5m])))",
+          "legendFormat": "p99 wait {{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Rate limit p99 wait",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 21},
+      "id": 400,
+      "panels": [],
+      "title": "Timeout",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 22},
+      "id": 31,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "rate(fortify_timeout_executions_total[1m])",
+          "legendFormat": "exec {{name}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "rate(fortify_timeout_exceeded_total[1m])",
+          "legendFormat": "exceeded {{name}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Timeout /sec",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 22},
+      "id": 32,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "histogram_quantile(0.99, sum by (le, name) (rate(fortify_timeout_duration_seconds_bucket[5m])))",
+          "legendFormat": "p99 {{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Timeout p99 duration",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 28},
+      "id": 500,
+      "panels": [],
+      "title": "Bulkhead",
+      "type": "row"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 12, "x": 0, "y": 29},
+      "id": 41,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "fortify_bulkhead_active",
+          "legendFormat": "active {{name}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "fortify_bulkhead_queued",
+          "legendFormat": "queued {{name}}",
+          "refId": "B"
+        }
+      ],
+      "title": "Bulkhead utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+      "gridPos": {"h": 6, "w": 12, "x": 12, "y": 29},
+      "id": 42,
+      "targets": [
+        {
+          "datasource": {"type": "prometheus", "uid": "${DS_PROMETHEUS}"},
+          "expr": "rate(fortify_bulkhead_rejected_total[1m])",
+          "legendFormat": "rejected {{name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Bulkhead rejections /sec",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["fortify", "resilience", "circuit-breaker"],
+  "templating": {
+    "list": [
+      {
+        "current": {"selected": false, "text": "Prometheus", "value": "Prometheus"},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Datasource",
+        "multi": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {"from": "now-30m", "to": "now"},
+  "timepicker": {},
+  "timezone": "",
+  "title": "Fortify Resilience Patterns",
+  "uid": "fortify-resilience",
+  "version": 1,
+  "weekStart": ""
+}

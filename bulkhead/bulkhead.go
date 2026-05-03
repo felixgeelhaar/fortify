@@ -186,9 +186,13 @@ func (b *bulkhead[T]) enqueue(ctx context.Context, fn func(context.Context) (T, 
 				return res.value, res.err
 			case <-queueCtx.Done():
 				return zero, queueCtx.Err()
+			case <-b.done:
+				return zero, ferrors.ErrBulkheadFull
 			}
 		case <-queueCtx.Done():
 			return zero, queueCtx.Err()
+		case <-b.done:
+			return zero, ferrors.ErrBulkheadFull
 		}
 
 	case <-queueCtx.Done():
@@ -198,6 +202,9 @@ func (b *bulkhead[T]) enqueue(ctx context.Context, fn func(context.Context) (T, 
 			b.safeCallback(b.config.OnRejected)
 		}
 		return zero, queueCtx.Err()
+
+	case <-b.done:
+		return zero, ferrors.ErrBulkheadFull
 
 	default:
 		// Queue full, reject immediately
@@ -213,45 +220,51 @@ func (b *bulkhead[T]) enqueue(ctx context.Context, fn func(context.Context) (T, 
 func (b *bulkhead[T]) worker() {
 	for {
 		select {
-		case req, ok := <-b.queue:
-			if !ok {
-				// Queue closed, shutdown
-				return
-			}
-
+		case req := <-b.queue:
 			// Wait for semaphore in worker goroutine, so queue stays full
 			// until we're ready to execute
 			select {
 			case b.sem <- struct{}{}:
-				// Got semaphore, execute in goroutine to continue processing queue
+				// Got semaphore, execute in goroutine to continue processing queue.
+				// resultCh is buffered=1, so the send is non-blocking even if the
+				// caller has already abandoned the request via queueCtx.Done().
 				go func(r *request[T]) {
 					defer func() {
 						<-b.sem // Release semaphore
 					}()
-
-					// Execute function
 					value, err := r.fn(r.ctx)
 					r.resultCh <- result[T]{value: value, err: err}
 				}(req)
 
 			case <-req.ctx.Done():
-				// Context cancelled while waiting for semaphore
-				go func(r *request[T]) {
-					var zero T
-					r.resultCh <- result[T]{value: zero, err: r.ctx.Err()}
-				}(req)
+				// Context cancelled while waiting for semaphore.
+				// Direct send is safe: resultCh is buffered=1.
+				req.resultCh <- result[T]{err: req.ctx.Err()}
 
 			case <-b.done:
-				// Shutdown signal received
-				go func(r *request[T]) {
-					var zero T
-					r.resultCh <- result[T]{value: zero, err: ferrors.ErrBulkheadFull}
-				}(req)
+				// Shutdown signal received: notify this request and drain remaining.
+				req.resultCh <- result[T]{err: ferrors.ErrBulkheadFull}
+				b.drainQueue()
 				return
 			}
 
 		case <-b.done:
-			// Shutdown signal received
+			// Shutdown signal received: drain remaining requests.
+			b.drainQueue()
+			return
+		}
+	}
+}
+
+// drainQueue notifies any queued requests that the bulkhead is closed.
+// Called once during shutdown; uses non-blocking receive to avoid races
+// with concurrent senders that observe b.done in their own select.
+func (b *bulkhead[T]) drainQueue() {
+	for {
+		select {
+		case req := <-b.queue:
+			req.resultCh <- result[T]{err: ferrors.ErrBulkheadFull}
+		default:
 			return
 		}
 	}
@@ -259,12 +272,12 @@ func (b *bulkhead[T]) worker() {
 
 // Close implements the Bulkhead interface.
 // It signals shutdown and stops the worker goroutine.
+//
+// Close does NOT close the queue channel: senders in enqueue() observe b.done
+// in their own select and bail out cleanly, avoiding a send-on-closed-channel panic.
 func (b *bulkhead[T]) Close() error {
 	b.once.Do(func() {
 		close(b.done)
-		if b.queue != nil {
-			close(b.queue)
-		}
 	})
 	return nil
 }

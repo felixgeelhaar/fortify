@@ -50,3 +50,8 @@ dist/
 
 # Generated reports
 SECURITY_AUDIT_REPORT.md
+
+# Security scanner outputs
+*.sarif
+nox-out/
+verdict-results.*

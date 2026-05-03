@@ -31,6 +31,7 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/felixgeelhaar/fortify/ferrors"
@@ -50,7 +51,23 @@ type CircuitBreaker[T any] interface {
 
 	// Reset manually resets the circuit breaker to the Closed state and clears all counts.
 	Reset()
+
+	// Close releases resources held by the circuit breaker, including the
+	// internal callback dispatcher goroutine. After Close, OnStateChange
+	// callbacks no longer fire. It is safe to call Close multiple times.
+	Close() error
 }
+
+// stateChange is an event emitted when the circuit breaker transitions between states.
+type stateChange struct {
+	from State
+	to   State
+}
+
+// stateChangeBufferSize bounds the in-flight state change queue to prevent
+// unbounded memory growth under callback storms (e.g., a flapping breaker
+// combined with a slow user callback).
+const stateChangeBufferSize = 64
 
 // circuitBreaker is the concrete implementation of CircuitBreaker.
 type circuitBreaker[T any] struct {
@@ -61,6 +78,30 @@ type circuitBreaker[T any] struct {
 	counts        Counts
 	generation    uint64
 	state         State
+
+	// fastState/fastExpiry/fastGen mirror state/expiry/generation under
+	// atomic semantics. They allow beforeRequest to short-circuit when the
+	// breaker is in steady-state Closed without acquiring mu, restoring the
+	// "<1µs" hot-path claim under contention. Mirrors are updated by
+	// syncFastFields, always called with mu held.
+	fastState  atomic.Int32
+	fastExpiry atomic.Int64
+	fastGen    atomic.Uint64
+
+	// stateChanges receives state transition events for sequenced delivery
+	// to OnStateChange. nil if no callback is configured.
+	stateChanges chan stateChange
+	// done signals the dispatcher goroutine to exit.
+	done      chan struct{}
+	closeOnce sync.Once
+}
+
+// syncFastFields refreshes the atomic mirrors from the locked fields.
+// Must be called with cb.mu held.
+func (cb *circuitBreaker[T]) syncFastFields() {
+	cb.fastGen.Store(cb.generation)
+	cb.fastExpiry.Store(cb.expiry.UnixNano())
+	cb.fastState.Store(int32(cb.state))
 }
 
 // New creates a new CircuitBreaker with the given configuration.
@@ -74,8 +115,65 @@ func New[T any](config Config) CircuitBreaker[T] {
 		generation: 0,
 		expiry:     time.Now().Add(config.Interval),
 	}
+	// Seed atomic mirrors so the fast path sees consistent initial values
+	// without requiring a lock acquisition first.
+	cb.fastGen.Store(0)
+	cb.fastExpiry.Store(cb.expiry.UnixNano())
+	cb.fastState.Store(int32(StateClosed))
+
+	if config.OnStateChange != nil {
+		cb.stateChanges = make(chan stateChange, stateChangeBufferSize)
+		cb.done = make(chan struct{})
+		go cb.dispatchStateChanges()
+	}
 
 	return cb
+}
+
+// dispatchStateChanges delivers state transitions to OnStateChange in
+// the order they were emitted. It exits when Close signals via done.
+func (cb *circuitBreaker[T]) dispatchStateChanges() {
+	for {
+		select {
+		case ev := <-cb.stateChanges:
+			cb.safeCallback(func() { cb.config.OnStateChange(ev.from, ev.to) })
+		case <-cb.done:
+			return
+		}
+	}
+}
+
+// emitStateChange enqueues a state change for serialized delivery.
+// If the queue is full (callback consumer is slow) or the breaker has been
+// closed, the event is dropped and (when full) a warning is logged.
+func (cb *circuitBreaker[T]) emitStateChange(from, to State) {
+	if cb.stateChanges == nil {
+		return
+	}
+	select {
+	case cb.stateChanges <- stateChange{from: from, to: to}:
+	case <-cb.done:
+		// Breaker closed - silently drop further events.
+	default:
+		if cb.config.Logger != nil {
+			cb.config.Logger.Warn("circuit breaker state change dropped: callback queue full",
+				slog.String("from", from.String()),
+				slog.String("to", to.String()),
+			)
+		}
+	}
+}
+
+// Close implements the CircuitBreaker interface.
+// It signals the dispatcher goroutine to exit. Subsequent state changes
+// do not fire OnStateChange callbacks. It is safe to call Close multiple times.
+func (cb *circuitBreaker[T]) Close() error {
+	cb.closeOnce.Do(func() {
+		if cb.done != nil {
+			close(cb.done)
+		}
+	})
+	return nil
 }
 
 // Execute implements the CircuitBreaker interface.
@@ -87,19 +185,46 @@ func (cb *circuitBreaker[T]) Execute(ctx context.Context, fn func(context.Contex
 		return zero, err
 	}
 
-	// Get current state and generation
+	// Try a lock-free fast path: if the breaker is in steady-state Closed,
+	// no lock is needed to admit the request. This is the dominant case in
+	// healthy systems and keeps Execute hot-path-cheap.
+	if generation, ok := cb.fastAdmit(); ok {
+		result, err := fn(ctx)
+		cb.afterRequest(generation, cb.config.IsSuccessful(err))
+		return result, err
+	}
+
+	// Slow path: full state machine under mu.
 	generation, err := cb.beforeRequest()
 	if err != nil {
 		return zero, err
 	}
 
-	// Execute the function
 	result, err := fn(ctx)
-
-	// Update state based on result
 	cb.afterRequest(generation, cb.config.IsSuccessful(err))
-
 	return result, err
+}
+
+// fastAdmit returns (generation, true) when the breaker is in Closed state
+// and no counts-reset is due. It performs only atomic loads, no mutex.
+// Returns (0, false) when the slow path must be taken.
+func (cb *circuitBreaker[T]) fastAdmit() (uint64, bool) {
+	if State(cb.fastState.Load()) != StateClosed {
+		return 0, false
+	}
+	// Interval == 0 means counts never reset in Closed state, so the
+	// expiry check is a no-op. Skip it.
+	if cb.config.Interval > 0 {
+		if time.Now().UnixNano() >= cb.fastExpiry.Load() {
+			return 0, false
+		}
+	}
+	// Re-check state after expiry load to defend against a transition that
+	// landed between the two atomic loads. Slow path handles that case.
+	if State(cb.fastState.Load()) != StateClosed {
+		return 0, false
+	}
+	return cb.fastGen.Load(), true
 }
 
 // State implements the CircuitBreaker interface.
@@ -117,22 +242,21 @@ func (cb *circuitBreaker[T]) Reset() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 
-	cb.logStateChange(cb.state, StateClosed)
+	prev := cb.state
+	cb.logStateChange(prev, StateClosed)
 	cb.state = StateClosed
 	cb.generation++
 	cb.counts.reset()
 	cb.expiry = time.Now().Add(cb.config.Interval)
+	cb.syncFastFields()
 
-	if cb.config.OnStateChange != nil {
-		// Call outside of lock to prevent potential deadlock
-		go cb.safeCallback(func() {
-			cb.config.OnStateChange(cb.state, StateClosed)
-		})
-	}
+	cb.emitStateChange(prev, StateClosed)
 }
 
 // beforeRequest checks if the request should be allowed and returns the current generation.
-// Returns an error if the circuit is open and not ready for half-open trial requests.
+// Returns a *ferrors.CircuitOpenError if the circuit is open and not ready for half-open
+// trial requests. The structured error carries the breaker state, retry-after, and counts;
+// errors.Is(err, ferrors.ErrCircuitOpen) continues to match.
 func (cb *circuitBreaker[T]) beforeRequest() (uint64, error) {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
@@ -141,14 +265,31 @@ func (cb *circuitBreaker[T]) beforeRequest() (uint64, error) {
 	state, generation := cb.currentState(now)
 
 	if state == StateOpen {
-		return generation, ferrors.ErrCircuitOpen
+		return generation, cb.openError(state, now)
 	}
 
 	if state == StateHalfOpen && cb.counts.Requests >= cb.config.MaxRequests {
-		return generation, ferrors.ErrCircuitOpen
+		return generation, cb.openError(state, now)
 	}
 
 	return generation, nil
+}
+
+// openError builds a structured error describing why the breaker rejected.
+// Caller must hold cb.mu.
+func (cb *circuitBreaker[T]) openError(state State, now time.Time) error {
+	var retryAfter time.Duration
+	if state == StateOpen && cb.expiry.After(now) {
+		retryAfter = cb.expiry.Sub(now)
+	}
+	return &ferrors.CircuitOpenError{
+		State:                state.String(),
+		RetryAfter:           retryAfter,
+		TotalRequests:        cb.counts.Requests,
+		TotalFailures:        cb.counts.TotalFailures,
+		ConsecutiveFailures:  cb.counts.ConsecutiveFailures,
+		ConsecutiveSuccesses: cb.counts.ConsecutiveSuccesses,
+	}
 }
 
 // afterRequest updates the circuit breaker state after a request completes.
@@ -180,6 +321,8 @@ func (cb *circuitBreaker[T]) currentState(now time.Time) (state State, generatio
 		if cb.config.Interval > 0 && cb.expiry.Before(now) {
 			cb.counts.reset()
 			cb.expiry = now.Add(cb.config.Interval)
+			// Refresh fast-path mirror so subsequent admits skip the lock.
+			cb.syncFastFields()
 		}
 	case StateOpen:
 		if cb.expiry.Before(now) {
@@ -238,15 +381,10 @@ func (cb *circuitBreaker[T]) setState(newState State, now time.Time) {
 	case StateHalfOpen:
 		cb.halfOpenStart = now
 	}
+	cb.syncFastFields()
 
 	cb.logStateChange(oldState, newState)
-
-	if cb.config.OnStateChange != nil {
-		// Call outside of lock to prevent potential deadlock
-		go cb.safeCallback(func() {
-			cb.config.OnStateChange(oldState, newState)
-		})
-	}
+	cb.emitStateChange(oldState, newState)
 }
 
 // safeCallback executes a callback with panic recovery.

@@ -18,7 +18,7 @@ func BenchmarkRetrySuccess(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = r.Do(ctx, func(ctx context.Context) (int, error) {
+		_, _ = r.Execute(ctx, func(ctx context.Context) (int, error) {
 			return 42, nil
 		})
 	}
@@ -36,7 +36,7 @@ func BenchmarkRetryFailure(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = r.Do(ctx, func(ctx context.Context) (int, error) {
+		_, _ = r.Execute(ctx, func(ctx context.Context) (int, error) {
 			return 0, testErr
 		})
 	}
@@ -56,7 +56,7 @@ func BenchmarkRetryWithJitter(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = r.Do(ctx, func(ctx context.Context) (int, error) {
+		_, _ = r.Execute(ctx, func(ctx context.Context) (int, error) {
 			return 0, testErr
 		})
 	}

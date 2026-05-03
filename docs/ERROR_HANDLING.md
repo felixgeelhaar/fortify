@@ -195,7 +195,7 @@ if err != nil {
 **Example:**
 
 ```go
-result, err := r.Do(ctx, func(ctx context.Context) (*Response, error) {
+result, err := r.Execute(ctx, func(ctx context.Context) (*Response, error) {
     resp, err := apiClient.Call(ctx)
     if err != nil {
         // Wrap error with context
@@ -387,7 +387,7 @@ result, err := middleware.New[*Response]().
 
 // Error chain might be:
 // - timeout.Execute error
-// - retry.Do error (after 3 attempts)
+// - retry.Execute error (after 3 attempts)
 // - circuitbreaker.Execute error
 // - ServiceError
 // - original HTTP error

@@ -24,7 +24,7 @@ func main() {
 	})
 
 	attempt := 0
-	result, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+	result, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		attempt++
 		fmt.Printf("Executing attempt %d...\n", attempt)
 
@@ -47,7 +47,7 @@ func main() {
 	defer cancel()
 
 	attempt = 0
-	_, err = r.Do(ctx, func(ctx context.Context) (int, error) {
+	_, err = r.Execute(ctx, func(ctx context.Context) (int, error) {
 		attempt++
 		fmt.Printf("Executing attempt %d...\n", attempt)
 		time.Sleep(time.Millisecond * 200)

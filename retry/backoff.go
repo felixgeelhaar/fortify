@@ -2,7 +2,7 @@ package retry
 
 import (
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"time"
 )
 
@@ -20,27 +20,40 @@ const (
 	BackoffConstant
 )
 
+// maxBackoffDuration caps any backoff computation to a value safely
+// representable as time.Duration without wrapping. Without this guard, a
+// pathological Multiplier or attempt count produces +Inf via math.Pow, which
+// converts to a negative time.Duration and breaks select{} timers.
+const maxBackoffDuration = 24 * time.Hour
+
 // calculateBackoff computes the delay before the next retry attempt.
 // It applies the configured backoff policy, respects MaxDelay, and optionally adds jitter.
 func calculateBackoff(policy BackoffPolicy, attempt int, initialDelay, maxDelay time.Duration, multiplier float64, jitter bool) time.Duration {
-	var delay time.Duration
+	var delayF float64
 
 	switch policy {
 	case BackoffExponential:
 		// delay = initialDelay * multiplier^(attempt-1).
-		delay = time.Duration(float64(initialDelay) * math.Pow(multiplier, float64(attempt-1)))
+		delayF = float64(initialDelay) * math.Pow(multiplier, float64(attempt-1))
 
 	case BackoffLinear:
 		// delay = initialDelay * attempt.
-		delay = time.Duration(float64(initialDelay) * float64(attempt))
+		delayF = float64(initialDelay) * float64(attempt)
 
 	case BackoffConstant:
 		// delay = initialDelay (constant).
-		delay = initialDelay
+		delayF = float64(initialDelay)
 
 	default:
-		delay = initialDelay
+		delayF = float64(initialDelay)
 	}
+
+	// Guard against NaN/Inf and float -> Duration overflow.
+	cap := float64(maxBackoffDuration)
+	if math.IsNaN(delayF) || math.IsInf(delayF, 0) || delayF > cap || delayF < 0 {
+		delayF = cap
+	}
+	delay := time.Duration(delayF)
 
 	// Apply max delay cap.
 	if maxDelay > 0 && delay > maxDelay {
@@ -62,12 +75,9 @@ func addJitter(delay time.Duration) time.Duration {
 		return 0
 	}
 
-	// Add random jitter between 0% and 10% of the delay.
-	// Using math/rand instead of crypto/rand because:
-	// 1. Retry jitter doesn't require cryptographic security
-	// 2. The goal is preventing thundering herd, not security
-	// 3. math/rand is significantly faster (no syscalls)
-	// 4. Predictability of math/rand is acceptable for retry timing
+	// math/rand/v2 has lock-free per-goroutine state, avoiding the global
+	// mutex contention of math/rand under parallel callers. Predictability
+	// is acceptable for retry jitter.
 	//nolint:gosec // G404: weak random is intentional and appropriate for retry jitter
 	jitterAmount := time.Duration(rand.Float64() * float64(delay) * 0.1)
 	return delay + jitterAmount

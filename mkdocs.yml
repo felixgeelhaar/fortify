@@ -1,0 +1,85 @@
+site_name: Fortify
+site_description: Composable resilience patterns for Go.
+site_url: https://felixgeelhaar.github.io/fortify/
+repo_url: https://github.com/felixgeelhaar/fortify
+repo_name: felixgeelhaar/fortify
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Concepts: concepts.md
+  - How-to:
+    - Compose patterns: how-to-compose.md
+    - Wire observability: how-to-observe.md
+    - Rate limit: how-to-rate-limit.md
+    - Test resilience: how-to-test.md
+  - Integrations: integrations.md
+  - Reference:
+    - API docs (pkg.go.dev): https://pkg.go.dev/github.com/felixgeelhaar/fortify
+    - Comparison: COMPARISON.md
+    - Production checklist: PRODUCTION.md
+    - Error handling: ERROR_HANDLING.md
+    - Migration: MIGRATION.md
+    - Performance testing: PERFORMANCE_TESTING.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/felixgeelhaar/fortify
+    - icon: fontawesome/solid/book
+      link: https://pkg.go.dev/github.com/felixgeelhaar/fortify

@@ -7,6 +7,129 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ⚠ BREAKING CHANGES
+
+This release contains source-incompatible changes across multiple packages.
+Migration is mechanical; full diff at `docs/MIGRATION.md`.
+
+- **`ratelimit.New`** now takes `Config` by value, not `*Config`. Drop the `&`:
+  - Before: `ratelimit.New(&ratelimit.Config{...})`
+  - After: `ratelimit.New(ratelimit.Config{...})`
+- **`retry.Retry[T].Do(...)` renamed to `Execute(...)`** for verb consistency with `cb.Execute`, `timeout.Execute`, `bulkhead.Execute`, `fallback.Execute`.
+- **`circuitbreaker.CircuitBreaker[T]` interface** gained a `Close() error` method. Existing implementations of the interface (e.g. test doubles) need to add a no-op Close.
+- **`ratelimit.Config.KeyFunc`** signature: `func(ctx) string` → `func(ctx, key string) string`. The caller-supplied key is now passed in; KeyFunc may use, transform, or override it. Removes the silent argument-shadow footgun.
+- **Structured errors** replace bare sentinels:
+  - `cb.Execute` returns `*ferrors.CircuitOpenError` (with `State`, `RetryAfter`, `Counts`).
+  - `ratelimit.Execute`/`ExecuteN` return `*ratelimit.rateLimitError` (with `Key()`, `RetryAfter()`).
+  - `timeout.Execute` returns `*ferrors.TimeoutError` (with `Timeout`).
+  - All wrap their existing sentinels via `Unwrap`, so `errors.Is(err, ferrors.ErrCircuitOpen)`, `errors.Is(err, ratelimit.ErrLimitExceeded)`, `errors.Is(err, ferrors.ErrTimeout)`, and `errors.Is(err, context.DeadlineExceeded)` all continue to match.
+
+### Fixed
+
+#### Critical concurrency bugs
+
+- **bulkhead:** worker no longer leaks goroutines on shutdown. Queued requests receive `ErrBulkheadFull` via `drainQueue`. `Close()` no longer closes the queue channel (which racily panicked in-flight senders); senders observe `b.done` in a new inner-select case instead. (`bulkhead/bulkhead.go`)
+- **bulkhead:** `enqueue` inner select gained `<-b.done` case so callers waiting on `resultCh` exit cleanly when the bulkhead closes mid-flight.
+- **ratelimit:** fail-open path now caps grants at `Config.Burst` for `Take`/`ExecuteN`. Previously, on `Store` error, oversize token requests bypassed `MaxTokensPerRequest` enforcement, enabling DoS amplification during storage outages. (`ratelimit/limiter.go`)
+- **http.CircuitBreaker middleware:** no longer writes a second `WriteHeader(503)` when the downstream handler already wrote a response. Status read protected by the recorder's mutex to defend against handler-spawned goroutines. (`http/middleware.go`)
+- **circuitbreaker:** `OnStateChange` callbacks delivered in transition order via a single dispatcher goroutine + bounded channel (default 64). Replaces per-event `go safeCallback` which reordered notifications under rapid flapping. New `Close()` method drains the dispatcher; idempotent. (`circuitbreaker/breaker.go`)
+
+#### High-priority correctness
+
+- **gRPC `KeyFromMetadata` / `StreamKeyFromMetadata`** now sanitize and truncate (256-byte cap) client-supplied metadata. Previously raw values flowed to the rate-limit Store, triggering `ErrKeyTooLong` per request and exploding metric label cardinality. (`grpc/interceptor.go`)
+- **retry:** switched jitter source from `math/rand` (global mutex) to `math/rand/v2` (lock-free, per-goroutine). Removed contention spike under concurrent retries. (`retry/backoff.go`)
+- **retry:** `calculateBackoff` now caps at 24h before float→`time.Duration` conversion, defending against `math.Pow` producing `+Inf` (which silently became negative `time.Duration` and broke `time.NewTimer`). `Config.Multiplier` capped at 100 in `setDefaults`. (`retry/backoff.go`, `retry/config.go`)
+- **retry:** replaced `time.After` in the retry loop with a reusable `time.NewTimer` + drain-on-cancel. Eliminates per-attempt timer leak under high QPS with fast cancellation. (`retry/retry.go`)
+
+### Performance
+
+- **circuitbreaker:** lock-free fast path for steady-state Closed admission. `Execute` now skips the mutex when `state == Closed && time.Now() < expiry`, using atomic mirrors (`fastState`, `fastExpiry`, `fastGen`). Mirrors are refreshed under `mu` in `setState`, `currentState` (Closed reset path), and `Reset`. Restores the "<1µs hot path" claim under contention.
+  - Apple M5, 10 cores: 70 ns/op steady-state; 187 ns/op concurrent (10 goroutines); 0 allocs.
+
+### Supply chain
+
+- Replaced `verdictsec` security scan with `nox` (v0.8.1, pinned); SARIF uploaded to GitHub code scanning. Dropped `|| true` failure-swallowing in CI. CI uses new v0.8 flag-before-subcommand syntax (`nox -format X -output Y scan .`); SARIF artifact renamed to `results.sarif` (was `scan.sarif` in v0.7).
+- All GitHub Actions pinned to commit SHAs with `# vX.Y.Z` annotations (closes 22 IAC-013 findings).
+- Added `actions/dependency-review-action` PR gate (fails on high-severity vulnerable additions).
+- Added `.github/dependabot.yml` with grouped weekly updates for gomod (otel/grpc/prometheus groups) and GitHub Actions.
+- `release.yml` Go version bumped 1.24 → 1.25; release artifacts now include CycloneDX (`sbom.cdx.json`) and SPDX (`sbom.spdx.json`) SBOMs.
+- `performance.yml` Go version bumped 1.24 → 1.25.
+
+### Patterns
+
+- New **`hedge/`** package — hedged-request execution for tail-latency reduction. Fires the primary attempt immediately; if not returned within `HedgeDelay`, fires a second (and optionally third, ...) attempt in parallel up to `MaxAttempts`. First success wins; remaining attempts are cancelled via shared context. `MaxAttempts` capped at 16. Generic on `T`. Use only with idempotent operations.
+- New **`adaptive/`** package — AIMD-tuning concurrency limiter. Starts at `InitialLimit`; every `SuccessThreshold` consecutive successes raises the cap by 1 (additive); every failure halves the cap (multiplicative), bounded by `MinLimit`/`MaxLimit`. CAS-based, lock-free hot path. Generic on `T`. Use when downstream capacity is unknown or shifts over time.
+
+### Middleware presets
+
+- New **`middleware.HTTPClient`** — preset chain for outbound HTTP: CB → retry → timeout. Configurable failure threshold, retry count, timeouts.
+- New **`middleware.DatabaseQuery`** — preset for DB queries: conservative retry (default 2 attempts), late breaker trip (default 10 consecutive failures).
+- New **`middleware.RPCDownstream[T]`** — preset for per-downstream RPC chains, generic on result type.
+- New **`middleware.HTTPRoundTripper`** — wraps any `http.RoundTripper` with the HTTPClient preset chain. Returns an `http.RoundTripper` ready to mount on `http.Client.Transport`.
+- New **`middleware.HTTPRoundTripperFromChain`** — same shape but accepts an arbitrary user-built `*Chain[*http.Response]`.
+- `middleware.Chain[T]` gained `WithAdaptive` and `WithHedge` builders.
+
+### gRPC client-side interceptors
+
+- New **`UnaryClientCircuitBreakerInterceptor`** — wraps unary client calls; returns `Unavailable` when the breaker is open.
+- New **`UnaryClientRateLimitInterceptor`** + key extractors `KeyFromMethod`, `KeyFromOutgoingMetadata` — returns `ResourceExhausted` when over budget.
+- New **`UnaryClientTimeoutInterceptor`** — returns `DeadlineExceeded` on Fortify timeout.
+- New **`StreamClientCircuitBreakerInterceptor`** + **`StreamClientRateLimitInterceptor`** — gate stream creation only.
+- All client-side metadata extractors share the sanitization + 256-byte truncation already applied to server-side ones.
+
+### Tests
+
+- New **property-based tests** for the circuit breaker state machine using `pgregory.net/rapid`. Asserts: state always recognized, counts coherent in long-running Closed, generation monotonic across Execute/Reset, Open rejects within Timeout window. Test-only dependency; not pulled by consumers.
+
+### Examples
+
+- New **`examples/ratelimit-redis/`** — reference Redis-backed `ratelimit.Store`. Atomic update via Lua (server-side TIME, scaled-integer tokens, automatic TTL). Lives in its own Go module to avoid pulling `go-redis` into core fortify.
+- New **`examples/circuitbreaker-redis/`** — reference distributed circuit breaker. State (Closed/Open/HalfOpen, generation, expiry, counters) lives in a single Redis Hash; admission and recording happen atomically via Lua. Implements `circuitbreaker.CircuitBreaker[T]`. Trade-offs vs. in-process CB documented in the package README.
+
+### Operations
+
+- New **`assets/grafana/fortify-dashboard.json`** — importable Grafana dashboard with panels for CB state, retry attempts, rate-limit allow/deny, timeout duration, bulkhead utilization. Datasource variable; Grafana 10.x compatible.
+- New **`.github/workflows/changelog.yml`** + `cliff.toml` — git-cliff auto-refresh of the Unreleased section from conventional commits, opens a PR on each push to main.
+- New **`.github/workflows/docs.yml`** + `mkdocs.yml` — MkDocs Material site published to GitHub Pages from `docs/`. Builds with `--strict` to fail on broken links.
+
+### Algorithm options
+
+- **`adaptive.AlgorithmVegas`** — RTT-aware concurrency tuning. Tracks the minimum observed call latency (no-load baseline) and an EMA of recent latencies (halflife ≈ 8 samples). Computes a queue-depth estimate (`limit × (emaRTT − minRTT) / emaRTT`); raises the limit when the estimate is below `VegasAlpha` (default 3), lowers when above `VegasBeta` (default 6). Reacts to rising latency before failures appear. AIMD is still the default. Configurable via `Algorithm`, `VegasAlpha`, `VegasBeta`, `VegasMinSamples`.
+- **`adaptive.AlgorithmGradient2`** — smoothed gradient-of-RTT controller (Netflix concurrency-limits naming). `gradient = clamp(minRTT/longEMA, 0.5, 1.0)`; `newLimit = floor(currentLimit × gradient + √currentLimit)`. Reacts proportionally to RTT inflation instead of waiting on water marks. Configurable via `GradientMinSamples`, `GradientSmoothing`. Highest per-call overhead of the three algorithms (one sqrt + one float multiply + two atomic time samples).
+
+### Fuzz tests
+
+- New `FuzzSanitizeLogKey` (`ratelimit/`), `FuzzSanitizeKey` (`http/`), `FuzzSanitizeMetadataKey` (`grpc/`). Properties: idempotency, length bounds, no control characters, UTF-8 validity preservation, clean inputs unchanged. Each runs 70k–250k execs/3s in CI sample runs.
+
+### Property tests
+
+- `adaptive/property_test.go` — limit always within `[MinLimit, MaxLimit]`, in-flight settles to zero after sequential Execute, persistent failure floors at `MinLimit`.
+- `ratelimit/property_test.go` — bucket tokens within `[0, Burst]`, `BucketCount` ≤ `MaxKeys`, `Allow(k)` and `Take(k, 1)` agree, `Reset` empties the store.
+
+### HTTP server preset
+
+- New **`middleware.HTTPHandler`** — wraps any `http.Handler` with `RateLimit (optional) → CircuitBreaker → Timeout → inner`. Returns 429/503/504 to clients on the corresponding pattern errors. Server-side equivalent of `HTTPRoundTripper`.
+
+### Benchmarks
+
+- `hedge_bench_test.go` and `adaptive_bench_test.go` cover the new patterns. Apple M5 single-thread numbers:
+  - `BenchmarkAIMDSuccess` — 8 ns/op, 0 allocs
+  - `BenchmarkAIMDFailure` — 18 ns/op, 1 alloc (the structured error)
+  - `BenchmarkVegasSuccess` — 58 ns/op, 0 allocs (extra cost = `time.Now` + EMA update)
+  - `BenchmarkAIMDSuccessParallel` — 203 ns/op (10 cores), 0 allocs
+  - `BenchmarkHedgePrimaryWins` — 740 ns/op, 9 allocs (inherent to the goroutine + channel + timer machinery; hedging trades work for tail-latency reduction)
+
+### Slimmed
+
+- **`slog/` package** trimmed: dropped redundant constructor wrappers (`NewLogger`, `NewTextLogger`, `NewJSONLogger`) and pattern-event helpers (`LogPatternEvent`, `LogPatternError`, `LogPatternMetrics`). Kept the `Pattern` enum, `WithPattern`, and `LogContext`. New patterns added to enum: `PatternFallback`, `PatternHedge`, `PatternAdaptive`.
+
+### Docs
+
+- New `docs/COMPARISON.md` — Fortify vs `sony/gobreaker`, `failsafe-go`, `uber-go/ratelimit`, `golang.org/x/time/rate`, `hashicorp/go-retryablehttp`. Per-pattern feature matrices and "when Fortify is the wrong choice" guidance.
+- New `GOVERNANCE.md` — solo-maintainer disclosure, semver policy, release process, security disclosure.
+- New `ADOPTERS.md` — bootstrap with PR-add instructions.
+- README rewritten in Diataxis style: lean landing (~180 lines) + dedicated `docs/concepts.md`, `docs/how-to-compose.md`, `docs/how-to-observe.md`, `docs/how-to-rate-limit.md`, `docs/how-to-test.md`, `docs/integrations.md`.
+
 ### Added
 
 #### Pluggable Storage Interface

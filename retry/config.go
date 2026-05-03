@@ -80,4 +80,10 @@ func (c *Config) setDefaults() {
 	if c.Multiplier <= 0 {
 		c.Multiplier = 2.0
 	}
+	// Cap Multiplier to a sane upper bound. Combined with the per-call
+	// maxBackoffDuration guard in calculateBackoff, this prevents
+	// math.Pow from producing +Inf -> negative time.Duration.
+	if c.Multiplier > 100 {
+		c.Multiplier = 100
+	}
 }

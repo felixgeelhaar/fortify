@@ -17,7 +17,7 @@ func TestRetryDo(t *testing.T) {
 		})
 
 		attempts := 0
-		result, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		result, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 42, nil
 		})
@@ -40,7 +40,7 @@ func TestRetryDo(t *testing.T) {
 		})
 
 		attempts := 0
-		result, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		result, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			if attempts < 3 {
 				return 0, errors.New("temporary failure")
@@ -67,7 +67,7 @@ func TestRetryDo(t *testing.T) {
 
 		attempts := 0
 		expectedErr := errors.New("persistent failure")
-		_, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		_, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, expectedErr
 		})
@@ -89,7 +89,7 @@ func TestRetryDo(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		attempts := 0
-		_, err := r.Do(ctx, func(ctx context.Context) (int, error) {
+		_, err := r.Execute(ctx, func(ctx context.Context) (int, error) {
 			attempts++
 			if attempts == 2 {
 				cancel()
@@ -115,7 +115,7 @@ func TestRetryDo(t *testing.T) {
 		})
 
 		attempts := 0
-		_, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		_, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, nonRetryableErr
 		})
@@ -137,7 +137,7 @@ func TestRetryDo(t *testing.T) {
 		})
 
 		attempts := 0
-		_, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		_, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, retryableErr
 		})
@@ -162,7 +162,7 @@ func TestRetryDo(t *testing.T) {
 		})
 
 		attempts := 0
-		result, err := r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		result, err := r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			if attempts == 1 {
 				return 0, customErr // Should not retry
@@ -195,7 +195,7 @@ func TestRetryBackoff(t *testing.T) {
 		start := time.Now()
 
 		//nolint:errcheck,gosec // intentionally ignoring error in test
-		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		_, _ = r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")
 		})
@@ -221,7 +221,7 @@ func TestRetryBackoff(t *testing.T) {
 		start := time.Now()
 
 		//nolint:errcheck,gosec // intentionally ignoring error in test
-		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		_, _ = r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")
 		})
@@ -245,7 +245,7 @@ func TestRetryBackoff(t *testing.T) {
 		start := time.Now()
 
 		//nolint:errcheck,gosec // intentionally ignoring error in test
-		_, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		_, _ = r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			attempts++
 			return 0, errors.New("failure")
 		})
@@ -270,7 +270,7 @@ func TestRetryBackoff(t *testing.T) {
 		start := time.Now()
 
 		//nolint:errcheck,gosec // intentionally ignoring error in test
-		r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
 
@@ -297,7 +297,7 @@ func TestRetryCallbacks(t *testing.T) {
 		})
 
 		//nolint:errcheck,gosec // intentionally ignoring error in test
-		r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
 
@@ -325,7 +325,7 @@ func TestRetryWithJitter(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		start := time.Now()
 		//nolint:errcheck,gosec // intentionally ignoring error in test
-		r.Do(context.Background(), func(ctx context.Context) (int, error) {
+		r.Execute(context.Background(), func(ctx context.Context) (int, error) {
 			return 0, errors.New("failure")
 		})
 		durations[i] = time.Since(start)

@@ -133,14 +133,13 @@ type rateLimiter struct {
 }
 
 // New creates a new RateLimiter with the given configuration.
-func New(config *Config) RateLimiter {
-	if config == nil {
-		config = &Config{}
-	}
+//
+//nolint:gocritic // hugeParam: Config passed by value for API consistency across all patterns
+func New(config Config) RateLimiter {
 	config.setDefaults()
 
 	return &rateLimiter{
-		config: *config,
+		config: config,
 		// Pre-calculate hot path values to avoid repeated conversions
 		intervalNs: config.Interval.Nanoseconds(),
 		burstFloat: float64(config.Burst),
@@ -339,6 +338,28 @@ func (rl *rateLimiter) Take(ctx context.Context, key string, tokens int) bool {
 
 	if err != nil {
 		failOpen := rl.handleError(ctx, resolvedKey, err)
+		if failOpen && tokens > rl.config.Burst {
+			// Fail-open with excessive tokens: deny to prevent DoS amplification
+			// even when storage is unavailable. Burst is the largest grant
+			// possible under normal operation, so we never exceed that under
+			// fail-open either.
+			if rl.config.Logger != nil {
+				rl.config.Logger.WarnContext(ctx, "fail-open denied: tokens exceed burst",
+					slog.String("key", sanitizeLogKey(resolvedKey)),
+					slog.Int("requested", tokens),
+					slog.Int("burst", rl.config.Burst),
+				)
+			}
+			if rl.config.Metrics != nil {
+				rl.config.Metrics.OnDeny(ctx, resolvedKey)
+			}
+			if rl.config.OnLimit != nil {
+				rl.safeCallback(func() {
+					rl.config.OnLimit(ctx, resolvedKey)
+				})
+			}
+			return false
+		}
 		if failOpen {
 			if rl.config.Metrics != nil {
 				rl.config.Metrics.OnAllow(ctx, resolvedKey)
@@ -383,7 +404,7 @@ func (rl *rateLimiter) Execute(ctx context.Context, key string, operation func()
 	}
 
 	if !rl.Allow(ctx, key) {
-		return ErrLimitExceeded
+		return rl.limitError(ctx, rl.resolveKey(ctx, key))
 	}
 
 	return operation()
@@ -406,10 +427,21 @@ func (rl *rateLimiter) ExecuteN(ctx context.Context, key string, tokens int, ope
 	}
 
 	if !rl.Take(ctx, key, tokens) {
-		return ErrLimitExceeded
+		return rl.limitError(ctx, rl.resolveKey(ctx, key))
 	}
 
 	return operation()
+}
+
+// limitError builds a structured RateLimitError carrying the resolved key
+// and an estimated RetryAfter. The error wraps ErrLimitExceeded so that
+// errors.Is(err, ErrLimitExceeded) continues to match.
+func (rl *rateLimiter) limitError(ctx context.Context, resolvedKey string) error {
+	retryAfter := rl.calculateWaitTime(ctx, resolvedKey)
+	return &rateLimitError{
+		key:        sanitizeLogKey(resolvedKey),
+		retryAfter: retryAfter,
+	}
 }
 
 // Reset implements the RateLimiter interface.
@@ -687,10 +719,12 @@ func (rl *rateLimiter) handleError(ctx context.Context, key string, err error) b
 	return rl.config.FailOpen
 }
 
-// resolveKey determines the rate limiting key using KeyFunc if configured.
+// resolveKey determines the rate-limit key using KeyFunc if configured.
+// KeyFunc receives both ctx and the caller-supplied key, so it can transform
+// the key, derive from context, or pass through unchanged.
 func (rl *rateLimiter) resolveKey(ctx context.Context, key string) string {
 	if rl.config.KeyFunc != nil {
-		return rl.config.KeyFunc(ctx)
+		return rl.config.KeyFunc(ctx, key)
 	}
 	return key
 }

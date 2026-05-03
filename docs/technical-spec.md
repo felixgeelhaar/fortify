@@ -217,7 +217,7 @@ r := retry.New[*User](retry.Config{
     Logger: slog.Default(),
 })
 
-user, err := r.Do(ctx, func(ctx context.Context) (*User, error) {
+user, err := r.Execute(ctx, func(ctx context.Context) (*User, error) {
     return fetchUser(ctx, userID)
 })
 ```
@@ -267,7 +267,7 @@ func New(config Config) RateLimiter
 **Example:**
 
 ```go
-limiter := ratelimit.New(&ratelimit.Config{
+limiter := ratelimit.New(ratelimit.Config{
     Rate:     100,
     Burst:    150,
     Interval: time.Second,
@@ -490,7 +490,7 @@ func UnaryCircuitBreakerInterceptor[T any](cb circuitbreaker.CircuitBreaker[T]) 
 func UnaryRetryInterceptor[T any](r retry.Retry[T]) grpc.UnaryClientInterceptor {
     return func(ctx context.Context, method string, req, reply interface{},
                 cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-        _, err := r.Do(ctx, func(ctx context.Context) (interface{}, error) {
+        _, err := r.Execute(ctx, func(ctx context.Context) (interface{}, error) {
             return nil, invoker(ctx, method, req, reply, cc, opts...)
         })
         return err
@@ -781,7 +781,7 @@ func FuzzRetryBackoff(f *testing.F) {
         })
 
         // Should not panic
-        _, _ = r.Do(context.Background(), func(ctx context.Context) (int, error) {
+        _, _ = r.Execute(context.Background(), func(ctx context.Context) (int, error) {
             return 0, errors.New("test")
         })
     })
@@ -861,7 +861,7 @@ func callAPI(ctx context.Context) (*Response, error) {
 // Stack timeouts: overall < circuit breaker < retry < individual operation
 timeout.Execute(ctx, 10*time.Second, func(ctx context.Context) {
     cb.Execute(ctx, func(ctx context.Context) {
-        retry.Do(ctx, func(ctx context.Context) {
+        retry.Execute(ctx, func(ctx context.Context) {
             callAPI(ctx) // 1s timeout
         })
     })

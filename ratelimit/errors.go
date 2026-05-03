@@ -3,6 +3,7 @@ package ratelimit
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 // Sentinel errors for rate limiting operations.
@@ -52,6 +53,33 @@ var (
 	// ErrRateLimiterClosed is returned when operations are attempted on a closed rate limiter.
 	ErrRateLimiterClosed = errors.New("ratelimit: rate limiter is closed")
 )
+
+// rateLimitError is a structured error returned by Execute/ExecuteN when the
+// rate limit is exceeded. It carries the resolved key and an estimated
+// RetryAfter, while wrapping ErrLimitExceeded so errors.Is(err, ErrLimitExceeded)
+// continues to match.
+type rateLimitError struct {
+	key        string
+	retryAfter time.Duration
+}
+
+// Error implements error.
+func (e *rateLimitError) Error() string {
+	if e.retryAfter > 0 {
+		return fmt.Sprintf("ratelimit: limit exceeded for key=%q (retry_after=%s)", e.key, e.retryAfter)
+	}
+	return ErrLimitExceeded.Error()
+}
+
+// Key returns the resolved (sanitized) rate-limit key.
+func (e *rateLimitError) Key() string { return e.key }
+
+// RetryAfter returns the estimated time until a token becomes available.
+// Zero indicates the duration could not be computed.
+func (e *rateLimitError) RetryAfter() time.Duration { return e.retryAfter }
+
+// Unwrap allows errors.Is(err, ErrLimitExceeded) to keep matching.
+func (e *rateLimitError) Unwrap() error { return ErrLimitExceeded }
 
 // WrapStorageError wraps an underlying error with ErrStorageUnavailable context.
 // This allows callers to use errors.Is(err, ErrStorageUnavailable) while also
