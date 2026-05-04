@@ -35,12 +35,13 @@ func TestHedge_FiresHedgeWhenPrimarySlow(t *testing.T) {
 	got, err := h.Execute(context.Background(), func(ctx context.Context) (int, error) {
 		n := calls.Add(1)
 		if n == 1 {
-			// Primary is slow but still wins-or-loses. Block until either
-			// the hedge fires (so calls.Load() advances) or ctx cancels.
+			// Primary deliberately loses: wait for hedge to fire, then
+			// return an error so the hedge result is the only winner.
+			// (If primary returned (1, nil) it could race the hedge.)
 			for ctx.Err() == nil && calls.Load() < 2 {
 				time.Sleep(time.Millisecond)
 			}
-			return 1, ctx.Err()
+			return 0, errors.New("primary loses")
 		}
 		// Hedge attempt: succeed quickly.
 		return 2, nil
