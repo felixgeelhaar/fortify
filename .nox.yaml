@@ -13,6 +13,7 @@ scan:
     # Documentation contains example code snippets and curl commands with
     # placeholder tokens / API keys.
     - "README.md"
+    - "CHANGELOG.md"
     - "docs/*.md"
     - "**/README.md"
     # Generated coverage badge.
