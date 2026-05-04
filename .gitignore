@@ -56,3 +56,8 @@ SECURITY_AUDIT_REPORT.md
 nox-out/
 verdict-results.*
 .nox/cache/
+# MkDocs staged copies of root markdown
+docs/GOVERNANCE.md
+docs/ADOPTERS.md
+docs/SECURITY.md
+docs/CHANGELOG.md
