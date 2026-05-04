@@ -4,63 +4,50 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-## [Unreleased]
 
-### Chore
+## [1.3.1] - 2026-05-04
 
-- **changelog:** Refresh Unreleased (#23)
-- **changelog:** Refresh Unreleased (#22)
-- **changelog:** Refresh Unreleased (#19)
-- Update coverage badge [skip ci]
-- Update coverage badge [skip ci]
-
-### Dependencies
-
-- **deps:** Bump pymdown-extensions from 10.12 to 10.16.1 in /docs (#20)
+Patch release: CI hardening, docs site online, flaky-test fix. No API changes.
 
 ### Fixed
 
-- **hedge:** Make TestHedge_FiresHedgeWhenPrimarySlow deterministic
-- **security:** Exclude CHANGELOG.md from nox scan
-- **ci:** Docs build resolves cross-links and tolerates code-block warnings
-- **ci:** Docs site build + changelog workflow permissions
-- **ci:** Satisfy golangci-lint v2.7.2 + suppress nox baseline self-flag
+- **hedge**: `TestHedge_FiresHedgeWhenPrimarySlow` was flaky on Linux. Primary
+  returned `(1, ctx.Err())` which could resolve to `(1, nil)` and race the hedge.
+  Primary now returns an explicit error so the hedge is the only possible winner.
+- **lint**: errcheck on `Close()` deferreds wrapped in `func() { _ = ...Close() }()`
+  across `circuitbreaker/property_test.go`, `grpc/client_test.go`,
+  `middleware/http_test.go`.
+- **docs site**: now builds and deploys to GitHub Pages. `docs/requirements.txt`
+  pins MkDocs deps; root governance docs staged into `docs/` at build time so
+  cross-links resolve; dropped `--strict` (mkdocs flags `[bracket]` fragments
+  inside code blocks as broken links — false positives).
+- **changelog workflow**: switched from push-on-main to weekly cron +
+  `workflow_dispatch`. The push trigger created a runaway loop (each merged
+  PR opened a fresh refresh PR).
+- **nox CLI install**: bumped to source path `github.com/nox-hq/nox/cli@v0.8.1`
+  (binary lives at the `/cli` subpackage), renamed `cli → nox` after install.
+  CI tolerates source-built CLI exit-1-on-baselined-findings via `|| true` and
+  asserts SARIF/SBOM artifact existence as the real gate.
 
-## [Unreleased]
+### Security
 
-### Chore
-
-- **changelog:** Refresh Unreleased (#19)
-- Update coverage badge [skip ci]
-- Update coverage badge [skip ci]
-
-### Dependencies
-
-- **deps:** Bump pymdown-extensions from 10.12 to 10.16.1 in /docs (#20)
-
-### Fixed
-
-- **security:** Exclude CHANGELOG.md from nox scan
-- **ci:** Docs build resolves cross-links and tolerates code-block warnings
-- **ci:** Docs site build + changelog workflow permissions
-- **ci:** Satisfy golangci-lint v2.7.2 + suppress nox baseline self-flag
-
-## [Unreleased]
-
-### Chore
-
-- Update coverage badge [skip ci]
-- Update coverage badge [skip ci]
+- New `.nox.yaml` excludes `.nox/baseline.json` (entropy self-flag), `go.sum`
+  (module digests), `.github/workflows/*.yml` (pinned SHAs), README/CHANGELOG/
+  docs (token snippets), `assets/grafana/*.json` (Prometheus metric names).
+  Local rescan: 0 findings, 76 suppressed, exit 0.
+- `.nox/baseline.json` committed for cross-run finding suppression.
+- `.golangci.yml` suppresses `gosec G115` package-wide (atomic.Int32 mirrors
+  in `adaptive/` are deliberate, sources are config-clamped) and `dupl` on
+  `middleware/presets.go` (intentional structural similarity per preset).
 
 ### Dependencies
 
-- **deps:** Bump pymdown-extensions from 10.12 to 10.16.1 in /docs (#20)
-
-### Fixed
-
-- **ci:** Docs site build + changelog workflow permissions
-- **ci:** Satisfy golangci-lint v2.7.2 + suppress nox baseline self-flag
-
+- Action SHA bumps merged: `actions/upload-artifact` 4.6.2 → 7.0.1,
+  `actions/upload-pages-artifact` 3.0.1 → 5.0.0, `actions/deploy-pages` 4.0.5
+  → 5.0.0, `actions/configure-pages` 5.0.0 → 6.0.0, `softprops/action-gh-release`
+  2.6.2 → 3.0.0 (resolves Node 20 deprecation), `github/codeql-action` SHA bump.
+- `golang.org/x/text` 0.33.0 → 0.36.0.
+- `pymdown-extensions` 10.12 → 10.16.1 (in `docs/requirements.txt`).
 
 ## [1.3.0] - 2026-05-03
 
