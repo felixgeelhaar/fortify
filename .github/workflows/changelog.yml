@@ -1,8 +1,10 @@
 name: Changelog
 
 on:
-  push:
-    branches: [main]
+  # Weekly refresh + manual trigger only. Running on every push triggers
+  # PR-creation loops (merge of PR opens a new PR for next commit).
+  schedule:
+    - cron: "0 6 * * MON"
   workflow_dispatch:
 
 permissions:
