@@ -90,11 +90,11 @@ type Config[T any] struct {
 // are safe for concurrent use; the aggregate cost is accumulated with
 // atomic operations.
 type Budget[T any] struct {
-	cfg      Config[T]
-	tokens   atomic.Int64
-	usdMicros     atomic.Int64
-	calls    atomic.Int64
-	breached atomic.Bool
+	cfg       Config[T]
+	tokens    atomic.Int64
+	usdMicros atomic.Int64
+	calls     atomic.Int64
+	breached  atomic.Bool
 }
 
 // New constructs a Budget. Returns an error if Max is entirely zero
