@@ -48,6 +48,9 @@ dist/
 # Relicta runtime state
 .relicta/
 
+# Roady runtime state (spec is materialised into docs/backlog.md and committed there)
+.roady/
+
 # Generated reports
 SECURITY_AUDIT_REPORT.md
 
