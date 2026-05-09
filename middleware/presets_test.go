@@ -223,6 +223,140 @@ func TestLLMCall_NonIdempotentDefaultDoesNotRetryArbitraryErrors(t *testing.T) {
 	}
 }
 
+func TestLLMHedge_RejectsEmptyAttempts(t *testing.T) {
+	_, err := middleware.LLMHedge[string](middleware.LLMHedgeConfig[string]{})
+	if err == nil {
+		t.Fatal("want error for empty Attempts")
+	}
+}
+
+func TestLLMHedge_RejectsCrossVendorWithoutOptIn(t *testing.T) {
+	noop := func(context.Context) (string, error) { return "", nil }
+	_, err := middleware.LLMHedge[string](middleware.LLMHedgeConfig[string]{
+		Attempts: []func(context.Context) (string, error){noop, noop},
+	})
+	if err == nil {
+		t.Fatal("want error when multiple Attempts lack opt-in")
+	}
+}
+
+func TestLLMHedge_AcceptsSameVendorMulti(t *testing.T) {
+	noop := func(context.Context) (string, error) { return "", nil }
+	_, err := middleware.LLMHedge[string](middleware.LLMHedgeConfig[string]{
+		Attempts:              []func(context.Context) (string, error){noop, noop},
+		AllAttemptsSameVendor: true,
+	})
+	if err != nil {
+		t.Fatalf("AllAttemptsSameVendor should be sufficient: %v", err)
+	}
+}
+
+func TestLLMHedge_PrimaryWinsWhenFast(t *testing.T) {
+	r, err := middleware.LLMHedge[string](middleware.LLMHedgeConfig[string]{
+		Attempts: []func(context.Context) (string, error){
+			func(context.Context) (string, error) { return "primary", nil },
+			func(ctx context.Context) (string, error) {
+				<-ctx.Done()
+				return "secondary", ctx.Err()
+			},
+		},
+		HedgeAfter:            500 * time.Millisecond,
+		AllAttemptsSameVendor: true,
+	})
+	if err != nil {
+		t.Fatalf("constructor: %v", err)
+	}
+
+	got, err := r.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run err: %v", err)
+	}
+	if got != "primary" {
+		t.Errorf("got %q, want primary", got)
+	}
+}
+
+func TestLLMHedge_HedgeWinsWhenPrimarySlow(t *testing.T) {
+	var hedgeFired int
+	r, err := middleware.LLMHedge[string](middleware.LLMHedgeConfig[string]{
+		Attempts: []func(context.Context) (string, error){
+			func(ctx context.Context) (string, error) {
+				select {
+				case <-ctx.Done():
+					return "", ctx.Err()
+				case <-time.After(500 * time.Millisecond):
+					return "primary-late", nil
+				}
+			},
+			func(context.Context) (string, error) {
+				return "secondary-fast", nil
+			},
+		},
+		HedgeAfter:            30 * time.Millisecond,
+		AllAttemptsSameVendor: true,
+		OnHedge:               func(int) { hedgeFired++ },
+	})
+	if err != nil {
+		t.Fatalf("constructor: %v", err)
+	}
+
+	got, err := r.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run err: %v", err)
+	}
+	if got != "secondary-fast" {
+		t.Errorf("got %q, want secondary-fast", got)
+	}
+	if hedgeFired != 1 {
+		t.Errorf("OnHedge fired %d times, want 1", hedgeFired)
+	}
+}
+
+func TestLLMHedge_AllErrorsReturnsLast(t *testing.T) {
+	r, err := middleware.LLMHedge[string](middleware.LLMHedgeConfig[string]{
+		Attempts: []func(context.Context) (string, error){
+			func(context.Context) (string, error) { return "", errors.New("first failed") },
+			func(context.Context) (string, error) { return "", errors.New("second failed") },
+		},
+		HedgeAfter:            10 * time.Millisecond,
+		AllAttemptsSameVendor: true,
+	})
+	if err != nil {
+		t.Fatalf("constructor: %v", err)
+	}
+
+	_, err = r.Run(context.Background())
+	if err == nil {
+		t.Fatal("want error when all attempts fail")
+	}
+}
+
+func TestLLMHedge_ParentCancelPropagates(t *testing.T) {
+	r, err := middleware.LLMHedge[string](middleware.LLMHedgeConfig[string]{
+		Attempts: []func(context.Context) (string, error){
+			func(ctx context.Context) (string, error) {
+				<-ctx.Done()
+				return "", ctx.Err()
+			},
+		},
+		HedgeAfter: 100 * time.Millisecond,
+	})
+	if err != nil {
+		t.Fatalf("constructor: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(20 * time.Millisecond)
+		cancel()
+	}()
+
+	_, err = r.Run(ctx)
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want context.Canceled", err)
+	}
+}
+
 func TestLLMCall_BudgetChargesWiredFromConfig(t *testing.T) {
 	chain, err := middleware.LLMCall[int](middleware.LLMCallConfig[int]{
 		Provider:    "anthropic",

@@ -360,6 +360,147 @@ func LLMCall[T any](cfg LLMCallConfig[T]) (*Chain[T], error) {
 		WithTimeout(tm, cfg.CallTimeout), nil
 }
 
+// LLMHedgeConfig configures the LLMHedge runner. Each Attempt is an
+// already-wrapped invocation (typically an LLMCall chain bound to a
+// specific provider/model and its operation). Attempts are fired in
+// order; subsequent attempts are spaced by HedgeAfter and cancelled
+// when any attempt returns a non-error result.
+//
+// Cross-vendor hedging — racing OpenAI against Anthropic, for example —
+// sends the same prompt to multiple providers in parallel. This has
+// data-residency implications: the prompt's contents traverse and may
+// be retained by every provider that participates. Set
+// AllowCrossVendor=true only after the data-flow has been reviewed
+// against your data-handling policy.
+type LLMHedgeConfig[T any] struct {
+	// Attempts is the list of attempt thunks. The first is the primary;
+	// the rest are hedges fired with HedgeAfter spacing. Must be at
+	// least length 1.
+	Attempts []func(context.Context) (T, error)
+
+	// HedgeAfter is the delay between firing consecutive attempts.
+	// Defaults to 800ms — a value that, on typical LLM latency curves,
+	// avoids paying for a hedge when the primary is already on a fast
+	// path. Lower values reduce tail latency at higher token cost.
+	HedgeAfter time.Duration
+
+	// AllowCrossVendor must be set to true to permit racing attempts
+	// across different providers. Defaults to false; an Attempts list
+	// passed without this flag is allowed only if the caller has marked
+	// AllAttemptsSameVendor=true (see below). The runner cannot itself
+	// detect provider identity, so callers attest.
+	AllowCrossVendor bool
+
+	// AllAttemptsSameVendor lets the caller declare that all attempts
+	// target the same vendor (e.g., a primary and a fallback model on
+	// the same provider). When true, AllowCrossVendor is not required.
+	AllAttemptsSameVendor bool
+
+	// OnHedge fires each time a hedge attempt is dispatched (the
+	// primary does not fire OnHedge). Receives the 1-based attempt
+	// index of the just-dispatched hedge.
+	OnHedge func(attempt int)
+}
+
+// LLMHedgeRunner is the runtime instance produced by LLMHedge.
+type LLMHedgeRunner[T any] struct {
+	cfg LLMHedgeConfig[T]
+}
+
+// LLMHedge constructs a runner that races multiple Attempts and
+// returns the first non-error result.
+//
+// Returns an error if Attempts is empty, if more than one attempt is
+// provided without either AllAttemptsSameVendor or AllowCrossVendor
+// set, or if HedgeAfter is negative.
+func LLMHedge[T any](cfg LLMHedgeConfig[T]) (*LLMHedgeRunner[T], error) {
+	if len(cfg.Attempts) == 0 {
+		return nil, errors.New("middleware.LLMHedge: at least one Attempt required")
+	}
+	if cfg.HedgeAfter < 0 {
+		return nil, errors.New("middleware.LLMHedge: HedgeAfter must be non-negative")
+	}
+	if len(cfg.Attempts) > 1 && !cfg.AllAttemptsSameVendor && !cfg.AllowCrossVendor {
+		return nil, errors.New("middleware.LLMHedge: multiple Attempts require either AllAttemptsSameVendor or AllowCrossVendor=true; see godoc for the data-residency rationale")
+	}
+	if cfg.HedgeAfter == 0 {
+		cfg.HedgeAfter = 800 * time.Millisecond
+	}
+	return &LLMHedgeRunner[T]{cfg: cfg}, nil
+}
+
+// Run executes the configured Attempts and returns the first
+// non-error result. If every attempt errors, Run returns the last
+// error received. The losing attempts are cancelled via ctx as soon
+// as a winner is determined; the caller's fn is responsible for
+// honouring ctx.Done().
+func (r *LLMHedgeRunner[T]) Run(ctx context.Context) (T, error) {
+	var zero T
+
+	type outcome struct {
+		idx    int
+		result T
+		err    error
+	}
+	results := make(chan outcome, len(r.cfg.Attempts))
+
+	rctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	dispatch := func(i int) {
+		go func() {
+			res, err := r.cfg.Attempts[i](rctx)
+			select {
+			case results <- outcome{idx: i, result: res, err: err}:
+			case <-rctx.Done():
+			}
+		}()
+	}
+
+	dispatch(0)
+
+	hedgeTimer := time.NewTimer(r.cfg.HedgeAfter)
+	defer hedgeTimer.Stop()
+
+	pending := 1
+	nextHedge := 1
+	var lastErr error
+
+	for pending > 0 {
+		var hedgeC <-chan time.Time
+		if nextHedge < len(r.cfg.Attempts) {
+			hedgeC = hedgeTimer.C
+		}
+
+		select {
+		case o := <-results:
+			pending--
+			if o.err == nil {
+				return o.result, nil
+			}
+			lastErr = o.err
+			// Stay in the loop for outstanding attempts unless none remain.
+		case <-hedgeC:
+			if r.cfg.OnHedge != nil {
+				r.cfg.OnHedge(nextHedge)
+			}
+			dispatch(nextHedge)
+			pending++
+			nextHedge++
+			if nextHedge < len(r.cfg.Attempts) {
+				hedgeTimer.Reset(r.cfg.HedgeAfter)
+			}
+		case <-ctx.Done():
+			return zero, ctx.Err()
+		}
+	}
+
+	if lastErr != nil {
+		return zero, lastErr
+	}
+	return zero, errors.New("middleware.LLMHedge: no attempts produced a result")
+}
+
 // llmIsRetryable returns the retry predicate used by LLMCall. When
 // assumeIdempotent is false (the default), retries only fire on errors
 // explicitly marked retryable via ferrors.AsRetryable, plus rate-limit
