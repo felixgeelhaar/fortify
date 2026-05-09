@@ -6,10 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [1.4.0] - 2026-05-09
+
+The AI/agent wedge lands. New primitives (`budget`, `streamtimeout`) and middleware presets (`LLMCall`, `LLMHedge`) wrap LLM and tool calls with cost ceilings, streaming-aware timeouts, and provider hedging. Three new examples — MCP server, Eino, and an observability demo. No breaking changes; v1.3.x callers compile unchanged.
+
+### Patterns
+
+- New **`budget/`** package — cost-budget primitive enforcing per-chain caps in three independent dimensions (tokens, micro-USD, calls). Caller-supplied `Charge` callback converts each operation result to a `Cost`; aggregation is atomic; first breach short-circuits remaining work via `*BudgetExceededError` (wraps `ErrBudgetExceeded`, exposes `Consumed`/`Max`, implements `slog.LogValuer`). Generic on result type.
+- New **`streamtimeout/`** package — three-dimensional timeout for streaming work (LLM completions, server-sent events, gRPC streams). `FirstByteTimeout`, idle-between-chunks, and total-wall-clock are enforced independently via a `Mark` callback supplied to the user's function. `*StreamTimeoutError` reports which stage fired and unwraps to both `ferrors.ErrTimeout` and `context.DeadlineExceeded`. Implements `slog.LogValuer`.
+
+### Middleware presets
+
+- New **`middleware.LLMCall[T]`** — first AI-wedge preset. Chain: `Bulkhead → CircuitBreaker → Retry → Budget → Timeout → operation`. Budget sits inside Retry so each attempt is charged, capping the total cost of a retry storm during a provider incident. Defaults assume non-idempotent semantics; `IsRetryable` retries only on `ferrors.IsRetryable`-marked errors and `ferrors.ErrRateLimitExceeded`. Hard non-retryables: `budget.ErrBudgetExceeded`, `ferrors.ErrCircuitOpen`, `context.Canceled`, `context.DeadlineExceeded`. Set `AssumeIdempotent=true` to match HTTPClient retry semantics when an idempotency-key mechanism is wired.
+- New **`middleware.LLMHedge[T]`** — races a primary attempt against one or more hedges; first non-error result wins, losers cancelled via context. Default `HedgeAfter` 800ms. Cross-vendor hedging (e.g. OpenAI vs Anthropic) requires explicit opt-in (`AllowCrossVendor=true`) or attestation (`AllAttemptsSameVendor=true`); the runner cannot detect provider identity, so the gate is documented attestation. Each `Attempt` is an already-wrapped invocation, typically an `LLMCall` chain bound to a specific provider/model.
+- **`middleware.Chain[T]`** gained `WithBudget`, mirroring the other `With*` methods.
+
+### Examples
+
+- New **`examples/mcp-server/`** — Model Context Protocol tool-handler reference wiring Fortify into a tool handler. Chain: `Adaptive → Bulkhead → per-peer RateLimit → Timeout → operation`. Does not pin a specific MCP SDK (a minimal local `ToolHandler` interface stands in for the SDK shape) so CI stays green; the integration shape does not change when readers swap in the official `modelcontextprotocol` Go SDK or `mark3labs/mcp-go`. Demonstrates structured-error logging via `slog.LogValuer` without inspecting request payloads.
+- New **`examples/eino/`** — Eino integration reference using `LLMCall` with a token+USD budget driven by the response `Usage` field. Demonstrates Fortify's stance vs Go agent frameworks: complementary, not competitive — Eino owns prompts, tools, planning, and memory; Fortify wraps resilience around each model call. Avoids a hard dependency on `github.com/cloudwego/eino`.
+- New **`examples/observability-demo/`** — self-contained docker-compose stack (Prometheus + Grafana + sample app driving synthetic load through CB → Retry → Timeout). Grafana is provisioned with a pre-built Fortify overview dashboard covering CB state, request rate, retry attempts, rate-limit allow/deny, bulkhead active/queued, and timeout durations.
+
+### Documentation
+
+- `docs/POSITIONING.md` — Fortify's anchored wedge (Go services calling LLMs/tools), April Dunford 5-component breakdown, and validation gate.
+- `docs/PRODUCTION.md` "Observability and sensitive payloads" — PII policy: metric/span labels are pattern names and outcomes only, never request bodies or LLM prompts.
+- README, godoc, and pattern-count claims aligned with the Go version declared in `go.mod`; `slog.LogValuer` integration documented.
+- Draft blog post staged on hedging LLM tool calls in Go.
+
 ### Chore
 
-- Update coverage badge [skip ci]
-
+- Roady-derived backlog committed; runtime state ignored.
+- `gofmt` field-padding alignment in `budget/budget.go` (no behaviour change).
+- Coverage badge refreshes.
 
 ## [1.3.1] - 2026-05-04
 
