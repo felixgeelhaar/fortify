@@ -1,26 +1,26 @@
 // Package fortify provides production-grade resilience and fault-tolerance
-// patterns for Go 1.23+.
+// patterns for Go.
 //
 // Fortify offers a comprehensive suite of battle-tested patterns including
-// circuit breakers, retries, rate limiting, timeouts, and bulkheads with
-// zero external dependencies for core functionality.
+// circuit breakers, retries, rate limiting, timeouts, bulkheads, fallbacks,
+// hedged requests, and adaptive concurrency, with zero external dependencies
+// for core functionality.
 //
 // # Features
 //
-//   - 🔒 Type-Safe: Built with Go 1.23+ generics for compile-time safety
-//   - ⚡ High Performance: <1µs overhead with zero allocations in hot paths
-//   - 🎯 Zero Dependencies: Core patterns have no external dependencies
-//   - 🔍 Observable: Built-in support for structured logging (slog) and OpenTelemetry
-//   - 📊 Prometheus Metrics: Export metrics for all resilience patterns
-//   - 🌐 Framework Integration: First-class support for HTTP and gRPC
-//   - 🧩 Composable: Fluent API for combining multiple patterns
-//   - 🧪 Well Tested: >95% test coverage with race detection
+//   - Type-safe: Go generics for compile-time safety on result types
+//   - High performance: sub-microsecond overhead, zero allocations on hot paths
+//   - Zero dependencies: core patterns import nothing outside the standard library
+//   - Observable: built-in support for slog, OpenTelemetry, and Prometheus
+//   - Framework integration: HTTP and gRPC adapters
+//   - Composable: fluent middleware.Chain API for combining patterns
+//   - Well tested: >95% coverage with race detection
 //
 // # Installation
 //
 //	go get github.com/felixgeelhaar/fortify
 //
-// Requirements: Go 1.23 or higher
+// The minimum supported Go version is declared in go.mod (currently Go 1.25).
 //
 // # Quick Start
 //
@@ -117,6 +117,26 @@
 //	    },
 //	})
 //
+// Hedge: Reduces tail latency by firing parallel attempts when the primary call
+// is slow. Cancels the loser when a result arrives.
+//
+//	import "github.com/felixgeelhaar/fortify/hedge"
+//
+//	h := hedge.New[Response](hedge.Config{
+//	    HedgeAfter: 100 * time.Millisecond,
+//	    MaxAttempts: 2,
+//	})
+//
+// Adaptive concurrency: Auto-tunes a concurrency cap using AIMD, Vegas, or
+// Gradient2 based on observed latency and error signals.
+//
+//	import "github.com/felixgeelhaar/fortify/adaptive"
+//
+//	a := adaptive.New[Response](adaptive.Config{
+//	    Algorithm: adaptive.Vegas,
+//	    InitialLimit: 10,
+//	})
+//
 // # Middleware Composition
 //
 // Combine multiple patterns using the middleware chain:
@@ -197,10 +217,12 @@
 // Core Patterns:
 //   - circuitbreaker: Circuit breaker pattern implementation
 //   - retry: Retry pattern with backoff strategies
-//   - ratelimit: Token bucket rate limiting
+//   - ratelimit: Token bucket rate limiting (pluggable Store for distributed setups)
 //   - timeout: Context-based timeout enforcement
 //   - bulkhead: Concurrency limiting with semaphores
 //   - fallback: Graceful degradation pattern
+//   - hedge: Tail-latency reduction via parallel hedged attempts
+//   - adaptive: Adaptive concurrency limiting (AIMD, Vegas, Gradient2)
 //
 // Integration:
 //   - http: HTTP middleware for resilience patterns
@@ -253,19 +275,10 @@
 //
 // # Performance
 //
-// Fast-path overhead (per operation):
-//   - Circuit Breaker (closed): ~100ns
-//   - Rate Limiter (tokens available): ~200ns
-//   - Timeout (no timeout): ~50ns
-//   - Retry (first attempt success): ~150ns
-//   - Bulkhead (capacity available): ~300ns
-//
-// Memory footprint:
-//   - Circuit Breaker: ~200 bytes per instance
-//   - Rate Limiter: ~100 bytes per key bucket
-//   - Timeout: ~80 bytes per instance
-//   - Retry: ~120 bytes per instance
-//   - Bulkhead: ~250 bytes + worker pool
+// Steady-state fast paths target sub-microsecond overhead with zero allocations.
+// Run the package benchmarks with `go test -bench=. ./...` for the numbers on
+// your hardware; representative figures are published in the README and
+// regenerated per release.
 //
 // # Documentation
 //

@@ -12,6 +12,7 @@ How each Fortify pattern works, when to reach for it, and what its configuration
 | Caller never returns; we want to bound latency                 | Timeout        |
 | Concurrent calls saturate a shared resource (DB pool, threads) | Bulkhead / Adaptive |
 | Primary path failed; we have a degraded but acceptable substitute | Fallback   |
+| p99 latency too high; primary call is slow but not failed         | Hedge      |
 
 A composed chain typically uses several at once. See the [composition guide](how-to-compose.md) for ordering rationale.
 

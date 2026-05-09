@@ -13,63 +13,62 @@
 
 Composable resilience patterns for Go: circuit breaker, retry, rate limit, timeout, bulkhead, fallback, hedge, adaptive concurrency. First-class observability via OpenTelemetry, Prometheus, and `slog`. Zero dependencies in the core.
 
-## Why Fortify
-
-Most Go resilience libraries cover a single pattern. Stitching together a circuit breaker (`sony/gobreaker`), a retry policy (`hashicorp/go-retryablehttp`), and a rate limiter (`golang.org/x/time/rate`) means three different APIs, three different observability stories, and ad-hoc composition.
-
-Fortify is the resilience library for teams that want **all of it under one roof**, with consistent ergonomics and observability built in.
-
-See [docs/COMPARISON.md](docs/COMPARISON.md) for a detailed comparison against `sony/gobreaker`, `failsafe-go`, `uber-go/ratelimit`, `golang.org/x/time/rate`, and `hashicorp/go-retryablehttp`.
-
 ## Install
 
 ```bash
 go get github.com/felixgeelhaar/fortify
 ```
 
-Requires Go 1.25.
+Minimum Go version is declared in [`go.mod`](./go.mod). The Go Version badge above always reflects the current value.
 
 ## 60-second quick start
+
+Wrap an outbound call with circuit breaker + retry + timeout in one line, using a preset.
 
 ```go
 package main
 
 import (
     "context"
+    "log"
     "time"
 
-    "github.com/felixgeelhaar/fortify/circuitbreaker"
-    "github.com/felixgeelhaar/fortify/retry"
+    "github.com/felixgeelhaar/fortify/middleware"
 )
 
+type Response struct {
+    Body string
+}
+
+func callDownstream(ctx context.Context) (Response, error) {
+    // your real client call here
+    return Response{Body: "ok"}, nil
+}
+
 func main() {
-    cb := circuitbreaker.New[string](circuitbreaker.Config{
-        MaxRequests: 5,
-        Interval:    10 * time.Second,
-        ReadyToTrip: func(c circuitbreaker.Counts) bool {
-            return c.ConsecutiveFailures >= 3
-        },
+    chain, err := middleware.RPCDownstream[Response](middleware.RPCDownstreamConfig{
+        CallTimeout: time.Second,
     })
-    defer cb.Close()
+    if err != nil {
+        log.Fatal(err)
+    }
 
-    r := retry.New[string](retry.Config{
-        MaxAttempts:   3,
-        InitialDelay:  100 * time.Millisecond,
-        BackoffPolicy: retry.BackoffExponential,
-        Jitter:        true,
-    })
-
-    result, err := cb.Execute(context.Background(), func(ctx context.Context) (string, error) {
-        return r.Execute(ctx, func(ctx context.Context) (string, error) {
-            return callExternalService(ctx)
-        })
-    })
-    _ = result
-    _ = err
+    result, err := chain.Execute(context.Background(), callDownstream)
+    log.Printf("result=%+v err=%v", result, err)
 }
 ```
 
-For a fuller example combining all six patterns, see [`examples/composition`](./examples/composition/).
+A `Response` struct is used instead of a bare `string` so the example mirrors what real services actually return — your handler will likely look closer to this than to the toy `[string]` form.
+
+For a hand-rolled chain combining all eight patterns, see [`examples/composition`](./examples/composition/). For deciding which pattern fits which symptom, see the [pattern decision tree](docs/concepts.md#pattern-decision-tree).
+
+## Why Fortify
+
+Most Go resilience libraries cover a single pattern. Stitching together a circuit breaker (`sony/gobreaker`), a retry policy (`hashicorp/go-retryablehttp`), and a rate limiter (`golang.org/x/time/rate`) means three different APIs, three different observability stories, and ad-hoc composition.
+
+Fortify is the resilience library for teams that want **all of it under one roof**, with consistent ergonomics and observability built in.
+
+See [docs/COMPARISON.md](docs/COMPARISON.md) for a detailed comparison against `sony/gobreaker`, `failsafe-go`, `uber-go/ratelimit`, `golang.org/x/time/rate`, and `hashicorp/go-retryablehttp`. See [docs/POSITIONING.md](docs/POSITIONING.md) for the project's wedge and validation gates.
 
 ## Patterns at a glance
 
@@ -199,6 +198,6 @@ Concepts borrowed from [Hystrix](https://github.com/Netflix/Hystrix) (Java/Netfl
 
 ## Support
 
-- 🐛 [Issues](https://github.com/felixgeelhaar/fortify/issues)
-- 💬 [Discussions](https://github.com/felixgeelhaar/fortify/discussions)
-- 📖 [Reference](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
+- [Issues](https://github.com/felixgeelhaar/fortify/issues) — bug reports and feature requests
+- [Discussions](https://github.com/felixgeelhaar/fortify/discussions) — questions and design conversations
+- [API reference](https://pkg.go.dev/github.com/felixgeelhaar/fortify) — pkg.go.dev

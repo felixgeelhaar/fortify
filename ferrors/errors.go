@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -129,6 +130,34 @@ func (e *CircuitOpenError) Error() string {
 // Unwrap allows errors.Is(err, ErrCircuitOpen) to keep matching.
 func (e *CircuitOpenError) Unwrap() error { return ErrCircuitOpen }
 
+// LogValue implements slog.LogValuer so structured loggers emit the breaker's
+// state, retry hint, and counters as a group instead of a single string. Nil
+// receivers degrade gracefully to an empty group.
+func (e *CircuitOpenError) LogValue() slog.Value {
+	if e == nil {
+		return slog.GroupValue()
+	}
+	attrs := []slog.Attr{
+		slog.String("error", "circuit_open"),
+	}
+	if e.Name != "" {
+		attrs = append(attrs, slog.String("name", e.Name))
+	}
+	if e.State != "" {
+		attrs = append(attrs, slog.String("state", e.State))
+	}
+	if e.RetryAfter > 0 {
+		attrs = append(attrs, slog.Duration("retry_after", e.RetryAfter))
+	}
+	attrs = append(attrs,
+		slog.Uint64("total_requests", uint64(e.TotalRequests)),
+		slog.Uint64("total_failures", uint64(e.TotalFailures)),
+		slog.Uint64("consecutive_failures", uint64(e.ConsecutiveFailures)),
+		slog.Uint64("consecutive_successes", uint64(e.ConsecutiveSuccesses)),
+	)
+	return slog.GroupValue(attrs...)
+}
+
 // RateLimitError is returned when a rate limiter denies a request.
 // Use errors.As to extract Key and RetryAfter; errors.Is(err, ErrRateLimitExceeded) keeps matching.
 type RateLimitError struct {
@@ -150,6 +179,21 @@ func (e *RateLimitError) Error() string {
 // Unwrap allows errors.Is(err, ErrRateLimitExceeded) to keep matching.
 func (e *RateLimitError) Unwrap() error { return ErrRateLimitExceeded }
 
+// LogValue implements slog.LogValuer.
+func (e *RateLimitError) LogValue() slog.Value {
+	if e == nil {
+		return slog.GroupValue()
+	}
+	attrs := []slog.Attr{slog.String("error", "rate_limit_exceeded")}
+	if e.Key != "" {
+		attrs = append(attrs, slog.String("key", e.Key))
+	}
+	if e.RetryAfter > 0 {
+		attrs = append(attrs, slog.Duration("retry_after", e.RetryAfter))
+	}
+	return slog.GroupValue(attrs...)
+}
+
 // TimeoutError is returned when an operation exceeds its configured deadline.
 // Use errors.As to read Timeout; errors.Is(err, ErrTimeout) keeps matching.
 type TimeoutError struct {
@@ -170,4 +214,16 @@ func (e *TimeoutError) Error() string {
 // errors.Is(err, context.DeadlineExceeded) continue to work.
 func (e *TimeoutError) Unwrap() []error {
 	return []error{ErrTimeout, context.DeadlineExceeded}
+}
+
+// LogValue implements slog.LogValuer.
+func (e *TimeoutError) LogValue() slog.Value {
+	if e == nil {
+		return slog.GroupValue()
+	}
+	attrs := []slog.Attr{slog.String("error", "timeout")}
+	if e.Timeout > 0 {
+		attrs = append(attrs, slog.Duration("timeout", e.Timeout))
+	}
+	return slog.GroupValue(attrs...)
 }
