@@ -179,6 +179,9 @@ The circuit breaker takes a lock-free fast path in steady-state Closed (atomic m
 - [Basic patterns](./examples/basic/) — one file per pattern
 - [HTTP server](./examples/http/) — middleware integration
 - [Composition](./examples/composition/) — full chain in production-shape
+- [MCP server](./examples/mcp-server/) — resilience for an MCP tool handler
+- [Eino + LLMCall](./examples/eino/) — wrap an Eino chat model with cost-budgeted resilience
+- [Observability demo](./examples/observability-demo/) — Prometheus + Grafana stack with a pre-built Fortify dashboard (`docker compose up --build`)
 
 ## Contributing
 
