@@ -5,6 +5,13 @@
 // construction; use this package for the Pattern enum and the
 // WithPattern helper that scopes a logger to a specific pattern.
 //
+// Sensitive payloads: this package is payload-blind. It never inspects or
+// logs operation arguments, results, or wrapped HTTP / gRPC / LLM payloads.
+// If you attach your own attributes to a Fortify-scoped logger, keep
+// prompts, request bodies, PII, and credentials out. See
+// docs/PRODUCTION.md ("Observability and sensitive payloads") for the full
+// policy.
+//
 // Example:
 //
 //	import (

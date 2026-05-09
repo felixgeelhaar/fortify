@@ -430,6 +430,29 @@ rl := ratelimit.New(ratelimit.Config{
 })
 ```
 
+### Observability and sensitive payloads
+
+Fortify's observability hooks (`fortify/slog`, `fortify/otel`, `fortify/metrics`) are **payload-blind by default**. They emit:
+
+- Pattern names (`circuit_breaker`, `retry`, `rate_limit`, …).
+- State transitions, retry counts, latency histograms, queue depths.
+- Structured error fields (`state`, `retry_after`, counts) via `slog.LogValuer` on `*ferrors.CircuitOpenError`, `*ferrors.RateLimitError`, `*ferrors.TimeoutError`.
+
+They never inspect or log:
+
+- Operation request bodies, response bodies, or `T` type values returned from `Execute`.
+- HTTP request/response bodies, gRPC message payloads, or LLM prompts/completions when wired through HTTP/gRPC integrations.
+
+If you wire your own attrs into these hooks (e.g., via `OnStateChange`, span attributes, or your own logger), keep prompts, request bodies, PII, and credentials out. Treat the observability layer as you would any log sink: redact at the point of emission, not at the sink.
+
+For AI-adjacent workloads (LLM/MCP traffic), prefer attaching only:
+
+- Provider name and model identifier (`provider=openai`, `model=gpt-...`).
+- Request size, completion size, latency, and error class — not contents.
+- Cost or token counters from your own accounting layer.
+
+Future presets that wrap LLM/MCP calls will keep this default and gate any prompt-content logging behind an explicit opt-in flag (`WithUnsafeLogPrompts(true)`); do not introduce that flag yourself unless you have audited the downstream sink for compliance with your data-handling policy.
+
 ## Monitoring
 
 ### Key Metrics

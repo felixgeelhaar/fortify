@@ -3,6 +3,13 @@
 // This package enables distributed tracing and metrics collection for circuit breakers,
 // retries, rate limiters, timeouts, and bulkheads using OpenTelemetry standards.
 //
+// Sensitive payloads: spans emitted by this package carry pattern names,
+// state transitions, and error classes only. They never carry operation
+// arguments, results, or wrapped HTTP / gRPC / LLM payloads. If you attach
+// custom span attributes via SetAttributes or AddEvent, keep prompts,
+// request bodies, PII, and credentials out. See docs/PRODUCTION.md
+// ("Observability and sensitive payloads") for the full policy.
+//
 // Example usage:
 //
 //	import (
