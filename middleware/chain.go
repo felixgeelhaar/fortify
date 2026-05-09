@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/felixgeelhaar/fortify/adaptive"
+	"github.com/felixgeelhaar/fortify/budget"
 	"github.com/felixgeelhaar/fortify/bulkhead"
 	"github.com/felixgeelhaar/fortify/circuitbreaker"
 	"github.com/felixgeelhaar/fortify/hedge"
@@ -113,6 +114,25 @@ func (c *Chain[T]) WithAdaptive(a adaptive.Limiter[T]) *Chain[T] {
 	middleware := func(next func(context.Context) (T, error)) func(context.Context) (T, error) {
 		return func(ctx context.Context) (T, error) {
 			return a.Execute(ctx, next)
+		}
+	}
+	c.middlewares = append(c.middlewares, middleware)
+	return c
+}
+
+// WithBudget adds a cost-budget gate to the middleware chain. Place inside
+// WithRetry (i.e., add it after WithRetry in the builder chain) so each
+// retry attempt is charged. Place outside WithTimeout so timeouts charge
+// against the budget too.
+//
+// The budget's Charge callback should return *BudgetExceededError as a
+// non-retryable error in your retry IsRetryable predicate; otherwise a
+// retry will be attempted, which Budget will refuse and return the same
+// error.
+func (c *Chain[T]) WithBudget(b *budget.Budget[T]) *Chain[T] {
+	middleware := func(next func(context.Context) (T, error)) func(context.Context) (T, error) {
+		return func(ctx context.Context) (T, error) {
+			return b.Execute(ctx, next)
 		}
 	}
 	c.middlewares = append(c.middlewares, middleware)
