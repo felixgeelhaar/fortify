@@ -18,7 +18,9 @@
 package http
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -353,4 +355,29 @@ func (r *responseRecorder) Write(b []byte) (int, error) {
 	r.mu.Unlock()
 
 	return r.ResponseWriter.Write(b)
+}
+
+// Flush forwards to the underlying ResponseWriter when it implements
+// http.Flusher. SSE, chunked transfer, and httputil.ReverseProxy's
+// FlushInterval all rely on per-chunk Flush; without this delegation
+// the response is buffered until ServeHTTP returns.
+//
+// Always declared so the recorder satisfies http.Flusher. When the
+// underlying writer lacks Flush support the call is a no-op rather
+// than a panic.
+func (r *responseRecorder) Flush() {
+	if f, ok := r.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Hijack forwards to the underlying ResponseWriter when it implements
+// http.Hijacker. Returns http.ErrNotSupported otherwise so callers can
+// detect non-hijackable wrappers (httptest.ResponseRecorder, for
+// example) without panicking.
+func (r *responseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, errors.New("fortify/http: underlying ResponseWriter does not implement http.Hijacker")
 }
