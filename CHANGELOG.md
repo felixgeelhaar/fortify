@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+## [1.5.0] - 2026-05-12
+
+First-class SSE / chunked-response support in `fortify/http`. Two complementary changes: the existing `CircuitBreaker` and `Timeout` middlewares no longer drop `http.Flusher`/`http.Hijacker`, and a new `CircuitBreakerStream` middleware pairs the breaker with `streamtimeout` so long-lived streams get per-chunk health signals instead of a single after-the-fact outcome. Backwards-compatible; v1.4.x callers compile unchanged.
+
+### Fixed
+
+- **http**: `responseRecorder` (used by `CircuitBreaker` and `Timeout`) now forwards `http.Flusher` and `http.Hijacker` to the underlying writer. SSE clients, chunked transfer responses, and `httputil.ReverseProxy`'s `FlushInterval` mechanism rely on per-chunk `Flush()`; the prior recorder silently buffered every response until `ServeHTTP` returned. `Hijack` returns `http.ErrNotSupported` when the underlying writer is not hijackable, matching net/http convention.
+
+### Added
+
+- **http**: new `CircuitBreakerStream(cb, streamtimeout.Config) (func(http.Handler) http.Handler, error)` middleware. Pairs a `circuitbreaker.CircuitBreaker[*http.Response]` with a `streamtimeout.StreamTimeout` so the FirstByte / Idle / Total watchdogs feed the breaker's failure signal. A streaming response writer:
+  - forwards `Flusher` / `Hijacker` / `Pusher` to the underlying writer,
+  - pings `streamtimeout.Mark` on every `Write` so per-chunk activity satisfies the idle watchdog without handler changes.
+
+  A fired watchdog cancels the handler's context. Cooperative handlers abort the stream; the breaker records a failure. When the watchdog fires before any headers are written, the middleware synthesises a 504; once headers have flushed, the connection is closed silently (no misleading status overwrite). Client disconnects (`context.Canceled`) return without writing a synthetic error.
+
+  Example — SSE pass-through with 5s TTFB / 2s idle / 5m total cap:
+
+  ```go
+  cb := circuitbreaker.New[*http.Response](circuitbreaker.Config{
+      MaxRequests: 100, Interval: time.Minute,
+  })
+  mw, err := fortifyhttp.CircuitBreakerStream(cb, streamtimeout.Config{
+      FirstByteTimeout: 5 * time.Second,
+      IdleTimeout:      2 * time.Second,
+      TotalTimeout:     5 * time.Minute,
+  })
+  if err != nil { log.Fatal(err) }
+  mux.Handle("/v1/messages", mw(upstreamProxy))
+  ```
+
+### Tests
+
+- `TestCircuitBreakerPreservesFlusher` — regression test for the Flusher buffering bug. Handler blocks after each flush until the client reads the corresponding event, so the test fails when `Flush` is dropped.
+- `TestCircuitBreakerStreamHappyPath` / `IdleTimeout` / `FirstByteTimeout` / `Concurrent` / `ConfigValidation` / `HandlerError` — full coverage of the new streaming middleware.
+
+### Acknowledgements
+
+- Originated from the felixgeelhaar/tokenops integration (fronting OpenAI/Anthropic/Gemini SSE streams via a fortify-wrapped reverse proxy). Issue #32, PR #33.
+
 ## [1.4.0] - 2026-05-09
 
 The AI/agent wedge lands. New primitives (`budget`, `streamtimeout`) and middleware presets (`LLMCall`, `LLMHedge`) wrap LLM and tool calls with cost ceilings, streaming-aware timeouts, and provider hedging. Three new examples — MCP server, Eino, and an observability demo. No breaking changes; v1.3.x callers compile unchanged.
