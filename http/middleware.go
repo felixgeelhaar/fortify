@@ -20,7 +20,6 @@ package http
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -372,12 +371,12 @@ func (r *responseRecorder) Flush() {
 }
 
 // Hijack forwards to the underlying ResponseWriter when it implements
-// http.Hijacker. Returns http.ErrNotSupported otherwise so callers can
-// detect non-hijackable wrappers (httptest.ResponseRecorder, for
-// example) without panicking.
+// http.Hijacker. Returns http.ErrNotSupported otherwise — matching
+// the net/http convention — so callers that check for that sentinel
+// (e.g. WebSocket upgraders) recognise the failure mode.
 func (r *responseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if h, ok := r.ResponseWriter.(http.Hijacker); ok {
 		return h.Hijack()
 	}
-	return nil, nil, errors.New("fortify/http: underlying ResponseWriter does not implement http.Hijacker")
+	return nil, nil, http.ErrNotSupported
 }

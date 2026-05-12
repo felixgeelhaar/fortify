@@ -2,7 +2,6 @@ package http
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,13 +19,24 @@ import (
 // TestCircuitBreakerPreservesFlusher is the regression test for the
 // SSE buffering bug: the recorder used by CircuitBreaker must forward
 // http.Flusher so per-chunk flushes propagate to the client.
+//
+// The handler blocks after each Flush until the test reads the
+// corresponding event. If Flush were a no-op (the pre-fix behaviour),
+// no bytes reach the wire, the read blocks forever, the handler's
+// blocking channel never receives, and the test deadlocks until the
+// per-read deadline fires. Only a working Flush lets the client
+// observe each event independently of ServeHTTP returning.
 func TestCircuitBreakerPreservesFlusher(t *testing.T) {
 	cb := circuitbreaker.New[*http.Response](circuitbreaker.Config{
 		MaxRequests: 10,
 		Interval:    time.Second,
 	})
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	const events = 3
+	consumed := make(chan int, events)
+	done := make(chan struct{})
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		f, ok := w.(http.Flusher)
 		if !ok {
 			t.Errorf("CircuitBreaker middleware dropped http.Flusher")
@@ -34,12 +44,23 @@ func TestCircuitBreakerPreservesFlusher(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.WriteHeader(http.StatusOK)
-		for i := 0; i < 3; i++ {
+		for i := 0; i < events; i++ {
 			//nolint:errcheck // test response writer
 			_, _ = fmt.Fprintf(w, "data: event-%d\n\n", i)
 			f.Flush()
-			time.Sleep(20 * time.Millisecond)
+			// Block until the client read this event. With Flush
+			// broken nothing reaches the reader, this blocks forever,
+			// and the request hangs — caught by the test deadline.
+			select {
+			case <-consumed:
+			case <-r.Context().Done():
+				return
+			case <-time.After(2 * time.Second):
+				t.Errorf("handler timed out waiting for event %d to be consumed", i)
+				return
+			}
 		}
+		close(done)
 	})
 
 	srv := httptest.NewServer(CircuitBreaker(cb)(handler))
@@ -52,23 +73,23 @@ func TestCircuitBreakerPreservesFlusher(t *testing.T) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	// Read chunks with a per-chunk timeout. If Flush is buffered the
-	// reader will block until the handler returns, which a short
-	// per-line deadline catches.
 	reader := bufio.NewReader(resp.Body)
-	events := 0
-	deadline := time.Now().Add(500 * time.Millisecond)
-	for events < 3 {
-		if time.Now().After(deadline) {
-			t.Fatalf("only %d/3 SSE events received before deadline — Flush did not propagate", events)
-		}
+	got := 0
+	for got < events {
+		// Per-event read budget — would fire if Flush were buffered.
 		line, err := reader.ReadString('\n')
 		if err != nil && err != io.EOF {
-			t.Fatalf("read: %v", err)
+			t.Fatalf("read after %d events: %v", got, err)
 		}
 		if strings.HasPrefix(line, "data: event-") {
-			events++
+			got++
+			consumed <- got
 		}
+	}
+	select {
+	case <-done:
+	case <-time.After(time.Second):
+		t.Fatal("handler did not finish after consuming all events")
 	}
 }
 
@@ -311,6 +332,3 @@ func TestCircuitBreakerStreamHandlerError(t *testing.T) {
 		t.Errorf("call 2 status = %d, want 503", resp2.StatusCode)
 	}
 }
-
-// Ensure the embedded ctx import does not get pruned by goimports.
-var _ = context.Background

@@ -94,17 +94,30 @@ func CircuitBreakerStream(
 			// honest signal we can give the client is to close the
 			// connection (which the deferred cancel + upstream closing
 			// will do naturally).
-			if !sw.wroteHeader() {
-				if errors.Is(cbErr, ferrors.ErrCircuitOpen) {
-					http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
-					return
-				}
-				if _, ok := cbErr.(*streamtimeout.StreamTimeoutError); ok {
-					http.Error(w, "Gateway Timeout", http.StatusGatewayTimeout)
-					return
-				}
-				http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+			if sw.wroteHeader() {
+				return
 			}
+			// Streamtimeout firings must be classified first because
+			// StreamTimeoutError unwraps to context.DeadlineExceeded —
+			// the generic context check below would swallow them
+			// otherwise.
+			var stErr *streamtimeout.StreamTimeoutError
+			if errors.As(cbErr, &stErr) {
+				http.Error(w, "Gateway Timeout", http.StatusGatewayTimeout)
+				return
+			}
+			if errors.Is(cbErr, ferrors.ErrCircuitOpen) {
+				http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
+				return
+			}
+			// Client disconnect / parent-ctx cancellation isn't a
+			// server-side failure — there's no one left to receive a
+			// synthetic error response, and writing one would skew
+			// access-log status codes. Drop silently.
+			if errors.Is(cbErr, context.Canceled) || errors.Is(cbErr, context.DeadlineExceeded) {
+				return
+			}
+			http.Error(w, "Service Unavailable", http.StatusServiceUnavailable)
 		})
 	}, nil
 }
@@ -187,11 +200,14 @@ func (s *streamingResponseWriter) Flush() {
 // caller, which means the streamtimeout watchdogs no longer observe
 // data flow — callers are responsible for their own deadlines after
 // hijack.
+//
+// Returns http.ErrNotSupported when the underlying writer is not
+// hijackable, matching the net/http convention.
 func (s *streamingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if h, ok := s.ResponseWriter.(http.Hijacker); ok {
 		return h.Hijack()
 	}
-	return nil, nil, errors.New("fortify/http: underlying ResponseWriter does not implement http.Hijacker")
+	return nil, nil, http.ErrNotSupported
 }
 
 // Push forwards to the underlying ResponseWriter when it implements
