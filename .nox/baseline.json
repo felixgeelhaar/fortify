@@ -1071,6 +1071,20 @@
       "file_path": "metrics/prometheus_test.go",
       "severity": "high",
       "created_at": "2026-05-03T20:49:15.798396Z"
+    },
+    {
+      "fingerprint": "19d1b91f2df92b04241ebe29245b042aae0a895ee79af388a46fcd4ef05cd3c6",
+      "rule_id": "AI-012",
+      "file_path": "http/streaming.go",
+      "severity": "high",
+      "created_at": "2026-05-12T00:00:00Z"
+    },
+    {
+      "fingerprint": "2111655a38957b1577f79c35cc38df5e5258f085b0059728b6816112a29ebbd8",
+      "rule_id": "AI-012",
+      "file_path": "http/streaming.go",
+      "severity": "high",
+      "created_at": "2026-05-12T00:00:00Z"
     }
   ]
 }
