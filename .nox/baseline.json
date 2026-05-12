@@ -1071,6 +1071,34 @@
       "file_path": "metrics/prometheus_test.go",
       "severity": "high",
       "created_at": "2026-05-03T20:49:15.798396Z"
+    },
+    {
+      "fingerprint": "bd64b2352e415e2883d1b86cdd520fa5efcd5635cdcecc9bce28db911872a24d",
+      "rule_id": "AI-012",
+      "file_path": "http/streaming.go",
+      "severity": "high",
+      "created_at": "2026-05-12T00:00:00Z"
+    },
+    {
+      "fingerprint": "6cba91f0cdeaae0603f0be9262c17d045791b306c0abd66901b40bf4a3d96011",
+      "rule_id": "AI-012",
+      "file_path": "http/streaming.go",
+      "severity": "high",
+      "created_at": "2026-05-12T00:00:00Z"
+    },
+    {
+      "fingerprint": "2ddd3db9e19bd00fe88c2218dfba124c3584e34ae2697245ba4e8125b757467a",
+      "rule_id": "AI-012",
+      "file_path": "http/middleware.go",
+      "severity": "high",
+      "created_at": "2026-05-12T00:00:00Z"
+    },
+    {
+      "fingerprint": "39c5da7fce97c99ab8f1a8639215853dd2d9c3c8e6fc218a916a06ce36d10641",
+      "rule_id": "AI-012",
+      "file_path": "http/middleware.go",
+      "severity": "high",
+      "created_at": "2026-05-12T00:00:00Z"
     }
   ]
 }
