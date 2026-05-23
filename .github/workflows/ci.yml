@@ -3,20 +3,34 @@ name: CI
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
 
 permissions:
   contents: write
   security-events: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Test
+    # PRs use ubuntu only (cuts macOS=10x and Windows=2x cost).
+    # Push to main still validates all three; release.yml gates final tags.
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: ${{ github.event_name == 'pull_request' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest", "macos-latest", "windows-latest"]') }}
         go: ['1.25']
 
     steps:
@@ -119,6 +133,7 @@ jobs:
       with:
         name: benchmark-results
         path: benchmark.txt
+        retention-days: 7
 
   security:
     name: Security Scan
@@ -161,6 +176,7 @@ jobs:
       with:
         name: security-scan-results
         path: nox-out/
+        retention-days: 7
       if: always()
 
   dependency-review:
