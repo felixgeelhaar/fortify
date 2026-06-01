@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
+### CI
+
+- **actions:** Gate cross-OS to push-to-main, cap retention
+
+### Chore
+
+- Update coverage badge [skip ci]
+- Update coverage badge [skip ci]
+
+### Dependencies
+
+- **deps:** Bump pymdown-extensions 10.16.1 → 10.21.3
+
+## [Unreleased]
+
 ## [1.5.0] - 2026-05-12
 
 First-class SSE / chunked-response support in `fortify/http`. Two complementary changes: the existing `CircuitBreaker` and `Timeout` middlewares no longer drop `http.Flusher`/`http.Hijacker`, and a new `CircuitBreakerStream` middleware pairs the breaker with `streamtimeout` so long-lived streams get per-chunk health signals instead of a single after-the-fact outcome. Backwards-compatible; v1.4.x callers compile unchanged.
