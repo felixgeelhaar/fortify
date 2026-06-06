@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/circuitbreaker"
 )
 
 // Example demonstrates basic circuit breaker usage with a simple HTTP-like service call.

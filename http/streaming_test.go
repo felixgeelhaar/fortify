@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/streamtimeout"
+	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/streamtimeout"
 )
 
 // TestCircuitBreakerPreservesFlusher is the regression test for the

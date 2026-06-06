@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/ferrors"
-	"github.com/felixgeelhaar/fortify/streamtimeout"
+	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/ferrors"
+	"go.klarlabs.de/fortify/streamtimeout"
 )
 
 // CircuitBreakerStream pairs a CircuitBreaker with a StreamTimeout so

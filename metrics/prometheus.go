@@ -6,7 +6,7 @@
 // Example usage:
 //
 //	import (
-//	    "github.com/felixgeelhaar/fortify/metrics"
+//	    "go.klarlabs.de/fortify/metrics"
 //	    "github.com/prometheus/client_golang/prometheus"
 //	)
 //

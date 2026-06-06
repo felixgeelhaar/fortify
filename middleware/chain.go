@@ -22,14 +22,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/adaptive"
-	"github.com/felixgeelhaar/fortify/budget"
-	"github.com/felixgeelhaar/fortify/bulkhead"
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/hedge"
-	"github.com/felixgeelhaar/fortify/ratelimit"
-	"github.com/felixgeelhaar/fortify/retry"
-	"github.com/felixgeelhaar/fortify/timeout"
+	"go.klarlabs.de/fortify/adaptive"
+	"go.klarlabs.de/fortify/budget"
+	"go.klarlabs.de/fortify/bulkhead"
+	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/hedge"
+	"go.klarlabs.de/fortify/ratelimit"
+	"go.klarlabs.de/fortify/retry"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 // Middleware represents a function that wraps another function with resilience behavior.

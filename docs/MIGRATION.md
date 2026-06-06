@@ -44,7 +44,7 @@ result, err := cb.Execute(func() (interface{}, error) {
 
 **After (Fortify):**
 ```go
-import "github.com/felixgeelhaar/fortify/circuitbreaker"
+import "go.klarlabs.de/fortify/circuitbreaker"
 
 cb := circuitbreaker.New[*Response](circuitbreaker.Config{
     MaxRequests: 3,
@@ -124,7 +124,7 @@ err := retry.Execute(
 
 **After (Fortify):**
 ```go
-import "github.com/felixgeelhaar/fortify/retry"
+import "go.klarlabs.de/fortify/retry"
 
 r := retry.New[any](&retry.Config{
     MaxAttempts:   3,
@@ -215,7 +215,7 @@ if err := limiter.Wait(ctx); err != nil {
 
 **After (Fortify):**
 ```go
-import "github.com/felixgeelhaar/fortify/ratelimit"
+import "go.klarlabs.de/fortify/ratelimit"
 
 limiter := ratelimit.New(ratelimit.Config{
     Rate:     100,
@@ -329,8 +329,8 @@ if err == breaker.ErrBreakerOpen {
 **After (Fortify):**
 ```go
 import (
-    "github.com/felixgeelhaar/fortify/circuitbreaker"
-    fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+    "go.klarlabs.de/fortify/circuitbreaker"
+    fortifyerrors "go.klarlabs.de/fortify/errors"
 )
 
 cb := circuitbreaker.New[any](circuitbreaker.Config{
@@ -365,7 +365,7 @@ err := r.Run(func() error {
 
 **After (Fortify):**
 ```go
-import "github.com/felixgeelhaar/fortify/retry"
+import "go.klarlabs.de/fortify/retry"
 
 r := retry.New[any](&retry.Config{
     MaxAttempts:   3,
@@ -397,7 +397,7 @@ if err == deadline.ErrTimedOut {
 
 **After (Fortify):**
 ```go
-import "github.com/felixgeelhaar/fortify/timeout"
+import "go.klarlabs.de/fortify/timeout"
 
 tm := timeout.New[any](timeout.Config{
     DefaultTimeout: 5 * time.Second,
@@ -459,7 +459,7 @@ if errors.Is(err, context.DeadlineExceeded) {
 
 ### During Migration
 
-- [ ] Add Fortify dependency: `go get github.com/felixgeelhaar/fortify`
+- [ ] Add Fortify dependency: `go get go.klarlabs.de/fortify`
 - [ ] Implement Fortify patterns alongside existing ones
 - [ ] Update function signatures to accept `context.Context`
 - [ ] Add type parameters for generic patterns
@@ -608,7 +608,7 @@ func BenchmarkFortifyCircuitBreaker(b *testing.B) {
 
 ## Getting Help
 
-- [GitHub Issues](https://github.com/felixgeelhaar/fortify/issues)
+- [GitHub Issues](https://github.com/klarlabs-studio/fortify/issues)
 - [Documentation](../README.md)
 - [Examples](../examples/)
 - [Production Guide](./PRODUCTION.md)
@@ -619,8 +619,8 @@ func BenchmarkFortifyCircuitBreaker(b *testing.B) {
 If you need help migrating:
 
 1. Review the [examples](../examples/) directory
-2. Check [existing issues](https://github.com/felixgeelhaar/fortify/issues) for similar migrations
-3. Open a [new issue](https://github.com/felixgeelhaar/fortify/issues/new) with:
+2. Check [existing issues](https://github.com/klarlabs-studio/fortify/issues) for similar migrations
+3. Open a [new issue](https://github.com/klarlabs-studio/fortify/issues/new) with:
    - Current library and version
    - Your use case
    - Specific migration challenges

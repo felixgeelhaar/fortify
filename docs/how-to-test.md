@@ -22,7 +22,7 @@ CI runs a 3-OS matrix (Linux, macOS, Windows) on Go 1.25 with race detection ena
 ## Chaos utilities
 
 ```go
-import fortifytesting "github.com/felixgeelhaar/fortify/testing"
+import fortifytesting "go.klarlabs.de/fortify/testing"
 
 // Inject errors with configurable probability
 errInjector := fortifytesting.NewErrorInjector(0.3, errors.New("service unavailable"))

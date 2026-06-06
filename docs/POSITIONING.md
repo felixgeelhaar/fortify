@@ -161,7 +161,7 @@ Skipped: paid acquisition, Twitter/X, ProductHunt, HN front-page chase.
 
 ## North-star metric and OKR sketch
 
-NSM: **distinct Go modules importing `github.com/felixgeelhaar/fortify`** in
+NSM: **distinct Go modules importing `go.klarlabs.de/fortify`** in
 production (proxy via pkg.go.dev import graph and Sourcegraph search).
 
 Q1 (90 days): validate.

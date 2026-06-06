@@ -76,8 +76,8 @@ A primary chain bound to OpenAI:
 
 ```go
 import (
-    "github.com/felixgeelhaar/fortify/budget"
-    "github.com/felixgeelhaar/fortify/middleware"
+    "go.klarlabs.de/fortify/budget"
+    "go.klarlabs.de/fortify/middleware"
 )
 
 openaiChain, _ := middleware.LLMCall[Response](middleware.LLMCallConfig[Response]{
@@ -171,7 +171,7 @@ absolutely don't hedge.
 ## Where to start
 
 ```bash
-go get github.com/felixgeelhaar/fortify
+go get go.klarlabs.de/fortify
 ```
 
 Read the [POSITIONING document](../POSITIONING.md) for the wedge and
@@ -181,7 +181,7 @@ shape of an LLM-aware chain.
 
 ## Discussion
 
-Issues and discussion: <https://github.com/felixgeelhaar/fortify>.
+Issues and discussion: <https://github.com/klarlabs-studio/fortify>.
 We're collecting adoption stories in
 [ADOPTERS.md](../../ADOPTERS.md); a one-line PR helps shape what
 ships next.

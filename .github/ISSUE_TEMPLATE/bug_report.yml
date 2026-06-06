@@ -58,7 +58,7 @@ body:
 
         import (
             "context"
-            "github.com/felixgeelhaar/fortify/circuitbreaker"
+            "go.klarlabs.de/fortify/circuitbreaker"
         )
 
         func main() {

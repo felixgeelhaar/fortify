@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/retry"
+	"go.klarlabs.de/fortify/retry"
 )
 
 // Example demonstrates basic retry usage with exponential backoff.

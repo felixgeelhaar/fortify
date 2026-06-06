@@ -25,7 +25,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"go.klarlabs.de/fortify/ferrors"
 )
 
 // Retry is a generic interface for retry pattern implementation.

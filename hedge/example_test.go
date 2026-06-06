@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/hedge"
+	"go.klarlabs.de/fortify/hedge"
 )
 
 // Example demonstrates basic hedged-request usage.

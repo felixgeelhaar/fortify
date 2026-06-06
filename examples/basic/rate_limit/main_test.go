@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ratelimit"
+	"go.klarlabs.de/fortify/ratelimit"
 )
 
 func TestRateLimitExample(t *testing.T) {

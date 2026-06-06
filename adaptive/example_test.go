@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/felixgeelhaar/fortify/adaptive"
+	"go.klarlabs.de/fortify/adaptive"
 )
 
 // Example demonstrates basic adaptive limiter usage.

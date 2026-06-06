@@ -527,7 +527,7 @@ Migration is mechanical; full diff at `docs/MIGRATION.md`.
 - Comprehensive benchmarks
 - Fuzz testing for backoff algorithms
 
-[Unreleased]: https://github.com/felixgeelhaar/fortify/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/felixgeelhaar/fortify/releases/tag/v1.0.0
-[0.1.1]: https://github.com/felixgeelhaar/fortify/releases/tag/v0.1.1
-[0.1.0]: https://github.com/felixgeelhaar/fortify/releases/tag/v0.1.0
+[Unreleased]: https://github.com/klarlabs-studio/fortify/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/klarlabs-studio/fortify/releases/tag/v1.0.0
+[0.1.1]: https://github.com/klarlabs-studio/fortify/releases/tag/v0.1.1
+[0.1.0]: https://github.com/klarlabs-studio/fortify/releases/tag/v0.1.0

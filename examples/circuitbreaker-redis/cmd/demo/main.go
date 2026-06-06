@@ -13,8 +13,8 @@ import (
 	"log"
 	"time"
 
-	redisbreaker "github.com/felixgeelhaar/fortify/examples/circuitbreaker-redis"
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
+	redisbreaker "go.klarlabs.de/fortify/examples/circuitbreaker-redis"
+	"go.klarlabs.de/fortify/circuitbreaker"
 	"github.com/redis/go-redis/v9"
 )
 

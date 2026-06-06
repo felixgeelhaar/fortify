@@ -3,20 +3,20 @@
   <h1>Fortify</h1>
 </div>
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/felixgeelhaar/fortify.svg)](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
-[![Go Report Card](https://goreportcard.com/badge/github.com/felixgeelhaar/fortify)](https://goreportcard.com/report/github.com/felixgeelhaar/fortify)
-[![CI Status](https://github.com/felixgeelhaar/fortify/workflows/CI/badge.svg)](https://github.com/felixgeelhaar/fortify/actions/workflows/ci.yml)
+[![Go Reference](https://pkg.go.dev/badge/go.klarlabs.de/fortify.svg)](https://pkg.go.dev/go.klarlabs.de/fortify)
+[![Go Report Card](https://goreportcard.com/badge/go.klarlabs.de/fortify)](https://goreportcard.com/report/go.klarlabs.de/fortify)
+[![CI Status](https://github.com/klarlabs-studio/fortify/workflows/CI/badge.svg)](https://github.com/klarlabs-studio/fortify/actions/workflows/ci.yml)
 [![Coverage](./assets/coverage-badge.svg)](./assets/coverage-badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/felixgeelhaar/fortify)](https://github.com/felixgeelhaar/fortify)
-[![Release](https://img.shields.io/github/v/release/felixgeelhaar/fortify)](https://github.com/felixgeelhaar/fortify/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/klarlabs-studio/fortify)](https://github.com/klarlabs-studio/fortify)
+[![Release](https://img.shields.io/github/v/release/klarlabs-studio/fortify)](https://github.com/klarlabs-studio/fortify/releases)
 
 Composable resilience patterns for Go: circuit breaker, retry, rate limit, timeout, bulkhead, fallback, hedge, adaptive concurrency. First-class observability via OpenTelemetry, Prometheus, and `slog`. Zero dependencies in the core.
 
 ## Install
 
 ```bash
-go get github.com/felixgeelhaar/fortify
+go get go.klarlabs.de/fortify
 ```
 
 Minimum Go version is declared in [`go.mod`](./go.mod). The Go Version badge above always reflects the current value.
@@ -33,7 +33,7 @@ import (
     "log"
     "time"
 
-    "github.com/felixgeelhaar/fortify/middleware"
+    "go.klarlabs.de/fortify/middleware"
 )
 
 type Response struct {
@@ -113,7 +113,7 @@ Presets are starting points. Build your own `middleware.Chain` when the preset d
 Combine patterns via `middleware.Chain`:
 
 ```go
-import "github.com/felixgeelhaar/fortify/middleware"
+import "go.klarlabs.de/fortify/middleware"
 
 chain := middleware.New[Response]().
     WithBulkhead(bh).
@@ -165,7 +165,7 @@ The circuit breaker takes a lock-free fast path in steady-state Closed (atomic m
 - **Production checklist** — [docs/PRODUCTION.md](docs/PRODUCTION.md)
 - **Error handling** — [docs/ERROR_HANDLING.md](docs/ERROR_HANDLING.md)
 - **Migration notes** — [docs/MIGRATION.md](docs/MIGRATION.md)
-- **API reference** — [pkg.go.dev](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
+- **API reference** — [pkg.go.dev](https://pkg.go.dev/go.klarlabs.de/fortify)
 
 ## Project governance
 
@@ -201,6 +201,6 @@ Concepts borrowed from [Hystrix](https://github.com/Netflix/Hystrix) (Java/Netfl
 
 ## Support
 
-- [Issues](https://github.com/felixgeelhaar/fortify/issues) — bug reports and feature requests
-- [Discussions](https://github.com/felixgeelhaar/fortify/discussions) — questions and design conversations
-- [API reference](https://pkg.go.dev/github.com/felixgeelhaar/fortify) — pkg.go.dev
+- [Issues](https://github.com/klarlabs-studio/fortify/issues) — bug reports and feature requests
+- [Discussions](https://github.com/klarlabs-studio/fortify/discussions) — questions and design conversations
+- [API reference](https://pkg.go.dev/go.klarlabs.de/fortify) — pkg.go.dev

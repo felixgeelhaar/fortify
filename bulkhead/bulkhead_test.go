@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"go.klarlabs.de/fortify/ferrors"
 )
 
 func TestBulkheadExecute(t *testing.T) {

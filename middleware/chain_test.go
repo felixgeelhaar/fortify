@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/bulkhead"
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/ratelimit"
-	"github.com/felixgeelhaar/fortify/retry"
-	"github.com/felixgeelhaar/fortify/timeout"
+	"go.klarlabs.de/fortify/bulkhead"
+	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/ratelimit"
+	"go.klarlabs.de/fortify/retry"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 func TestChainExecution(t *testing.T) {

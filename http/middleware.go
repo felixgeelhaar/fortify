@@ -29,10 +29,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/ferrors"
-	"github.com/felixgeelhaar/fortify/ratelimit"
-	"github.com/felixgeelhaar/fortify/timeout"
+	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/ferrors"
+	"go.klarlabs.de/fortify/ratelimit"
+	"go.klarlabs.de/fortify/timeout"
 	"golang.org/x/text/unicode/norm"
 )
 

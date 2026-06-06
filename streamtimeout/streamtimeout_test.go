@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"go.klarlabs.de/fortify/ferrors"
 )
 
 func TestNew_RejectsAllZero(t *testing.T) {

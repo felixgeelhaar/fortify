@@ -1,4 +1,4 @@
-module github.com/felixgeelhaar/fortify
+module go.klarlabs.de/fortify
 
 go 1.25.0
 

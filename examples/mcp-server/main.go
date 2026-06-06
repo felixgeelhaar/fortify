@@ -26,12 +26,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/adaptive"
-	"github.com/felixgeelhaar/fortify/bulkhead"
-	"github.com/felixgeelhaar/fortify/ferrors"
-	"github.com/felixgeelhaar/fortify/middleware"
-	"github.com/felixgeelhaar/fortify/ratelimit"
-	"github.com/felixgeelhaar/fortify/timeout"
+	"go.klarlabs.de/fortify/adaptive"
+	"go.klarlabs.de/fortify/bulkhead"
+	"go.klarlabs.de/fortify/ferrors"
+	"go.klarlabs.de/fortify/middleware"
+	"go.klarlabs.de/fortify/ratelimit"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 // ToolCall represents a single inbound MCP tool invocation. Real SDKs

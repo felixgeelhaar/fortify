@@ -29,13 +29,13 @@ allowed=20 denied=30 (rate=10/s burst=20)
 ## Adopting in your project
 
 ```bash
-go get github.com/felixgeelhaar/fortify/examples/ratelimit-redis
+go get go.klarlabs.de/fortify/examples/ratelimit-redis
 ```
 
 ```go
 import (
-    redisstore "github.com/felixgeelhaar/fortify/examples/ratelimit-redis"
-    "github.com/felixgeelhaar/fortify/ratelimit"
+    redisstore "go.klarlabs.de/fortify/examples/ratelimit-redis"
+    "go.klarlabs.de/fortify/ratelimit"
     "github.com/redis/go-redis/v9"
 )
 

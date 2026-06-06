@@ -24,9 +24,9 @@ This guide covers best practices for deploying Fortify resilience patterns in pr
 
 ```go
 import (
-    "github.com/felixgeelhaar/fortify/circuitbreaker"
-    "github.com/felixgeelhaar/fortify/retry"
-    "github.com/felixgeelhaar/fortify/middleware"
+    "go.klarlabs.de/fortify/circuitbreaker"
+    "go.klarlabs.de/fortify/retry"
+    "go.klarlabs.de/fortify/middleware"
 )
 
 // Circuit Breaker for external API
@@ -607,6 +607,6 @@ Before deploying to production:
 
 - [Technical Specification](./technical-spec.md)
 - [Performance Testing Guide](./PERFORMANCE_TESTING.md)
-- [API Documentation](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
+- [API Documentation](https://pkg.go.dev/go.klarlabs.de/fortify)
 - [Examples](../examples/)
-- [GitHub Issues](https://github.com/felixgeelhaar/fortify/issues)
+- [GitHub Issues](https://github.com/klarlabs-studio/fortify/issues)

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/fallback"
+	"go.klarlabs.de/fortify/fallback"
 )
 
 // Example demonstrates basic fallback pattern usage.

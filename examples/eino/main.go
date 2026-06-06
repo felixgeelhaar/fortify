@@ -38,8 +38,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/budget"
-	"github.com/felixgeelhaar/fortify/middleware"
+	"go.klarlabs.de/fortify/budget"
+	"go.klarlabs.de/fortify/middleware"
 )
 
 // Message mirrors Eino's schema.Message minimally. Real callers should

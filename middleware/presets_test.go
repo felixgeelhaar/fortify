@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/budget"
-	"github.com/felixgeelhaar/fortify/middleware"
+	"go.klarlabs.de/fortify/budget"
+	"go.klarlabs.de/fortify/middleware"
 )
 
 func TestHTTPClient_RejectsZeroTimeout(t *testing.T) {

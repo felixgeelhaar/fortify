@@ -11,7 +11,7 @@ import (
     "log/slog"
     "os"
 
-    "github.com/felixgeelhaar/fortify/circuitbreaker"
+    "go.klarlabs.de/fortify/circuitbreaker"
 )
 
 logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
@@ -28,7 +28,7 @@ Add correlation IDs to context; Fortify propagates them via `LogContext` calls (
 
 ```go
 import (
-    fortifyotel "github.com/felixgeelhaar/fortify/otel"
+    fortifyotel "go.klarlabs.de/fortify/otel"
     "go.opentelemetry.io/otel"
 )
 
@@ -56,7 +56,7 @@ Span attribute conventions:
 
 ```go
 import (
-    "github.com/felixgeelhaar/fortify/metrics"
+    "go.klarlabs.de/fortify/metrics"
     "github.com/prometheus/client_golang/prometheus"
 )
 

@@ -39,7 +39,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"go.klarlabs.de/fortify/ferrors"
 )
 
 // Stage names the deadline that fired in a *StreamTimeoutError.

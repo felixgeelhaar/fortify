@@ -9,7 +9,7 @@ Wraps `http.Handler` with each pattern. Compose by stacking decorators.
 ```go
 import (
     "net/http"
-    fortifyhttp "github.com/felixgeelhaar/fortify/http"
+    fortifyhttp "go.klarlabs.de/fortify/http"
 )
 
 handler := fortifyhttp.RateLimit(rl, fortifyhttp.KeyFromIP)(
@@ -54,7 +54,7 @@ For `RateLimit`, supply a `KeyExtractor`:
 
 ```go
 import (
-    fortifygrpc "github.com/felixgeelhaar/fortify/grpc"
+    fortifygrpc "go.klarlabs.de/fortify/grpc"
     "google.golang.org/grpc"
 )
 

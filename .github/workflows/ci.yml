@@ -55,7 +55,7 @@ jobs:
 
     - name: Install coverctl
       if: matrix.os == 'ubuntu-latest' && matrix.go == '1.25'
-      run: go install github.com/felixgeelhaar/coverctl@latest
+      run: go install go.klarlabs.de/coverctl@latest
 
     - name: Check coverage
       if: matrix.os == 'ubuntu-latest' && matrix.go == '1.25'

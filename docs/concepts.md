@@ -1,6 +1,6 @@
 # Concepts
 
-How each Fortify pattern works, when to reach for it, and what its configuration knobs mean. If you want a recipe, see the how-to guides; if you want the API surface, see [pkg.go.dev](https://pkg.go.dev/github.com/felixgeelhaar/fortify).
+How each Fortify pattern works, when to reach for it, and what its configuration knobs mean. If you want a recipe, see the how-to guides; if you want the API surface, see [pkg.go.dev](https://pkg.go.dev/go.klarlabs.de/fortify).
 
 ## Pattern decision tree
 

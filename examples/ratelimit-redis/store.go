@@ -25,7 +25,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ratelimit"
+	"go.klarlabs.de/fortify/ratelimit"
 	"github.com/redis/go-redis/v9"
 )
 

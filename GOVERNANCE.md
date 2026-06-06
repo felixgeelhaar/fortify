@@ -20,7 +20,7 @@ Until Fortify reaches at least three active maintainers:
 
 ## Roadmap & priorities
 
-The roadmap is **not** versioned in this repo. Priorities are tracked in [GitHub Issues](https://github.com/felixgeelhaar/fortify/issues) under the labels:
+The roadmap is **not** versioned in this repo. Priorities are tracked in [GitHub Issues](https://github.com/klarlabs-studio/fortify/issues) under the labels:
 
 - `priority/high` — being worked on this milestone.
 - `priority/medium` — accepted, scheduled.

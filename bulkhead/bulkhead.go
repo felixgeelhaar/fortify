@@ -26,7 +26,7 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"go.klarlabs.de/fortify/ferrors"
 )
 
 // Bulkhead is a generic interface for enforcing concurrency limits.

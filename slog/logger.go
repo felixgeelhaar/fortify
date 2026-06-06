@@ -18,7 +18,7 @@
 //	    "log/slog"
 //	    "os"
 //
-//	    fortifyslog "github.com/felixgeelhaar/fortify/slog"
+//	    fortifyslog "go.klarlabs.de/fortify/slog"
 //	)
 //
 //	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))

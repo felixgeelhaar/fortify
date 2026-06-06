@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/timeout"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 func TestTimeoutExample(t *testing.T) {

@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/budget"
-	"github.com/felixgeelhaar/fortify/bulkhead"
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/ferrors"
-	"github.com/felixgeelhaar/fortify/retry"
-	"github.com/felixgeelhaar/fortify/timeout"
+	"go.klarlabs.de/fortify/budget"
+	"go.klarlabs.de/fortify/bulkhead"
+	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/ferrors"
+	"go.klarlabs.de/fortify/retry"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 // Presets are opinionated, configurable defaults for the most common

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/circuitbreaker"
 )
 
 func main() {

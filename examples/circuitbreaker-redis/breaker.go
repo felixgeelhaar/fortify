@@ -32,8 +32,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/circuitbreaker"
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"go.klarlabs.de/fortify/circuitbreaker"
+	"go.klarlabs.de/fortify/ferrors"
 	"github.com/redis/go-redis/v9"
 )
 

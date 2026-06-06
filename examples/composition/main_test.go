@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/middleware"
-	"github.com/felixgeelhaar/fortify/retry"
-	"github.com/felixgeelhaar/fortify/timeout"
+	"go.klarlabs.de/fortify/middleware"
+	"go.klarlabs.de/fortify/retry"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 func TestCompositionExample(t *testing.T) {

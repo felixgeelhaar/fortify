@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/middleware"
-	"github.com/felixgeelhaar/fortify/ratelimit"
+	"go.klarlabs.de/fortify/middleware"
+	"go.klarlabs.de/fortify/ratelimit"
 )
 
 func TestHTTPHandler_RejectsZeroTimeout(t *testing.T) {

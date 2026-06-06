@@ -18,7 +18,7 @@
 //
 // # Installation
 //
-//	go get github.com/felixgeelhaar/fortify
+//	go get go.klarlabs.de/fortify
 //
 // The minimum supported Go version is declared in go.mod (currently Go 1.25).
 //
@@ -28,8 +28,8 @@
 //	    "context"
 //	    "time"
 //
-//	    "github.com/felixgeelhaar/fortify/circuitbreaker"
-//	    "github.com/felixgeelhaar/fortify/retry"
+//	    "go.klarlabs.de/fortify/circuitbreaker"
+//	    "go.klarlabs.de/fortify/retry"
 //	)
 //
 //	func main() {
@@ -61,7 +61,7 @@
 //
 // Circuit Breaker: Prevents cascading failures by temporarily stopping requests to failing services
 //
-//	import "github.com/felixgeelhaar/fortify/circuitbreaker"
+//	import "go.klarlabs.de/fortify/circuitbreaker"
 //
 //	cb := circuitbreaker.New[Response](circuitbreaker.Config{
 //	    MaxRequests: 100,
@@ -71,7 +71,7 @@
 //
 // Retry: Handles transient failures with intelligent backoff strategies
 //
-//	import "github.com/felixgeelhaar/fortify/retry"
+//	import "go.klarlabs.de/fortify/retry"
 //
 //	r := retry.New[Response](retry.Config{
 //	    MaxAttempts:   3,
@@ -82,7 +82,7 @@
 //
 // Rate Limiter: Token bucket algorithm for controlling request rates
 //
-//	import "github.com/felixgeelhaar/fortify/ratelimit"
+//	import "go.klarlabs.de/fortify/ratelimit"
 //
 //	rl := ratelimit.New(ratelimit.Config{
 //	    Rate:     100,
@@ -92,7 +92,7 @@
 //
 // Timeout: Context-based timeout enforcement
 //
-//	import "github.com/felixgeelhaar/fortify/timeout"
+//	import "go.klarlabs.de/fortify/timeout"
 //
 //	t := timeout.New[Response](timeout.Config{
 //	    DefaultTimeout: time.Second * 5,
@@ -100,7 +100,7 @@
 //
 // Bulkhead: Limits concurrent executions to prevent resource exhaustion
 //
-//	import "github.com/felixgeelhaar/fortify/bulkhead"
+//	import "go.klarlabs.de/fortify/bulkhead"
 //
 //	bh := bulkhead.New[Response](bulkhead.Config{
 //	    MaxConcurrent: 10,
@@ -109,7 +109,7 @@
 //
 // Fallback: Provides graceful degradation with fallback values
 //
-//	import "github.com/felixgeelhaar/fortify/fallback"
+//	import "go.klarlabs.de/fortify/fallback"
 //
 //	fb := fallback.New[Response](fallback.Config[Response]{
 //	    Fallback: func(ctx context.Context, err error) (Response, error) {
@@ -120,7 +120,7 @@
 // Hedge: Reduces tail latency by firing parallel attempts when the primary call
 // is slow. Cancels the loser when a result arrives.
 //
-//	import "github.com/felixgeelhaar/fortify/hedge"
+//	import "go.klarlabs.de/fortify/hedge"
 //
 //	h := hedge.New[Response](hedge.Config{
 //	    HedgeAfter: 100 * time.Millisecond,
@@ -130,7 +130,7 @@
 // Adaptive concurrency: Auto-tunes a concurrency cap using AIMD, Vegas, or
 // Gradient2 based on observed latency and error signals.
 //
-//	import "github.com/felixgeelhaar/fortify/adaptive"
+//	import "go.klarlabs.de/fortify/adaptive"
 //
 //	a := adaptive.New[Response](adaptive.Config{
 //	    Algorithm: adaptive.Vegas,
@@ -141,7 +141,7 @@
 //
 // Combine multiple patterns using the middleware chain:
 //
-//	import "github.com/felixgeelhaar/fortify/middleware"
+//	import "go.klarlabs.de/fortify/middleware"
 //
 //	chain := middleware.New[Response]().
 //	    WithCircuitBreaker(cb).
@@ -159,7 +159,7 @@
 //
 //	import (
 //	    "net/http"
-//	    "github.com/felixgeelhaar/fortify/http"
+//	    "go.klarlabs.de/fortify/http"
 //	)
 //
 //	mux := http.NewServeMux()
@@ -175,7 +175,7 @@
 // Add resilience to gRPC services:
 //
 //	import (
-//	    "github.com/felixgeelhaar/fortify/grpc"
+//	    "go.klarlabs.de/fortify/grpc"
 //	    "google.golang.org/grpc"
 //	)
 //
@@ -190,9 +190,9 @@
 // Built-in support for logging, tracing, and metrics:
 //
 //	import (
-//	    "github.com/felixgeelhaar/fortify/otel"
-//	    "github.com/felixgeelhaar/fortify/slog"
-//	    "github.com/felixgeelhaar/fortify/metrics"
+//	    "go.klarlabs.de/fortify/otel"
+//	    "go.klarlabs.de/fortify/slog"
+//	    "go.klarlabs.de/fortify/metrics"
 //	)
 //
 //	// OpenTelemetry tracing
@@ -242,7 +242,7 @@
 //
 // Fortify provides standard error types for pattern-specific failures:
 //
-//	import "github.com/felixgeelhaar/fortify/ferrors"
+//	import "go.klarlabs.de/fortify/ferrors"
 //
 //	result, err := cb.Execute(ctx, operation)
 //	if errors.Is(err, ferrors.ErrCircuitOpen) {
@@ -259,7 +259,7 @@
 //
 // Fortify includes utilities for chaos engineering and resilience testing:
 //
-//	import "github.com/felixgeelhaar/fortify/testing"
+//	import "go.klarlabs.de/fortify/testing"
 //
 //	// Error injection for testing
 //	injector := testing.NewErrorInjector(0.3) // 30% failure rate
@@ -283,11 +283,11 @@
 // # Documentation
 //
 // For detailed documentation, examples, and API reference:
-//   - Package Documentation: https://pkg.go.dev/github.com/felixgeelhaar/fortify
-//   - GitHub Repository: https://github.com/felixgeelhaar/fortify
-//   - Production Guide: https://github.com/felixgeelhaar/fortify/blob/main/docs/PRODUCTION.md
-//   - Error Handling: https://github.com/felixgeelhaar/fortify/blob/main/docs/ERROR_HANDLING.md
-//   - Migration Guide: https://github.com/felixgeelhaar/fortify/blob/main/docs/MIGRATION.md
+//   - Package Documentation: https://pkg.go.dev/go.klarlabs.de/fortify
+//   - GitHub Repository: https://github.com/klarlabs-studio/fortify
+//   - Production Guide: https://github.com/klarlabs-studio/fortify/blob/main/docs/PRODUCTION.md
+//   - Error Handling: https://github.com/klarlabs-studio/fortify/blob/main/docs/ERROR_HANDLING.md
+//   - Migration Guide: https://github.com/klarlabs-studio/fortify/blob/main/docs/MIGRATION.md
 //
 // # License
 //

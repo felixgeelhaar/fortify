@@ -25,7 +25,7 @@ Fortify provides consistent error handling across all resilience patterns:
 All Fortify standard errors are defined in the `errors` package:
 
 ```go
-import fortifyerrors "github.com/felixgeelhaar/fortify/errors"
+import fortifyerrors "go.klarlabs.de/fortify/errors"
 ```
 
 ### Circuit Breaker Errors
@@ -723,6 +723,6 @@ if err != nil {
 ## Additional Resources
 
 - [Production Deployment Guide](./PRODUCTION.md)
-- [API Documentation](https://pkg.go.dev/github.com/felixgeelhaar/fortify)
+- [API Documentation](https://pkg.go.dev/go.klarlabs.de/fortify)
 - [Examples](../examples/)
 - [Standard Errors Package](../errors/)

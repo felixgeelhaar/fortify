@@ -48,7 +48,7 @@ go test -bench=. -benchmem ./circuitbreaker
 ### Setting Up a Tracker
 
 ```go
-import "github.com/felixgeelhaar/fortify/testing"
+import "go.klarlabs.de/fortify/testing"
 
 // Create performance tracker
 tracker := testing.NewPerformanceTracker(".benchmark-results")

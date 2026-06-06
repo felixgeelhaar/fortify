@@ -62,12 +62,12 @@ final state: closed
 ## Adopting in your project
 
 ```bash
-go get github.com/felixgeelhaar/fortify/examples/circuitbreaker-redis
+go get go.klarlabs.de/fortify/examples/circuitbreaker-redis
 ```
 
 ```go
 import (
-    redisbreaker "github.com/felixgeelhaar/fortify/examples/circuitbreaker-redis"
+    redisbreaker "go.klarlabs.de/fortify/examples/circuitbreaker-redis"
     "github.com/redis/go-redis/v9"
 )
 

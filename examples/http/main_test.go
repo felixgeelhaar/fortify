@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	fortifyhttp "github.com/felixgeelhaar/fortify/http"
-	"github.com/felixgeelhaar/fortify/ratelimit"
-	"github.com/felixgeelhaar/fortify/timeout"
+	fortifyhttp "go.klarlabs.de/fortify/http"
+	"go.klarlabs.de/fortify/ratelimit"
+	"go.klarlabs.de/fortify/timeout"
 )
 
 func TestHTTPExample(t *testing.T) {

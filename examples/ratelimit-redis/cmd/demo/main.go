@@ -12,8 +12,8 @@ import (
 	"log"
 	"time"
 
-	redisstore "github.com/felixgeelhaar/fortify/examples/ratelimit-redis"
-	"github.com/felixgeelhaar/fortify/ratelimit"
+	redisstore "go.klarlabs.de/fortify/examples/ratelimit-redis"
+	"go.klarlabs.de/fortify/ratelimit"
 	"github.com/redis/go-redis/v9"
 )
 

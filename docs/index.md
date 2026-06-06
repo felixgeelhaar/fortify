@@ -16,7 +16,7 @@ Fortify gives you circuit breaker, retry, rate limit, timeout, bulkhead, fallbac
 ## Install
 
 ```bash
-go get github.com/felixgeelhaar/fortify
+go get go.klarlabs.de/fortify
 ```
 
 ## 60-second example
@@ -26,8 +26,8 @@ import (
     "context"
     "time"
 
-    "github.com/felixgeelhaar/fortify/circuitbreaker"
-    "github.com/felixgeelhaar/fortify/retry"
+    "go.klarlabs.de/fortify/circuitbreaker"
+    "go.klarlabs.de/fortify/retry"
 )
 
 cb := circuitbreaker.New[string](circuitbreaker.Config{
@@ -56,8 +56,8 @@ Fortify is the resilience library for teams that want all of it under one roof, 
 
 ## Project status
 
-- See [GOVERNANCE.md](https://github.com/felixgeelhaar/fortify/blob/main/GOVERNANCE.md) for maintainership and semver policy
-- See [SECURITY.md](https://github.com/felixgeelhaar/fortify/blob/main/SECURITY.md) for vulnerability disclosure
-- See [ADOPTERS.md](https://github.com/felixgeelhaar/fortify/blob/main/ADOPTERS.md) — PRs welcome to add yourself
+- See [GOVERNANCE.md](https://github.com/klarlabs-studio/fortify/blob/main/GOVERNANCE.md) for maintainership and semver policy
+- See [SECURITY.md](https://github.com/klarlabs-studio/fortify/blob/main/SECURITY.md) for vulnerability disclosure
+- See [ADOPTERS.md](https://github.com/klarlabs-studio/fortify/blob/main/ADOPTERS.md) — PRs welcome to add yourself
 
 MIT-licensed. Currently solo-maintained.

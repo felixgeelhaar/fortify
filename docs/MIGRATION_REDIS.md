@@ -97,7 +97,7 @@ import (
     "encoding/json"
     "time"
 
-    "github.com/felixgeelhaar/fortify/ratelimit"
+    "go.klarlabs.de/fortify/ratelimit"
     "github.com/redis/go-redis/v9"
 )
 
@@ -185,7 +185,7 @@ import (
     "github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
     "github.com/aws/aws-sdk-go-v2/service/dynamodb"
     "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-    "github.com/felixgeelhaar/fortify/ratelimit"
+    "go.klarlabs.de/fortify/ratelimit"
 )
 
 type DynamoStore struct {
@@ -485,5 +485,5 @@ func healthCheck(store ratelimit.Store) http.HandlerFunc {
 ## Support
 
 - 📖 [Main Documentation](../README.md)
-- 🐛 [Issue Tracker](https://github.com/felixgeelhaar/fortify/issues)
-- 💬 [Discussions](https://github.com/felixgeelhaar/fortify/discussions)
+- 🐛 [Issue Tracker](https://github.com/klarlabs-studio/fortify/issues)
+- 💬 [Discussions](https://github.com/klarlabs-studio/fortify/discussions)

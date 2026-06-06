@@ -24,7 +24,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/ferrors"
+	"go.klarlabs.de/fortify/ferrors"
 )
 
 // Timeout is a generic interface for enforcing operation time limits.

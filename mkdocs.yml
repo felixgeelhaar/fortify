@@ -1,8 +1,8 @@
 site_name: Fortify
 site_description: Composable resilience patterns for Go.
-site_url: https://felixgeelhaar.github.io/fortify/
-repo_url: https://github.com/felixgeelhaar/fortify
-repo_name: felixgeelhaar/fortify
+site_url: https://klarlabs-studio.github.io/fortify/
+repo_url: https://github.com/klarlabs-studio/fortify
+repo_name: klarlabs-studio/fortify
 edit_uri: edit/main/docs/
 
 docs_dir: docs
@@ -48,7 +48,7 @@ nav:
     - Test resilience: how-to-test.md
   - Integrations: integrations.md
   - Reference:
-    - API docs (pkg.go.dev): https://pkg.go.dev/github.com/felixgeelhaar/fortify
+    - API docs (pkg.go.dev): https://pkg.go.dev/go.klarlabs.de/fortify
     - Comparison: COMPARISON.md
     - Production checklist: PRODUCTION.md
     - Error handling: ERROR_HANDLING.md
@@ -80,6 +80,6 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/felixgeelhaar/fortify
+      link: https://github.com/klarlabs-studio/fortify
     - icon: fontawesome/solid/book
-      link: https://pkg.go.dev/github.com/felixgeelhaar/fortify
+      link: https://pkg.go.dev/go.klarlabs.de/fortify

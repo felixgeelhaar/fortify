@@ -5,7 +5,7 @@ Patterns are most useful in combination. Fortify's `middleware.Chain` is a fluen
 ## Recommended chain
 
 ```go
-import "github.com/felixgeelhaar/fortify/middleware"
+import "go.klarlabs.de/fortify/middleware"
 
 chain := middleware.New[Response]().
     WithBulkhead(bh).                      // outermost

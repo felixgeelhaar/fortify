@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/fortify/middleware"
+	"go.klarlabs.de/fortify/middleware"
 )
 
 // fakeTransport allows controlling RoundTrip outcomes per-call for tests.
