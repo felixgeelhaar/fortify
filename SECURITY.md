@@ -13,7 +13,7 @@
 
 If you discover a security vulnerability in Fortify, please report it by emailing:
 
-**security@felixgeelhaar.de**
+**security@klarlabs.de**
 
 Please include the following information in your report:
 
