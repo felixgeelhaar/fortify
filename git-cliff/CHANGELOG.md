@@ -6,16 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
-### CI
+### Docs
 
-- **actions:** Gate cross-OS to push-to-main, cap retention
-
-### Chore
-
-- Update coverage badge [skip ci]
-- Update coverage badge [skip ci]
-
-### Dependencies
-
-- **deps:** Bump pymdown-extensions 10.16.1 → 10.21.3
+- Route security reports to security@klarlabs.de (#42)
 
