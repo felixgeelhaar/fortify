@@ -74,7 +74,7 @@ func Example_linearBackoff() {
 	})
 
 	attempt := 0
-	//nolint:errcheck,gosec // intentionally ignoring error in example
+	//nolint:errcheck // intentionally ignoring error in example
 	r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		return "", fmt.Errorf("error %d", attempt)
@@ -256,7 +256,7 @@ func Example_jitter() {
 	})
 
 	attempt := 0
-	//nolint:errcheck,gosec // intentionally ignoring error in example
+	//nolint:errcheck // intentionally ignoring error in example
 	r.Execute(context.Background(), func(ctx context.Context) (string, error) {
 		attempt++
 		if attempt < 3 {

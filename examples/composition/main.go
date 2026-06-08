@@ -38,7 +38,6 @@ func (c *ExternalAPIClient) Call(ctx context.Context, requestID string) (*APIRes
 	}
 
 	// Simulate random failures
-	//nolint:gosec // G404: using math/rand intentionally for non-security simulation
 	if rand.Float64() < c.failureRate {
 		return nil, errors.New("external API error")
 	}
@@ -55,8 +54,7 @@ func main() {
 	// 30% failure rate, 100-500ms latency
 	apiClient := &ExternalAPIClient{
 		failureRate: 0.3,
-		//nolint:gosec // G404: using math/rand intentionally for simulation latency
-		latency: time.Millisecond * time.Duration(100+rand.Intn(400)),
+		latency:     time.Millisecond * time.Duration(100+rand.Intn(400)),
 	}
 
 	// Build a comprehensive resilience chain

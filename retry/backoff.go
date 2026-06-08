@@ -78,7 +78,6 @@ func addJitter(delay time.Duration) time.Duration {
 	// math/rand/v2 has lock-free per-goroutine state, avoiding the global
 	// mutex contention of math/rand under parallel callers. Predictability
 	// is acceptable for retry jitter.
-	//nolint:gosec // G404: weak random is intentional and appropriate for retry jitter
 	jitterAmount := time.Duration(rand.Float64() * float64(delay) * 0.1)
 	return delay + jitterAmount
 }

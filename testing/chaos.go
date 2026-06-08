@@ -14,7 +14,7 @@ import (
 	// 3. math/rand provides sufficient randomness for chaos engineering
 	// 4. crypto/rand would add unnecessary overhead to test utilities.
 	// 5. Predictable seeds can actually be useful for reproducing test scenarios.
-	"math/rand" //nolint:gosec // G404: weak random is intentional and appropriate for testing utilities
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -57,7 +57,6 @@ func (e *ErrorInjector) ShouldFail() bool {
 
 	// Weak random is appropriate here because this is a testing utility
 	// that simulates probabilistic failures for chaos engineering
-	//nolint:gosec // G404: weak random is intentional for testing
 	if rand.Float64() < prob {
 		e.failures.Add(1)
 		return true
@@ -146,7 +145,6 @@ func (l *LatencyInjector) Delay(ctx context.Context) error {
 	if maxDelay > minDelay {
 		// Weak random is appropriate here because this is a testing utility
 		// that simulates variable latency for chaos engineering
-		//nolint:gosec // G404: weak random is intentional for testing
 		delay = minDelay + time.Duration(rand.Int63n(int64(maxDelay-minDelay)))
 	}
 
@@ -230,7 +228,6 @@ func (t *TimeoutSimulator) Context(parent context.Context) (context.Context, con
 	// Decide if we should simulate timeout
 	// Weak random is appropriate here because this is a testing utility
 	// that simulates probabilistic timeouts for chaos engineering
-	//nolint:gosec // G404: weak random is intentional for testing
 	if rand.Float64() < prob {
 		t.timeouts.Add(1)
 		return context.WithTimeout(parent, timeout)

@@ -432,7 +432,7 @@ func TestMemoryStore(t *testing.T) {
 		ctx := context.Background()
 
 		// Create state
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
@@ -641,7 +641,7 @@ func TestMemoryStoreGet(t *testing.T) {
 
 		// Create state
 		now := time.Now()
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: now}
 		})
@@ -677,7 +677,7 @@ func TestMemoryStoreClose(t *testing.T) {
 		ctx := context.Background()
 
 		// Create some state
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "test-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
@@ -786,7 +786,7 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a key
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "stale-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
@@ -813,7 +813,7 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 		ctx := context.Background()
 
 		// Create a key
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "active-key", func(s *BucketState) *BucketState {
 			return &BucketState{Tokens: 10, LastRefill: time.Now()}
 		})
@@ -821,7 +821,7 @@ func TestMemoryStoreTTLCleanup(t *testing.T) {
 		// Keep accessing the key to prevent expiry
 		for i := 0; i < 5; i++ {
 			time.Sleep(40 * time.Millisecond)
-			//nolint:errcheck,gosec // test setup
+			//nolint:errcheck // test setup
 			_, _ = store.AtomicUpdate(ctx, "active-key", func(s *BucketState) *BucketState {
 				return s
 			})
@@ -1093,7 +1093,7 @@ func TestMemoryStoreClear(t *testing.T) {
 
 		// Create multiple keys
 		for i := 0; i < 10; i++ {
-			//nolint:errcheck,gosec // test setup
+			//nolint:errcheck // test setup
 			_, _ = store.AtomicUpdate(ctx, fmt.Sprintf("key-%d", i), func(s *BucketState) *BucketState {
 				return &BucketState{Tokens: 10, LastRefill: time.Now()}
 			})
@@ -2001,7 +2001,7 @@ func TestRefillEdgeCases(t *testing.T) {
 
 		// Create initial state with a future timestamp
 		futureTime := time.Now().Add(time.Hour)
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     5,
@@ -2062,7 +2062,7 @@ func TestRefillEdgeCases(t *testing.T) {
 
 		// Create state with very old timestamp (simulating system sleep/wake)
 		oldTime := time.Now().Add(-24 * time.Hour)
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     0,
@@ -2132,7 +2132,7 @@ func TestRefillEdgeCases(t *testing.T) {
 		ctx := context.Background()
 
 		// Create state at burst limit
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     10, // At burst limit
@@ -2192,7 +2192,7 @@ func TestRefillEdgeCases(t *testing.T) {
 
 		// Create state with old timestamp to simulate long system sleep
 		oldTime := time.Now().Add(-24 * time.Hour)
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     0,
@@ -2237,7 +2237,7 @@ func TestRefillEdgeCases(t *testing.T) {
 		ctx := context.Background()
 
 		// Set up state just below burst
-		//nolint:errcheck,gosec // test setup
+		//nolint:errcheck // test setup
 		_, _ = store.AtomicUpdate(ctx, "test", func(s *BucketState) *BucketState {
 			return &BucketState{
 				Tokens:     9,
